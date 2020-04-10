@@ -1,12 +1,16 @@
 from flask import Flask, render_template
 import pymysql.cursors
 import logging
+from flask_socketio import SocketIO, emit # type: ignore
+
 
 app = Flask(__name__)
 logging.basicConfig(filename='error.log',level=logging.DEBUG)
 conn = pymysql.connect(host='localhost',
                        user='root',
                        password='root')
+
+socketio = SocketIO(app)
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -19,6 +23,7 @@ def test_write():
     logging.debug("test_write was called")
     logging.debug("connect was called")
     create_and_use_db("test1")
+    logging.debug("creating table")
     create_table()
     return 'hello world'
 
@@ -41,6 +46,24 @@ def create_table():
 
     logging.debug("table created")
 
+@socketio.on('my message')
+def test_message(message):
+    emit('my response', {'data': 'got it!'})
 
-if __name__ == "__main__":
-    app.run()
+@socketio.on('test')
+def this_is_a_test(message):
+    print("test message:", message)
+
+
+@socketio.on('message_sent')
+def log_changes(message):
+    logging.debug("message sent:", message)
+
+    if message['room']:
+        # a room is contained in this update
+
+
+
+if __name__ == '__main__':
+    print("LISTENING")
+    socketio.run(app)

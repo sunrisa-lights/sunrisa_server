@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtualenv
+venv/*
+sunrisa
+
+# mypy
+.mypy_cache
+
+# log files
+*.log
