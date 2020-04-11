@@ -22,7 +22,21 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a set of commands using the runners shell
+    # setup virtual env and install dependencies
+    - name: Setup virtual environment
+      run: |
+        sudo apt-get install python3-venv
+        python3 -m venv venv
+        . venv/bin/activate
+        pip install -r requirements.txt
+
+    # Runs mypy
+    - name: Run tests
+      run: |
+        . venv/bin/activate
+        mypy models/
+
+    # Runs pytest on the tests/ directory
     - name: Run tests
       run: |
         . venv/bin/activate
