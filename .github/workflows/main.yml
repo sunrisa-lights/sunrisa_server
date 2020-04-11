@@ -25,6 +25,7 @@ jobs:
     # Runs a single command using the runners shell
     - name: Setup virtual environment
       run: |
+        sudo apt-get install python3-venv
         python3 -m venv venv
         . venv/bin/activate
         pip install -r requirements.txt
