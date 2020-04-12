@@ -53,7 +53,7 @@ jobs:
     - name: Run integration tests
       run: |
         . venv/bin/activate
-        python -m pytest > /dev/null 2>&1 &
+        python -m sunrisa.py > /dev/null 2>&1 &
         . integration_venv/bin/activate
         python tests/integration/sunrisa_integration.py
 
