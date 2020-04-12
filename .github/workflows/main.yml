@@ -53,7 +53,7 @@ jobs:
     - name: Run integration tests
       run: |
         . venv/bin/activate
-        python -m sunrisa.py > /dev/null 2>&1 &
+        python -m sunrisa.py &
         echo "Sleeping 5 seconds before starting integration test"
         sleep 5
         . integration_venv/bin/activate
