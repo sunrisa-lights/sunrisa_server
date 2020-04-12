@@ -53,7 +53,6 @@ jobs:
     - name: Debugging with tmate
       uses: mxschmitt/action-tmate@v2
 
-
     # Setup MySQL for integration tests
     - name: Setup MySQL
       run: |
