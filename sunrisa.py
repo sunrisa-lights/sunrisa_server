@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import pymysql.cursors
 import logging
 from flask_socketio import SocketIO, emit # type: ignore
+from models.room import Room
 
 
 app = Flask(__name__)
@@ -59,8 +60,11 @@ def this_is_a_test(message):
 def log_changes(message):
     logging.debug("message sent:", message)
 
-    if message['room']:
+    if 'room' in message:
         # a room is contained in this update
+        room_json = message['room']
+        room = Room.from_json(room_json)
+        logging.debug(room)
 
 
 

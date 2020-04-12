@@ -1,4 +1,5 @@
 from typing import Any, Dict
+import json
 
 class Room():
 
@@ -13,4 +14,7 @@ class Room():
         roomId: int = int(roomJson['roomId'])
         isOn: bool = bool(roomJson['isOn']) if 'isOn' in roomJson else False
         return cls(roomId, isOn)
+
+    def __str__(self):
+        return json.dumps({'roomId': self.roomId, 'isOn': self.isOn})
 
