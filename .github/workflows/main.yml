@@ -56,6 +56,9 @@ jobs:
         echo "INSTALLED"
         sudo systemctl start mysql
         echo "STARTED"
+        # clean out data directory
+        rm -rf /var/lib/mysql/*
+        echo "STARTED"
         sudo mysqld --initialize-insecure --user=mysql
         echo "STARTED"
         sudo mysql -u root --skip-password -e "GRANT ALL PRIVILEGES ON . TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;"
