@@ -47,7 +47,7 @@ jobs:
       run: |
         python3 -m venv integration_venv
         . integration_venv/bin/activate
-        pip install -r tests/integration/integration_requirements.txt
+        pip install -r tests/integration/requirements_integration.txt
 
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
