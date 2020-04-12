@@ -61,6 +61,7 @@ jobs:
         echo "INSTALLED"
         sudo mysql -e "SET PASSWORD FOR root@localhost = PASSWORD('123');FLUSH PRIVILEGES;"
 
+
         # # Any subsequent tries to run queries this way will get access denied because lack of usr/pwd param
         echo "Finished updates"
 
