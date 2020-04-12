@@ -46,16 +46,21 @@ jobs:
     - name: Setup integration test virtual environment
       run: |
         python3 -m venv integration_venv
-        deactivate #deactivate previous virtual environment from sunrisa
         . integration_venv/bin/activate
-        pip install -r tests/integration/integration_requirements.txt
+        pip install -r tests/integration/requirements_integration.txt
+
+    # Setup MySQL for integration tests
+    - name: Setup MySQL
+      run: |
+        sudo systemctl start mysql
 
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
       run: |
+        . venv/bin/activate
+        python sunrisa.py &
+        echo "Sleeping 5 seconds before starting integration test"
+        sleep 5
         . integration_venv/bin/activate
-        python -m pytest tests/integration/sunrisa_integration.py > /dev/null 2>&1 &
-        INTEGRATION_TEST_PID=$!
-        echo $INTEGRATION_TEST_PID
-
+        python tests/integration/sunrisa_integration.py
 

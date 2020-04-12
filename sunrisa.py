@@ -28,6 +28,18 @@ def test_write():
     create_table()
     return 'hello world'
 
+@socketio.on('connect')
+def connect():
+    print("I'm connected!")
+
+@socketio.on('connect_error')
+def connect_error():
+    print("The connection failed!")
+
+@socketio.on('disconnect')
+def disconnect():
+    print("I'm disconnected!")
+
 def create_and_use_db(db_name):
     create_sql = 'create database {}'.format(db_name)
     try:
@@ -47,15 +59,6 @@ def create_table():
 
     logging.debug("table created")
 
-@socketio.on('my message')
-def test_message(message):
-    emit('my response', {'data': 'got it!'})
-
-@socketio.on('test')
-def this_is_a_test(message):
-    print("test message:", message)
-
-
 @socketio.on('message_sent')
 def log_changes(message):
     logging.debug("message sent:", message)
@@ -65,9 +68,9 @@ def log_changes(message):
         room_json = message['room']
         room = Room.from_json(room_json)
         logging.debug(room)
+        return "Entities Processed", [room_json]
 
 
 
 if __name__ == '__main__':
-    print("LISTENING")
     socketio.run(app)
