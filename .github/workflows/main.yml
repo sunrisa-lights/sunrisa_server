@@ -46,7 +46,6 @@ jobs:
     - name: Setup integration test virtual environment
       run: |
         python3 -m venv integration_venv
-        deactivate #deactivate previous virtual environment from sunrisa
         . integration_venv/bin/activate
         pip install -r tests/integration/integration_requirements.txt
 
