@@ -54,32 +54,10 @@ jobs:
       run: |
         sudo apt install mysql-server
         echo "INSTALLED"
-        sudo /bin/sh -c 'apt-get install -y aptitude'
-        echo "APTITUDE INSTALLED"
-        aptitude -y install expect
-        echo "EXPECT INSTALLED"
         sudo systemctl start mysql
         echo "start"
+        sudo mysql -e "SET PASSWORD FOR root@localhost = PASSWORD('123');FLUSH PRIVILEGES;" 
 
-		SECURE_MYSQL=$(expect -c "
-		set timeout 10
-		spawn mysql_secure_installation
-		expect \"Enter current password for root (enter for none):\"
-		send \"$MYSQL\r\"
-		expect \"Change the root password?\"
-		send \"n\r\"
-		expect \"Remove anonymous users?\"
-		send \"y\r\"
-		expect \"Disallow root login remotely?\"
-		send \"y\r\"
-		expect \"Remove test database and access to it?\"
-		send \"y\r\"
-		expect \"Reload privilege tables now?\"
-		send \"y\r\"
-		expect eof
-		")
-
-		echo "$SECURE_MYSQL"
 
 
         # # Any subsequent tries to run queries this way will get access denied because lack of usr/pwd param
