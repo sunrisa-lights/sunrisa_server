@@ -55,7 +55,6 @@ jobs:
         . venv/bin/activate
         python -m sunrisa.py > /dev/null 2>&1 &
         sleep 5
-        lsof -i tcp:[5000]
         . integration_venv/bin/activate
         python tests/integration/sunrisa_integration.py
 
