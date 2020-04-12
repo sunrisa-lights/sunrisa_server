@@ -52,10 +52,9 @@ jobs:
     # Setup MySQL for integration tests
     - name: Setup MySQL
       run: |
+        sudo apt-get update
         sudo apt install mysql-server
         echo "INSTALLED"
-        sudo systemctl start mysql
-        echo "start"
         sudo mysql -e "SET PASSWORD FOR root@localhost = PASSWORD('123');FLUSH PRIVILEGES;" 
 
 
