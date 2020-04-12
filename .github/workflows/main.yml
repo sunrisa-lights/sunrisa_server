@@ -55,8 +55,10 @@ jobs:
         sudo apt install mysql-server
         echo "INSTALLED"
         sudo systemctl start mysql
+        echo "INSTALLED"
+        sudo mysqld_safe --skip-grant-tables &
         echo "STARTED"
-        sudo mysql -p -e "UPDATE mysql.user SET Password = PASSWORD('password') WHERE User = 'root';"
+        sudo mysql -uroot -e "UPDATE mysql.user SET Password = PASSWORD('password') WHERE User = 'root';"
         echo "STARTED"
         sudo mysql -u root -p -e "FLUSH PRIVILEGES";
 
