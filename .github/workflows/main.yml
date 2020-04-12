@@ -54,7 +54,7 @@ jobs:
       run: |
         sudo apt install mysql-server
         echo "INSTALLED"
-        aptitude -y install expect
+        /bin/sh -c 'apt-get install -y aptitude'
         echo "INSTALLED"
         sudo systemctl start mysql
         echo "start"
