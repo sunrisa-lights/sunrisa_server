@@ -54,7 +54,6 @@ jobs:
       run: |
         sudo apt install mysql-server
         echo "INSTALLED"
-        systemctl status mysql.service
         sudo systemctl start mysql
         # Make sure that NOBODY can access the server without a password
         mysql -e "UPDATE mysql.user SET Password = PASSWORD('root') WHERE User = 'root'"
