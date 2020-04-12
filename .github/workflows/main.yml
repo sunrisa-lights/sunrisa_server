@@ -57,7 +57,7 @@ jobs:
         sudo systemctl start mysql
         echo "STARTED"
         # clean out data directory
-        sudo rm -rf /var/lib/mysql/*
+        sudo rm -rf /var/lib/mysql
         echo "STARTED"
         sudo mysqld --initialize-insecure --user=mysql
         echo "STARTED"
