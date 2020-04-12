@@ -31,7 +31,7 @@ jobs:
         pip install -r requirements.txt
 
     # Runs mypy
-    - name: Run tests
+    - name: Run mypy
       run: |
         . venv/bin/activate
         mypy models/
