@@ -49,6 +49,11 @@ jobs:
         . integration_venv/bin/activate
         pip install -r tests/integration/requirements_integration.txt
 
+    # starts a debugger. https://github.com/marketplace/actions/debugging-with-tmate
+    - name: Debugging with tmate
+      uses: mxschmitt/action-tmate@v2
+
+
     # Setup MySQL for integration tests
     - name: Setup MySQL
       run: |
