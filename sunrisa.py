@@ -9,7 +9,8 @@ from app_config import AppConfig
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-appConfig = AppConfig()
+env = "development" # TODO(lwotton): Get to a production environment
+appConfig = AppConfig(socketio, env)
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -39,13 +40,15 @@ def log_changes(message):
     logging.debug("message sent:", message)
     entities_processed = []
 
+    print("message:", message)
     if 'room' in message:
         # a room is contained in this update
         entities_processed.append('room')
         room_json = message['room']
         room = Room.from_json(room_json)
         appConfig.logger.debug(room)
-        appConfig.db.write_room_to_db(room)
+        print("Saw room in message")
+        appConfig.db.write_room(room)
 
 
     emit('message_received', {'processed': entities_processed})

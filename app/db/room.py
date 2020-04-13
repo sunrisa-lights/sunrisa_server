@@ -5,8 +5,10 @@ def write_room(conn, room: Room):
     isOn = room.isOn
     isVegRoom = room.isVegRoom
 
-    sql = "INSERT INTO `rooms` VALUES (%s, %r, %r)"
+    sql = "REPLACE INTO `rooms` VALUES (%s, %r, %r)"
     conn.cursor().execute(sql, (roomId, isOn, isVegRoom))
+    print("WROTE ROOM", room)
+    conn.commit()
 
 
 def create_room_table(conn):

@@ -10,7 +10,7 @@ class Room():
 
     @classmethod
     def from_json(cls, roomJson: Dict[Any, Any]):
-        if not roomJson['roomId']:
+        if not 'roomId' in roomJson:
             raise Exception("Invalid")
         roomId: int = int(roomJson['roomId'])
         isOn: bool = bool(roomJson['isOn']) if 'isOn' in roomJson else False
@@ -19,3 +19,14 @@ class Room():
 
     def __str__(self):
         return json.dumps({'roomId': self.roomId, 'isOn': self.isOn, 'isVegRoom': self.isVegRoom})
+
+    def __eq__(self, other):
+        if not isinstance(other, Room):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.roomId == other.roomId and self.isOn == other.isOn and self.isVegRoom == other.isVegRoom
+
+
+
+
