@@ -15,7 +15,7 @@ def test_write_room(mock_room):
 
     write_room(conn, mock_room)
 
-    conn.cursor().execute.assert_called_with("INSERT INTO `rooms` VALUES (%s, %r, %r)", (mock_room.roomId, mock_room.isOn, mock_room.isVegRoom))
+    conn.cursor().execute.assert_called_with("REPLACE INTO `rooms` VALUES (%s, %r, %r)", (mock_room.roomId, mock_room.isOn, mock_room.isVegRoom))
 
 def test_create_room_table():
     conn = MagicMock()
