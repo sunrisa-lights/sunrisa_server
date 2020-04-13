@@ -34,13 +34,13 @@ jobs:
     - name: Run mypy
       run: |
         . venv/bin/activate
-        mypy models/
+        mypy app/
 
     # Runs pytest on the tests/unit directory
     - name: Run unit tests
       run: |
         . venv/bin/activate
-        python -m pytest tests/unit/models/room_test.py
+        pytest tests/
 
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
