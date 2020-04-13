@@ -62,15 +62,16 @@ def create_table():
 @socketio.on('message_sent')
 def log_changes(message):
     logging.debug("message sent:", message)
+    entities_processed = []
 
     if 'room' in message:
         # a room is contained in this update
+        entities_processed.append('room')
         room_json = message['room']
         room = Room.from_json(room_json)
         logging.debug(room)
-        return "Entities Processed", [room_json]
 
-
+    emit('message_received', {'processed': entities_processed})
 
 if __name__ == '__main__':
     socketio.run(app)
