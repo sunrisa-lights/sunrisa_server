@@ -25,7 +25,21 @@ def test_send_room():
     global expected_processed_entities
     expected_processed_entities = ['room']
 
+    # send initial room update
     room_dict = {'room': {'roomId': 1, 'isOn': False, 'isVegRoom': True}}
+    sio.emit('message_sent', room_dict)
+    sio.sleep(10) # wait for changes to propagate in the DB
+    get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(room_dict['room']['roomId'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_room_sql)
+        rid, is_on, is_veg = cursor.fetchone()
+        foundRoom = Room(rid, bool(is_on), bool(is_veg))
+        expected = Room.from_json(room_dict['room'])
+        print("foundRoom:", foundRoom, "expected:", expected)
+        assert foundRoom == Room.from_json(room_dict['room'])
+
+    # update same room to on
+    room_dict['room']['isOn'] = True
     sio.emit('message_sent', room_dict)
     sio.sleep(10) # wait for changes to propagate in the DB
     get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(room_dict['room']['roomId'])
