@@ -17,6 +17,7 @@ expected_processed_entities = None
 conn = pymysql.connect(host='localhost',
                        user='root',
                        password='root')
+conn.autocommit(True) # necessary so we don't get stale reads back
 logging.basicConfig(filename='error.log',level=logging.DEBUG)
 db_name = "sunrisa_test"
 db = DB(conn, db_name, logging)
@@ -26,9 +27,9 @@ def test_send_room():
     expected_processed_entities = ['room']
 
     # send initial room update
-    room_dict = {'room': {'roomId': 1, 'isOn': False, 'isVegRoom': True}}
+    room_dict = {'room': {'roomId': 1, 'isOn': True, 'isVegRoom': True}}
     sio.emit('message_sent', room_dict)
-    sio.sleep(10) # wait for changes to propagate in the DB
+    sio.sleep(1) # wait for changes to propagate in the DB
     get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(room_dict['room']['roomId'])
     with conn.cursor() as cursor:
         cursor.execute(get_room_sql)
@@ -39,9 +40,9 @@ def test_send_room():
         assert foundRoom == Room.from_json(room_dict['room'])
 
     # update same room to on
-    room_dict['room']['isOn'] = True
+    room_dict['room']['isOn'] = not room_dict['room']['isOn']
     sio.emit('message_sent', room_dict)
-    sio.sleep(10) # wait for changes to propagate in the DB
+    sio.sleep(1) # wait for changes to propagate in the DB
     get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(room_dict['room']['roomId'])
     with conn.cursor() as cursor:
         cursor.execute(get_room_sql)

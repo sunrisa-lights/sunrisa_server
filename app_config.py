@@ -14,6 +14,7 @@ class AppConfig():
             conn = pymysql.connect(host='localhost',
                                    user='root',
                                    password='root')
+            conn.autocommit(True)
 
             logging.basicConfig(filename='error.log',level=logging.DEBUG)
             self.logger = logging
