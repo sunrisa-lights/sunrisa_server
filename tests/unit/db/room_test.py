@@ -15,7 +15,7 @@ def test_write_room(mock_room):
 
     write_room(conn, mock_room)
 
-    conn.cursor().execute.assert_called_with("REPLACE INTO `rooms` VALUES (%s, %r, %r)", (mock_room.roomId, mock_room.isOn, mock_room.isVegRoom))
+    conn.cursor().execute.assert_called_with("INSERT INTO `rooms` VALUES (%s, %r, %r) ON DUPLICATE KEY UPDATE is_on=%r, is_veg_room=%r", (mock_room.roomId, mock_room.isOn, mock_room.isVegRoom, mock_room.isOn, mock_room.isVegRoom))
 
 def test_create_room_table():
     conn = MagicMock()
@@ -24,7 +24,8 @@ def test_create_room_table():
     sql = """CREATE TABLE IF NOT EXISTS rooms(
     room_id INT NOT NULL,
     is_on BOOLEAN NOT NULL,
-    is_veg_room BOOLEAN NOT NULL
+    is_veg_room BOOLEAN NOT NULL,
+    PRIMARY KEY (room_id)
     );
     """
 
