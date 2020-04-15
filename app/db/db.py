@@ -1,5 +1,9 @@
-from app.db.room import create_room_table, write_room
 import pymysql.cursors
+
+from app.models.room import Room
+from app.models.rack import Rack
+from app.db.room import create_room_table, write_room
+from app.db.rack import create_rack_table, write_rack
 
 class DB():
 
@@ -9,8 +13,8 @@ class DB():
 
         self.create_and_use_db(db_name)
 
-    def create_and_use_db(self, db_name):
-        create_sql = 'create database {}'.format(db_name)
+    def create_and_use_db(self, db_name: str) -> None:
+        create_sql: str  = 'create database {}'.format(db_name)
         try:
             self.conn.cursor().execute(create_sql)
         except pymysql.err.ProgrammingError:
@@ -19,8 +23,12 @@ class DB():
         use_sql = 'use {}'.format(db_name)
         self.conn.cursor().execute(use_sql)
 
-    def initialize_tables(self):
+    def initialize_tables(self) -> None:
         create_room_table(self.conn)
+        create_rack_table(self.conn)
 
-    def write_room(self, room):
+    def write_room(self, room: Room) -> None:
         write_room(self.conn, room)
+
+    def write_rack(self, rack: Rack) -> None:
+        write_rack(self.conn, rack)

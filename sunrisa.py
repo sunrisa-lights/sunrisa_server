@@ -3,6 +3,7 @@ import pymysql.cursors
 import logging
 from flask_socketio import SocketIO, emit # type: ignore
 from app.models.room import Room
+from app.models.rack import Rack
 
 from app_config import AppConfig
 
@@ -50,6 +51,16 @@ def log_changes(message):
         print("Saw room in message")
         appConfig.db.write_room(room)
 
+    if 'rack' in message:
+        # a room is contained in this update
+        entities_processed.append('rack')
+        rack_json = message['rack']
+        rack = Rack.from_json(rack_json)
+        appConfig.logger.debug(rack)
+        print("Saw rack in message")
+        appConfig.db.write_rack(rack)
+
+    
 
     emit('message_received', {'processed': entities_processed})
 
