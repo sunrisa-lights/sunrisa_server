@@ -10,6 +10,7 @@ from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.shelf import Shelf
+from app.models.plant import Plant
 
 # standard Python
 sio = socketio.Client()
@@ -125,8 +126,6 @@ def test_send_shelf(rack, recipe):
         print("foundShelf:", foundShelf, "expected:", expected)
         assert foundShelf == expected
 
-        return foundShelf
-
     # add recipe in and verify that it is updated properly
     shelf_dict = {'shelf': {'shelf_id': 1, 'rack_id': rack.rack_id, 'recipe_id': recipe.recipe_id}}
     sio.emit('message_sent', shelf_dict)
@@ -142,6 +141,38 @@ def test_send_shelf(rack, recipe):
 
         return foundShelf
 
+def test_send_plant(shelf):
+    global expected_processed_entities
+    expected_processed_entities = ['plant']
+
+    # initially leave shelf_id nil to test out nil shelf
+    plant_dict = {'plant': {'olcc_number': 1}}
+    sio.emit('message_sent', plant_dict)
+    sio.sleep(1)
+    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(plant_dict['plant']['olcc_number'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_plant_sql)
+        olcc_number, shelf_id = cursor.fetchone()
+        foundPlant = Plant(olcc_number, shelf_id)
+        expected = Plant.from_json(plant_dict['plant'])
+        print("foundPlant:", foundPlant, "expected:", expected)
+        assert foundPlant == expected
+
+    # add shelf in and verify that it is updated properly
+    plant_dict = {'plant': {'olcc_number': 1, 'shelf_id': shelf.shelf_id}}
+    sio.emit('message_sent', plant_dict)
+    sio.sleep(1)
+    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(plant_dict['plant']['olcc_number'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_plant_sql)
+        olcc_number, shelf_id = cursor.fetchone()
+        foundPlant = Plant(olcc_number, shelf_id)
+        expected = Plant.from_json(plant_dict['plant'])
+        print("foundPlant:", foundPlant, "expected:", expected)
+        assert foundPlant == expected
+
+        return foundPlant
+
 @sio.on('message_received')
 def verify_message_received(entities_processed):
     assert entities_processed['processed'] == expected_processed_entities
@@ -150,7 +181,8 @@ def run_tests():
     room = test_send_room()
     rack = test_send_rack(room)
     recipe = test_send_recipe()
-    test_send_shelf(rack, recipe)
+    shelf = test_send_shelf(rack, recipe)
+    test_send_plant(shelf)
     print("Integration tests passed!")
 
 if __name__ == "__main__":
