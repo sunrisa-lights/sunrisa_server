@@ -2,8 +2,12 @@ import pymysql.cursors
 
 from app.models.room import Room
 from app.models.rack import Rack
+from app.models.recipe import Recipe
+from app.models.shelf import Shelf
 from app.db.room import create_room_table, write_room
 from app.db.rack import create_rack_table, write_rack
+from app.db.recipe import create_recipe_table, write_recipe
+from app.db.shelf import create_shelf_table, write_shelf
 
 class DB():
 
@@ -26,9 +30,17 @@ class DB():
     def initialize_tables(self) -> None:
         create_room_table(self.conn)
         create_rack_table(self.conn)
+        create_recipe_table(self.conn)
+        create_shelf_table(self.conn)
 
     def write_room(self, room: Room) -> None:
         write_room(self.conn, room)
 
     def write_rack(self, rack: Rack) -> None:
         write_rack(self.conn, rack)
+
+    def write_recipe(self, recipe: Recipe) -> None:
+        write_recipe(self.conn, recipe)
+
+    def write_shelf(self, shelf: Shelf) -> None:
+        write_shelf(self.conn, shelf)

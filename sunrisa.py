@@ -4,6 +4,8 @@ import logging
 from flask_socketio import SocketIO, emit # type: ignore
 from app.models.room import Room
 from app.models.rack import Rack
+from app.models.recipe import Recipe
+from app.models.shelf import Shelf
 
 from app_config import AppConfig
 
@@ -52,7 +54,7 @@ def log_changes(message):
         appConfig.db.write_room(room)
 
     if 'rack' in message:
-        # a room is contained in this update
+        # a rack is contained in this update
         entities_processed.append('rack')
         rack_json = message['rack']
         rack = Rack.from_json(rack_json)
@@ -60,7 +62,23 @@ def log_changes(message):
         print("Saw rack in message")
         appConfig.db.write_rack(rack)
 
-    
+    if 'recipe' in message:
+        # a recipe is contained in this update
+        entities_processed.append('recipe')
+        recipe_json = message['recipe']
+        recipe = Recipe.from_json(recipe_json)
+        appConfig.logger.debug(recipe)
+        print("Saw recipe in message")
+        appConfig.db.write_recipe(recipe)
+
+    if 'shelf' in message:
+        # a shelf is contained in this update
+        entities_processed.append('shelf')
+        shelf_json = message['shelf']
+        shelf = Shelf.from_json(shelf_json)
+        appConfig.logger.debug(shelf)
+        print("Saw shelf in message")
+        appConfig.db.write_shelf(shelf)
 
     emit('message_received', {'processed': entities_processed})
 

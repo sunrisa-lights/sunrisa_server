@@ -8,6 +8,8 @@ sys.path.append('.')
 from app.db.db import DB
 from app.models.room import Room
 from app.models.rack import Rack
+from app.models.recipe import Recipe
+from app.models.shelf import Shelf
 
 # standard Python
 sio = socketio.Client()
@@ -38,7 +40,7 @@ def test_send_room():
         foundRoom = Room(rid, bool(is_on), bool(is_veg))
         expected = Room.from_json(room_dict['room'])
         print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == Room.from_json(room_dict['room'])
+        assert foundRoom == expected
 
     # update same room to on
     room_dict['room']['isOn'] = not room_dict['room']['isOn']
@@ -51,9 +53,9 @@ def test_send_room():
         foundRoom = Room(rid, bool(is_on), bool(is_veg))
         expected = Room.from_json(room_dict['room'])
         print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == Room.from_json(room_dict['room'])
+        assert foundRoom == expected
 
-    return foundRoom
+        return foundRoom
 
 def test_send_rack(room):
     global expected_processed_entities
@@ -70,9 +72,9 @@ def test_send_rack(room):
         foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
         expected = Rack.from_json(rack_dict['rack'])
         print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == Rack.from_json(rack_dict['rack'])
+        assert foundRack == expected
 
-    # update same room to on
+    # update same rack to on
     rack_dict['rack']['is_on'] = not rack_dict['rack']['is_on']
     sio.emit('message_sent', rack_dict)
     sio.sleep(1) # wait for changes to propagate in the DB
@@ -83,16 +85,72 @@ def test_send_rack(room):
         foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
         expected = Rack.from_json(rack_dict['rack'])
         print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == Rack.from_json(rack_dict['rack'])
+        assert foundRack == expected
 
+        return foundRack
+
+
+def test_send_recipe():
+    global expected_processed_entities
+    expected_processed_entities = ['recipe']
+
+    recipe_dict = {'recipe': {'recipe_id': 1, 'recipe_name': 'purp', 'power_level': 1000, 'red_level': 10, 'blue_level': 20, 'num_hours': 20000}}
+    sio.emit('message_sent', recipe_dict)
+    sio.sleep(1)
+    get_recipe_sql = "SELECT recipe_id, recipe_name, power_level, red_level, blue_level, num_hours FROM recipes WHERE recipe_id={}".format(recipe_dict['recipe']['recipe_id'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_recipe_sql)
+        recipe_id, recipe_name, power_level, red_level, blue_level, num_hours = cursor.fetchone()
+        foundRecipe = Recipe(recipe_id, recipe_name, power_level, red_level, blue_level, num_hours)
+        expected = Recipe.from_json(recipe_dict['recipe'])
+        print("foundRecipe:", foundRecipe, "expected:", expected)
+        assert foundRecipe == expected
+
+        return foundRecipe
+
+def test_send_shelf(rack, recipe):
+    global expected_processed_entities
+    expected_processed_entities = ['shelf']
+
+    # initially leave recipe_id nil to test out nil recipe
+    shelf_dict = {'shelf': {'shelf_id': 1, 'rack_id': rack.rack_id}}
+    sio.emit('message_sent', shelf_dict)
+    sio.sleep(1)
+    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id FROM shelves WHERE shelf_id={}".format(shelf_dict['shelf']['shelf_id'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_shelf_sql)
+        shelf_id, rack_id, recipe_id = cursor.fetchone()
+        foundShelf = Shelf(shelf_id, rack_id, recipe_id)
+        expected = Shelf.from_json(shelf_dict['shelf'])
+        print("foundShelf:", foundShelf, "expected:", expected)
+        assert foundShelf == expected
+
+        return foundShelf
+
+    # add recipe in and verify that it is updated properly
+    shelf_dict = {'shelf': {'shelf_id': 1, 'rack_id': rack.rack_id, 'recipe_id': recipe.recipe_id}}
+    sio.emit('message_sent', shelf_dict)
+    sio.sleep(1)
+    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id FROM shelves WHERE shelf_id={}".format(shelf_dict['shelf']['shelf_id'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_shelf_sql)
+        shelf_id, rack_id, recipe_id = cursor.fetchone()
+        foundShelf = Shelf(shelf_id, rack_id, recipe_id)
+        expected = Shelf.from_json(shelf_dict['shelf'])
+        print("foundShelf:", foundShelf, "expected:", expected)
+        assert foundShelf == expected
+
+        return foundShelf
 
 @sio.on('message_received')
 def verify_message_received(entities_processed):
     assert entities_processed['processed'] == expected_processed_entities
 
 def run_tests():
-    createdRoom = test_send_room()
-    test_send_rack(createdRoom)
+    room = test_send_room()
+    rack = test_send_rack(room)
+    recipe = test_send_recipe()
+    test_send_shelf(rack, recipe)
     print("Integration tests passed!")
 
 if __name__ == "__main__":
