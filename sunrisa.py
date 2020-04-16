@@ -4,6 +4,8 @@ import logging
 from flask_socketio import SocketIO, emit # type: ignore
 from app.models.room import Room
 from app.models.rack import Rack
+from app.models.recipe import Recipe
+from app.models.shelf import Shelf
 
 from app_config import AppConfig
 
