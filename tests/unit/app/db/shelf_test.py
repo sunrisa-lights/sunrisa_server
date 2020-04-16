@@ -17,7 +17,7 @@ def test_write_shelf(mock_shelf):
 
     conn.cursor().execute.assert_called_with("INSERT INTO `shelves` VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE recipe_id=%s", (mock_shelf.shelf_id, mock_shelf.rack_id, mock_shelf.recipe_id, mock_shelf.recipe_id))
 
-def test_create_room_table():
+def test_create_shelf_table():
     conn = MagicMock()
 
     create_shelf_table(conn)
