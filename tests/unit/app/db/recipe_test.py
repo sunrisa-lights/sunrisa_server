@@ -31,7 +31,6 @@ def test_create_recipe_table():
     red_level INT NOT NULL,
     blue_level INT NOT NULL,
     num_hours INT NOT NULL,
-    recipe_id INT,
     PRIMARY KEY (recipe_id)
     );
     """
