@@ -6,6 +6,7 @@ from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.shelf import Shelf
+from app.models.plant import Plant
 
 from app_config import AppConfig
 
@@ -79,6 +80,16 @@ def log_changes(message):
         appConfig.logger.debug(shelf)
         print("Saw shelf in message")
         appConfig.db.write_shelf(shelf)
+
+    if 'plant' in message:
+        # a plant is contained in this update
+        entities_processed.append('plant')
+        plant_json = message['plant']
+        plant = Plant.from_json(plant_json)
+        appConfig.logger.debug(plant)
+        print("Saw plant in message")
+        appConfig.db.write_plant(plant)
+
 
     emit('message_received', {'processed': entities_processed})
 
