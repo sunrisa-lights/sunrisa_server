@@ -31,8 +31,7 @@ def test_create_room_table():
         REFERENCES racks(rack_id),
     CONSTRAINT fk_recipe
     FOREIGN KEY (recipe_id)
-        REFERENCES recipes(recipe_id),
-
+        REFERENCES recipes(recipe_id)
     );
     """
 

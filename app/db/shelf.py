@@ -21,8 +21,7 @@ def create_shelf_table(conn):
         REFERENCES racks(rack_id),
     CONSTRAINT fk_recipe
     FOREIGN KEY (recipe_id)
-        REFERENCES recipes(recipe_id),
-
+        REFERENCES recipes(recipe_id)
     );
     """
     conn.cursor().execute(sql)
