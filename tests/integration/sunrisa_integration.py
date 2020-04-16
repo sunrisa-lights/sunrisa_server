@@ -38,7 +38,7 @@ def test_send_room():
         foundRoom = Room(rid, bool(is_on), bool(is_veg))
         expected = Room.from_json(room_dict['room'])
         print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == Room.from_json(room_dict['room'])
+        assert foundRoom == expected
 
     # update same room to on
     room_dict['room']['isOn'] = not room_dict['room']['isOn']
@@ -51,7 +51,7 @@ def test_send_room():
         foundRoom = Room(rid, bool(is_on), bool(is_veg))
         expected = Room.from_json(room_dict['room'])
         print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == Room.from_json(room_dict['room'])
+        assert foundRoom == expected
 
     return foundRoom
 
@@ -70,7 +70,7 @@ def test_send_rack(room):
         foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
         expected = Rack.from_json(rack_dict['rack'])
         print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == Rack.from_json(rack_dict['rack'])
+        assert foundRack == expected
 
     # update same room to on
     rack_dict['rack']['is_on'] = not rack_dict['rack']['is_on']
@@ -83,7 +83,25 @@ def test_send_rack(room):
         foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
         expected = Rack.from_json(rack_dict['rack'])
         print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == Rack.from_json(rack_dict['rack'])
+        assert foundRack == expected
+
+
+def test_send_recipe():
+    global expected_processed_entities
+    expected_processed_entities = ['recipe']
+
+    recipe_dict = {'recipe': {'recipe_id': 1, 'recipe_name': 'purp', 'power_level': 1000, 'red_level': 10, 'blue_level': 20, 'num_hours': 20000}}
+    sio.emit('message_sent', recipe_dict)
+    sio.sleep(1)
+    recipe = Recipe.from_json({'recipe_id': 1, 'recipe_name': 'purp', 'power_level': 1000, 'red_level': 10, 'blue_level': 20, 'num_hours': 20000})
+    get_recipe_sql = "SELECT recipe_id, recipe_name, power_level, red_level, blue_level, num_hours FROM recipes WHERE recipe_id={}".format(rack_dict['recipe']['recipe_id'])
+    with conn.cursor() as cursor:
+        cursor.execute(get_recipe_sql)
+        recipe_id, recipe_name, power_level, red_level, blue_level, num_hours = cursor.fetchone()
+        foundRecipe = Recipe(recipe_id, recipe_name, power_level, red_level, blue_level, num_hours)
+        expected = Recipe.from_json(recipe_dict['recipe'])
+        print("foundRecipe:", foundRecipe, "expected:", expected)
+        assert foundRecipe == expected
 
 
 @sio.on('message_received')
@@ -93,6 +111,7 @@ def verify_message_received(entities_processed):
 def run_tests():
     createdRoom = test_send_room()
     test_send_rack(createdRoom)
+    test_send_recipe()
     print("Integration tests passed!")
 
 if __name__ == "__main__":
