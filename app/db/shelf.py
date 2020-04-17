@@ -1,11 +1,14 @@
 from app.models.shelf import Shelf
 
+
 def write_shelf(conn, shelf: Shelf):
     shelf_id = shelf.shelf_id
     rack_id = shelf.rack_id
     recipe_id = shelf.recipe_id
 
-    sql = "INSERT INTO `shelves` VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE recipe_id=%s"
+    sql = (
+        "INSERT INTO `shelves` VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE recipe_id=%s"
+    )
     conn.cursor().execute(sql, (shelf_id, rack_id, recipe_id, recipe_id))
     print("WROTE SHELF", shelf)
 

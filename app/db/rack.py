@@ -1,5 +1,6 @@
 from app.models.rack import Rack
 
+
 def write_rack(conn, rack: Rack):
     rack_id = rack.rack_id
     room_id = rack.room_id
@@ -8,7 +9,10 @@ def write_rack(conn, rack: Rack):
     is_connected = rack.is_connected
 
     sql = "INSERT INTO `racks` VALUES (%s, %s, %s, %r, %r) ON DUPLICATE KEY UPDATE voltage=%s, is_on=%r, is_connected=%r"
-    conn.cursor().execute(sql, (rack_id, room_id, voltage, is_on, is_connected, voltage, is_on, is_connected))
+    conn.cursor().execute(
+        sql,
+        (rack_id, room_id, voltage, is_on, is_connected, voltage, is_on, is_connected),
+    )
     print("WROTE RACK", rack)
 
 

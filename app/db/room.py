@@ -1,5 +1,6 @@
 from app.models.room import Room
 
+
 def write_room(conn, room: Room):
     roomId = room.roomId
     isOn = room.isOn

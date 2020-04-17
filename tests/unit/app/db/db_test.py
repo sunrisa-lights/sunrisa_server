@@ -13,12 +13,13 @@ def mock_db():
     db = DB(conn, DB_NAME, logger)
     return db
 
+
 @pytest.fixture
 def mock_room():
-    return Room.from_json({'roomId': 1, 'isOn': True, 'isVegRoom': True})
+    return Room.from_json({"roomId": 1, "isOn": True, "isVegRoom": True})
 
 
-@patch('app.db.db.write_room')
+@patch("app.db.db.write_room")
 def test_write_room(mock_write_room, mock_db, mock_room):
     mock_write_room.return_value = None
     mock_db.write_room(mock_room)

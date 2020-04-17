@@ -1,5 +1,6 @@
 from app.models.recipe import Recipe
 
+
 def write_recipe(conn, recipe: Recipe):
     recipe_id = recipe.recipe_id
     recipe_name = recipe.recipe_name
@@ -9,7 +10,22 @@ def write_recipe(conn, recipe: Recipe):
     num_hours = recipe.num_hours
 
     sql = "INSERT INTO `recipes` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE recipe_name=%s, power_level=%s, red_level=%s, blue_level=%s, num_hours=%s"
-    conn.cursor().execute(sql, (recipe_id, recipe_name, power_level, red_level, blue_level, num_hours, recipe_name, power_level, red_level, blue_level, num_hours))
+    conn.cursor().execute(
+        sql,
+        (
+            recipe_id,
+            recipe_name,
+            power_level,
+            red_level,
+            blue_level,
+            num_hours,
+            recipe_name,
+            power_level,
+            red_level,
+            blue_level,
+            num_hours,
+        ),
+    )
     print("WROTE RECIPE", recipe)
 
 

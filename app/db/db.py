@@ -11,8 +11,8 @@ from app.db.recipe import create_recipe_table, write_recipe
 from app.db.shelf import create_shelf_table, write_shelf
 from app.db.plant import create_plant_table, write_plant
 
-class DB():
 
+class DB:
     def __init__(self, conn, db_name, logger):
         self.logger = logger
         self.conn = conn
@@ -20,13 +20,13 @@ class DB():
         self.create_and_use_db(db_name)
 
     def create_and_use_db(self, db_name: str) -> None:
-        create_sql: str  = 'create database {}'.format(db_name)
+        create_sql: str = "create database {}".format(db_name)
         try:
             self.conn.cursor().execute(create_sql)
         except pymysql.err.ProgrammingError:
             self.logger.debug("db already exists")
 
-        use_sql = 'use {}'.format(db_name)
+        use_sql = "use {}".format(db_name)
         self.conn.cursor().execute(use_sql)
 
     def initialize_tables(self) -> None:

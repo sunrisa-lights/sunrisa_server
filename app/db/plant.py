@@ -1,5 +1,6 @@
 from app.models.plant import Plant
 
+
 def write_plant(conn, plant: Plant):
     olcc_number = plant.olcc_number
     shelf_id = plant.shelf_id

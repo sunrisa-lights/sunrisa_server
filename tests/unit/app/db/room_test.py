@@ -7,7 +7,7 @@ from app.db.room import create_room_table, write_room
 
 @pytest.fixture
 def mock_room():
-    return Room.from_json({'roomId': 1, 'isOn': False, 'isVegRoom': True})
+    return Room.from_json({"roomId": 1, "isOn": False, "isVegRoom": True})
 
 
 def test_write_room(mock_room):
@@ -15,7 +15,17 @@ def test_write_room(mock_room):
 
     write_room(conn, mock_room)
 
-    conn.cursor().execute.assert_called_with("INSERT INTO `rooms` VALUES (%s, %r, %r) ON DUPLICATE KEY UPDATE is_on=%r, is_veg_room=%r", (mock_room.roomId, mock_room.isOn, mock_room.isVegRoom, mock_room.isOn, mock_room.isVegRoom))
+    conn.cursor().execute.assert_called_with(
+        "INSERT INTO `rooms` VALUES (%s, %r, %r) ON DUPLICATE KEY UPDATE is_on=%r, is_veg_room=%r",
+        (
+            mock_room.roomId,
+            mock_room.isOn,
+            mock_room.isVegRoom,
+            mock_room.isOn,
+            mock_room.isVegRoom,
+        ),
+    )
+
 
 def test_create_room_table():
     conn = MagicMock()

@@ -1,5 +1,6 @@
 from app.models.room import Room
 
+
 def test_create_room():
     room = Room(1, False, True)
 
@@ -9,8 +10,7 @@ def test_create_room():
 
 
 def test_create_room_from_json():
-    room = Room.from_json({'roomId': 1})
+    room = Room.from_json({"roomId": 1})
 
     assert room.roomId == 1
-    assert room.isOn == False  #auto-initialized to False if not present
-
+    assert room.isOn == False  # auto-initialized to False if not present
