@@ -1,8 +1,6 @@
 from flask import Blueprint, render_template
 from jinja2 import TemplateNotFound
 
-from app.forms.login import LoginForm
-
 simple_page = Blueprint('simple_page', __name__)
 
 values = {
