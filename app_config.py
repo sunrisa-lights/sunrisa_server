@@ -22,3 +22,4 @@ class AppConfig:
             self.db.initialize_tables()
         else:
             raise Error("Unimplemented environment {}".format(env))
+
