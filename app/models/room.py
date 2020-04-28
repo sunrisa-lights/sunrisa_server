@@ -20,11 +20,19 @@ class Room:
         return cls(room_id, is_on, is_veg_room)
 
     def to_json(self) -> Dict[str, Any]:
-        return {"room_id": self.room_id, "is_on": self.is_on, "is_veg_room": self.is_veg_room}
+        return {
+            "room_id": self.room_id,
+            "is_on": self.is_on,
+            "is_veg_room": self.is_veg_room,
+        }
 
     def __str__(self):
         return json.dumps(
-            {"room_id": self.room_id, "is_on": self.is_on, "is_veg_room": self.is_veg_room}
+            {
+                "room_id": self.room_id,
+                "is_on": self.is_on,
+                "is_veg_room": self.is_veg_room,
+            }
         )
 
     def __eq__(self, other):
