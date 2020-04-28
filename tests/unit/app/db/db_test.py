@@ -16,7 +16,7 @@ def mock_db():
 
 @pytest.fixture
 def mock_room():
-    return Room.from_json({"roomId": 1, "isOn": True, "isVegRoom": True})
+    return Room.from_json({"room_id": 1, "is_on": True, "is_veg_room": True})
 
 
 @patch("app.db.db.write_room")

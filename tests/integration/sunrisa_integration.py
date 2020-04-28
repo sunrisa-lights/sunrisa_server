@@ -16,6 +16,7 @@ from app.models.plant import Plant
 # standard Python
 sio = socketio.Client()
 sio.connect("http://localhost:5000")
+# sio.connect("https://sunrisalights.com")
 
 expected_processed_entities = None
 
@@ -31,36 +32,45 @@ def test_send_room():
     expected_processed_entities = ["room"]
 
     # send initial room update
-    room_dict = {"room": {"roomId": 1, "isOn": False, "isVegRoom": True}}
+    room_dict = {"room": {"room_id": 1, "is_on": False, "is_veg_room": True}}
     sio.emit("message_sent", room_dict)
-    sio.sleep(1)  # wait for changes to propagate in the DB
-    get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(
-        room_dict["room"]["roomId"]
-    )
-    with conn.cursor() as cursor:
-        cursor.execute(get_room_sql)
-        rid, is_on, is_veg = cursor.fetchone()
-        foundRoom = Room(rid, bool(is_on), bool(is_veg))
-        expected = Room.from_json(room_dict["room"])
-        print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == expected
+
+    num_events_emitted = 0
+
+    @sio.on("return_room")
+    def find_room_listener(message) -> None:
+        nonlocal num_events_emitted
+        returned_room = Room.from_json(message["room"])
+        expected_room = Room.from_json(room_dict["room"])
+
+        assert returned_room == expected_room
+        num_events_emitted += 1
+
+    sio.emit("read_room", room_dict)
+    num_seconds = 0
+    while num_events_emitted == 0 and num_seconds < 5:
+        sio.sleep(1)
+        num_seconds += 1
+
+    assert (
+        num_events_emitted == 1
+    ), "waiting for 1st room read event timed out after 5 seconds"
 
     # update same room to on
-    room_dict["room"]["isOn"] = not room_dict["room"]["isOn"]
+    room_dict["room"]["is_on"] = not room_dict["room"]["is_on"]
     sio.emit("message_sent", room_dict)
-    sio.sleep(1)  # wait for changes to propagate in the DB
-    get_room_sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id={}".format(
-        room_dict["room"]["roomId"]
-    )
-    with conn.cursor() as cursor:
-        cursor.execute(get_room_sql)
-        rid, is_on, is_veg = cursor.fetchone()
-        foundRoom = Room(rid, bool(is_on), bool(is_veg))
-        expected = Room.from_json(room_dict["room"])
-        print("foundRoom:", foundRoom, "expected:", expected)
-        assert foundRoom == expected
 
-        return foundRoom
+    sio.emit("read_room", room_dict)
+    num_seconds = 0
+    while num_events_emitted == 1 and num_seconds < 5:
+        sio.sleep(1)
+        num_seconds += 1
+
+    assert (
+        num_events_emitted == 2
+    ), "waiting for 2nd room read event timed out after 5 seconds"
+
+    return Room.from_json(room_dict["room"])
 
 
 def test_send_rack(room):
@@ -69,7 +79,7 @@ def test_send_rack(room):
 
     # send initial rack update with created room id
     rack_dict = {
-        "rack": {"rack_id": 2, "room_id": room.roomId, "voltage": 100, "is_on": True}
+        "rack": {"rack_id": 2, "room_id": room.room_id, "voltage": 100, "is_on": True}
     }
     sio.emit("message_sent", rack_dict)
     sio.sleep(1)  # wait for changes to propagate in the DB

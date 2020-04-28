@@ -5,7 +5,7 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.shelf import Shelf
 from app.models.plant import Plant
-from app.db.room import create_room_table, write_room
+from app.db.room import create_room_table, read_room, write_room
 from app.db.rack import create_rack_table, write_rack
 from app.db.recipe import create_recipe_table, write_recipe
 from app.db.shelf import create_shelf_table, write_shelf
@@ -35,6 +35,9 @@ class DB:
         create_recipe_table(self.conn)
         create_shelf_table(self.conn)
         create_plant_table(self.conn)
+
+    def read_room(self, room_id: int) -> Room:
+        return read_room(self.conn, room_id)
 
     def write_room(self, room: Room) -> None:
         write_room(self.conn, room)

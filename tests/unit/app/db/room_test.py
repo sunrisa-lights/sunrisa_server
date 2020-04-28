@@ -2,12 +2,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.models.room import Room
-from app.db.room import create_room_table, write_room
+from app.db.room import create_room_table, read_room, write_room
 
 
 @pytest.fixture
 def mock_room():
-    return Room.from_json({"roomId": 1, "isOn": False, "isVegRoom": True})
+    return Room.from_json({"room_id": 1, "is_on": False, "is_veg_room": True})
 
 
 def test_write_room(mock_room):
@@ -18,11 +18,11 @@ def test_write_room(mock_room):
     conn.cursor().execute.assert_called_with(
         "INSERT INTO `rooms` VALUES (%s, %r, %r) ON DUPLICATE KEY UPDATE is_on=%r, is_veg_room=%r",
         (
-            mock_room.roomId,
-            mock_room.isOn,
-            mock_room.isVegRoom,
-            mock_room.isOn,
-            mock_room.isVegRoom,
+            mock_room.room_id,
+            mock_room.is_on,
+            mock_room.is_veg_room,
+            mock_room.is_on,
+            mock_room.is_veg_room,
         ),
     )
 
