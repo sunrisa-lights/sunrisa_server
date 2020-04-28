@@ -3,25 +3,28 @@ import json
 
 
 class Room:
-    def __init__(self, roomId: int, isOn: bool, isVegRoom: bool):
-        self.roomId = roomId
-        self.isOn = isOn
-        self.isVegRoom = isVegRoom
+    def __init__(self, room_id: int, is_on: bool, is_veg_room: bool):
+        self.room_id = room_id
+        self.is_on = is_on
+        self.is_veg_room = is_veg_room
 
     @classmethod
-    def from_json(cls, roomJson: Dict[Any, Any]):
-        if not "roomId" in roomJson:
+    def from_json(cls, room_json: Dict[Any, Any]):
+        if not "room_id" in room_json:
             raise Exception("Invalid")
-        roomId: int = int(roomJson["roomId"])
-        isOn: bool = bool(roomJson["isOn"]) if "isOn" in roomJson else False
-        isVegRoom: bool = bool(
-            roomJson["isVegRoom"]
-        ) if "isVegRoom" in roomJson else False
-        return cls(roomId, isOn, isVegRoom)
+        room_id: int = int(room_json["room_id"])
+        is_on: bool = bool(room_json["is_on"]) if "is_on" in room_json else False
+        is_veg_room: bool = bool(
+            room_json["is_veg_room"]
+        ) if "is_veg_room" in room_json else False
+        return cls(room_id, is_on, is_veg_room)
+
+    def to_json(self) -> Dict[str, Any]:
+        return {"room_id": self.room_id, "is_on": self.is_on, "is_veg_room": self.is_veg_room}
 
     def __str__(self):
         return json.dumps(
-            {"roomId": self.roomId, "isOn": self.isOn, "isVegRoom": self.isVegRoom}
+            {"room_id": self.room_id, "is_on": self.is_on, "is_veg_room": self.is_veg_room}
         )
 
     def __eq__(self, other):
@@ -30,7 +33,7 @@ class Room:
             return NotImplemented
 
         return (
-            self.roomId == other.roomId
-            and self.isOn == other.isOn
-            and self.isVegRoom == other.isVegRoom
+            self.room_id == other.room_id
+            and self.is_on == other.is_on
+            and self.is_veg_room == other.is_veg_room
         )

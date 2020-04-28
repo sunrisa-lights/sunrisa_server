@@ -1,5 +1,7 @@
 import logging
 
+from typing import Optional
+
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
@@ -75,3 +77,12 @@ def init_event_listeners(app_config, socketio):
 
         socketio.emit("message_received", {"processed": entities_processed})
 
+    @socketio.on("read_room")
+    def read_room(message) -> None:
+        room: Optional[Room] = None
+        if "room" in message:
+            room_id = message['room']['room_id']
+            room: Room = app_config.db.read_room(room_id)
+            print("found room:", room)
+
+        socketio.emit("return_room", {'room': room.to_json() if room else None})
