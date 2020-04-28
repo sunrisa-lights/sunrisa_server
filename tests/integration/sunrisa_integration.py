@@ -16,7 +16,7 @@ from app.models.plant import Plant
 # standard Python
 sio = socketio.Client()
 sio.connect("http://localhost:5000")
-#sio.connect("https://sunrisalights.com")
+# sio.connect("https://sunrisalights.com")
 
 expected_processed_entities = None
 
@@ -40,8 +40,8 @@ def test_send_room():
     @sio.on("return_room")
     def find_room_listener(message) -> None:
         nonlocal num_events_emitted
-        returned_room = Room.from_json(message['room'])
-        expected_room = Room.from_json(room_dict['room'])
+        returned_room = Room.from_json(message["room"])
+        expected_room = Room.from_json(room_dict["room"])
 
         assert returned_room == expected_room
         num_events_emitted += 1
@@ -52,7 +52,9 @@ def test_send_room():
         sio.sleep(1)
         num_seconds += 1
 
-    assert num_events_emitted == 1, "waiting for 1st room read event timed out after 5 seconds"
+    assert (
+        num_events_emitted == 1
+    ), "waiting for 1st room read event timed out after 5 seconds"
 
     # update same room to on
     room_dict["room"]["is_on"] = not room_dict["room"]["is_on"]
@@ -64,8 +66,10 @@ def test_send_room():
         sio.sleep(1)
         num_seconds += 1
 
-    assert num_events_emitted == 2, "waiting for 2nd room read event timed out after 5 seconds"
-    
+    assert (
+        num_events_emitted == 2
+    ), "waiting for 2nd room read event timed out after 5 seconds"
+
     return Room.from_json(room_dict["room"])
 
 
