@@ -1,11 +1,13 @@
 import pymysql.cursors
 
+from typing import List
+
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.shelf import Shelf
 from app.models.plant import Plant
-from app.db.room import create_room_table, read_room, write_room
+from app.db.room import create_room_table, read_all_rooms, read_room, write_room
 from app.db.rack import create_rack_table, write_rack
 from app.db.recipe import create_recipe_table, write_recipe
 from app.db.shelf import create_shelf_table, write_shelf
@@ -35,6 +37,9 @@ class DB:
         create_recipe_table(self.conn)
         create_shelf_table(self.conn)
         create_plant_table(self.conn)
+
+    def read_all_rooms(self) -> List[Room]:
+        return read_all_rooms(self.conn)
 
     def read_room(self, room_id: int) -> Room:
         return read_room(self.conn, room_id)

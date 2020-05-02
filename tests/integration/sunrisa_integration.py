@@ -16,7 +16,6 @@ from app.models.plant import Plant
 # standard Python
 sio = socketio.Client()
 sio.connect("http://localhost:5000")
-# sio.connect("https://sunrisalights.com")
 
 expected_processed_entities = None
 
@@ -55,6 +54,7 @@ def test_send_room():
     assert (
         num_events_emitted == 1
     ), "waiting for 1st room read event timed out after 5 seconds"
+    print("first room found and returned")
 
     # update same room to on
     room_dict["room"]["is_on"] = not room_dict["room"]["is_on"]
@@ -69,6 +69,36 @@ def test_send_room():
     assert (
         num_events_emitted == 2
     ), "waiting for 2nd room read event timed out after 5 seconds"
+    print("second room read and updated")
+
+    # create new room
+    room_dict2 = {"room": {"room_id": 2, "is_on": False, "is_veg_room": True}}
+    sio.emit("message_sent", room_dict2)
+
+    # return both rooms
+    rooms = []
+    @sio.on("return_rooms")
+    def find_all_rooms_listener(message) -> None:
+        found_rooms = message['rooms']
+        for fr in found_rooms:
+            rooms.append(Room.from_json(fr))
+
+        room_map = {room.room_id: room for room in rooms}
+        first_id = room_dict['room']['room_id']
+        second_id = room_dict2['room']['room_id']
+        assert room_map[first_id] == Room.from_json(room_dict['room'])
+        assert room_map[second_id] == Room.from_json(room_dict2['room'])
+
+    sio.emit("read_all_rooms", {})
+    num_seconds = 0
+    while len(rooms) < 2 and num_seconds < 5:
+        sio.sleep(1)
+        num_seconds += 1
+
+    assert (
+        len(rooms) == 2
+    ), "waiting for room read events timed out after 5 seconds"
+
 
     return Room.from_json(room_dict["room"])
 

@@ -75,6 +75,16 @@ def init_event_listeners(app_config, socketio):
 
         socketio.emit("message_received", {"processed": entities_processed})
 
+
+    @socketio.on("read_all_rooms")
+    def read_all_rooms(message) -> None:
+        all_rooms = app_config.db.read_all_rooms()
+
+        rooms = [room.to_json() for room in all_rooms]
+        print("rooms:", rooms)
+        socketio.emit("return_rooms", {"rooms": rooms})
+
+
     @socketio.on("read_room")
     def read_room(message) -> None:
         room: Optional[Room] = None

@@ -4,7 +4,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 from app.views.events import init_event_listeners
 
-socketio = SocketIO()
+socketio = SocketIO(cors_allowed_origins="*")
 from app_config import AppConfig
 
 
@@ -15,7 +15,7 @@ def create_app(debug):
     """Create an application."""
     app = Flask(__name__)
     app.debug = debug
-    app.config["SECRET_KEY"] = "gjr39dkjn344_!67#"
+    app.config["SECRET_KEY"] = "gjr38dkjn344_!67#"
 
     env = "development"
     app_config = AppConfig(socketio, env)
