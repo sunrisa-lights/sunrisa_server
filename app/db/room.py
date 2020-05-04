@@ -19,12 +19,10 @@ def read_room(conn, room_id: int) -> Optional[Room]:
     with conn.cursor() as cursor:
         cursor.execute(sql, (room_id))
         found_room_data = cursor.fetchone()
-        if found_room_data is not None:
+        found_room: Optional[Room] = None
+        if found_room_data is not None: # if found_room_data is None, room was not found
             rid, is_on, is_veg = found_room_data
             found_room = Room(rid, bool(is_on), bool(is_veg))
-        else:
-            # Room was not found
-            found_room = None
 
         return found_room
 
