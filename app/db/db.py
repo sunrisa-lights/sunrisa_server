@@ -1,6 +1,7 @@
 import pymysql.cursors
 
 from typing import List
+from typing import Optional
 
 from app.models.room import Room
 from app.models.rack import Rack
@@ -41,7 +42,7 @@ class DB:
     def read_all_rooms(self) -> List[Room]:
         return read_all_rooms(self.conn)
 
-    def read_room(self, room_id: int) -> Room:
+    def read_room(self, room_id: int) -> Optional[Room]:
         return read_room(self.conn, room_id)
 
     def write_room(self, room: Room) -> None:

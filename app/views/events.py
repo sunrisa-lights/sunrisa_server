@@ -81,8 +81,18 @@ def init_event_listeners(app_config, socketio):
         all_rooms = app_config.db.read_all_rooms()
 
         rooms = [room.to_json() for room in all_rooms]
+        app_config.logger.debug("rooms:", rooms)
         print("rooms:", rooms)
         socketio.emit("return_rooms", {"rooms": rooms})
+
+
+    @socketio.on("post_schedule")
+    def post_schedule(message) -> None:
+        if 'schedule' in message:
+            schedule_dict = message['schedule']
+            shelf_id = schedule_dict['shelf_id']
+            rack_id = schedule_dict['rack_id']
+            room_id = schedule_dict['room_id']
 
 
     @socketio.on("read_room")
@@ -90,6 +100,7 @@ def init_event_listeners(app_config, socketio):
         room: Optional[Room] = None
         if "room" in message:
             room_id = message["room"]["room_id"]
+            # room is None if not found
             room = app_config.db.read_room(room_id)
 
         socketio.emit("return_room", {"room": room.to_json() if room else None})
