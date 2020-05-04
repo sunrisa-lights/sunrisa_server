@@ -2,6 +2,7 @@ import socketio
 import pymysql.cursors
 import logging
 import sys
+import time
 
 # TODO(lwotton): Remove this hack
 sys.path.append(".")
@@ -26,7 +27,17 @@ db_name = "sunrisa_test"
 db = DB(conn, db_name, logging)
 
 
-def test_send_room():
+# flag should be an empty list that is populated and has a certain length
+def wait_for_event(flag, length_condition, num_seconds, test_name):
+    seconds_counter = 0
+    while len(flag) != length_condition and seconds_counter < num_seconds:
+        time.sleep(1)
+        seconds_counter += 1
+
+    assert flag, "Timed out waiting for event for test {}".format(test_name)
+
+
+def test_send_room(sio):
     global expected_processed_entities
     expected_processed_entities = ["room"]
 
@@ -34,26 +45,20 @@ def test_send_room():
     room_dict = {"room": {"room_id": 1, "is_on": False, "is_veg_room": True}}
     sio.emit("message_sent", room_dict)
 
-    num_events_emitted = 0
+    flag = []
 
     @sio.on("return_room")
     def find_room_listener(message) -> None:
-        nonlocal num_events_emitted
         returned_room = Room.from_json(message["room"])
         expected_room = Room.from_json(room_dict["room"])
 
         assert returned_room == expected_room
-        num_events_emitted += 1
+        flag.append(True)
 
     sio.emit("read_room", room_dict)
-    num_seconds = 0
-    while num_events_emitted == 0 and num_seconds < 5:
-        sio.sleep(1)
-        num_seconds += 1
 
-    assert (
-        num_events_emitted == 1
-    ), "waiting for 1st room read event timed out after 5 seconds"
+    wait_for_event(flag, 1, 5, "test_send_room.create_room")
+
     print("first room found and returned")
 
     # update same room to on
@@ -61,14 +66,9 @@ def test_send_room():
     sio.emit("message_sent", room_dict)
 
     sio.emit("read_room", room_dict)
-    num_seconds = 0
-    while num_events_emitted == 1 and num_seconds < 5:
-        sio.sleep(1)
-        num_seconds += 1
 
-    assert (
-        num_events_emitted == 2
-    ), "waiting for 2nd room read event timed out after 5 seconds"
+    wait_for_event(flag, 2, 5, "test_send_room.update_room")
+
     print("second room read and updated")
 
     # create new room
@@ -90,20 +90,13 @@ def test_send_room():
         assert room_map[second_id] == Room.from_json(room_dict2['room'])
 
     sio.emit("read_all_rooms", {})
-    num_seconds = 0
-    while len(rooms) < 2 and num_seconds < 5:
-        sio.sleep(1)
-        num_seconds += 1
-
-    assert (
-        len(rooms) == 2
-    ), "waiting for room read events timed out after 5 seconds"
-
+    wait_for_event(rooms, 2, 5, "test_send_room.read_rooms")
+    print("read all rooms")
 
     return Room.from_json(room_dict["room"])
 
 
-def test_send_rack(room):
+def test_send_rack(sio, room):
     global expected_processed_entities
     expected_processed_entities = ["rack"]
 
@@ -142,7 +135,7 @@ def test_send_rack(room):
         return foundRack
 
 
-def test_send_recipe():
+def test_send_recipe(sio):
     global expected_processed_entities
     expected_processed_entities = ["recipe"]
 
@@ -181,7 +174,7 @@ def test_send_recipe():
         return foundRecipe
 
 
-def test_send_shelf(rack, recipe):
+def test_send_shelf(sio, rack, recipe):
     global expected_processed_entities
     expected_processed_entities = ["shelf"]
 
@@ -220,7 +213,7 @@ def test_send_shelf(rack, recipe):
         return foundShelf
 
 
-def test_send_plant(shelf):
+def test_send_plant(sio, shelf):
     global expected_processed_entities
     expected_processed_entities = ["plant"]
 
@@ -257,17 +250,46 @@ def test_send_plant(shelf):
         return foundPlant
 
 
-@sio.on("message_received")
-def verify_message_received(entities_processed):
-    assert entities_processed["processed"] == expected_processed_entities
+def create_entities_test(sio):
+    @sio.on("message_received")
+    def verify_message_received(entities_processed):
+        assert entities_processed["processed"] == expected_processed_entities
 
+    room = test_send_room(sio)
+    rack = test_send_rack(sio, room)
+    recipe = test_send_recipe(sio)
+    shelf = test_send_shelf(sio, rack, recipe)
+    test_send_plant(sio, shelf)
+    print("create_entities_test passed!")
+
+def test_room_not_found(sio):
+    flag = []
+
+    room_dict = {'room': {'room_id': 5000, 'is_on': True}}
+
+    @sio.on("return_room")
+    def find_room_listener(message) -> None:
+        assert message['room'] is None, "Found a nonexistent room"
+        flag.append(True)
+
+    sio.emit("read_room", room_dict)
+
+    wait_for_event(flag, 1, 5, "test_send_room.create_room")
+
+
+def entities_not_found_test(sio):
+    test_room_not_found(sio)
+    print("entities_not_found passed!")
 
 def run_tests():
-    room = test_send_room()
-    rack = test_send_rack(room)
-    recipe = test_send_recipe()
-    shelf = test_send_shelf(rack, recipe)
-    test_send_plant(shelf)
+    def run_test_and_disconnect(test_func):
+        sio = socketio.Client()
+        sio.connect("http://localhost:5000")
+        test_func(sio)
+        sio.disconnect()
+
+    run_test_and_disconnect(create_entities_test)
+    run_test_and_disconnect(entities_not_found_test)
     print("Integration tests passed!")
 
 

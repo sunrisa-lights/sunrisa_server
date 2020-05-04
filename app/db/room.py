@@ -1,4 +1,5 @@
 from typing import List
+from typing import Optional
 
 from app.models.room import Room
 
@@ -13,12 +14,18 @@ def write_room(conn, room: Room) -> None:
     print("WROTE ROOM", room)
 
 
-def read_room(conn, room_id: int) -> Room:
+def read_room(conn, room_id: int) -> Optional[Room]:
     sql = "SELECT room_id, is_on, is_veg_room FROM rooms WHERE room_id=%s"
     with conn.cursor() as cursor:
         cursor.execute(sql, (room_id))
-        rid, is_on, is_veg = cursor.fetchone()
-        found_room = Room(rid, bool(is_on), bool(is_veg))
+        found_room_data = cursor.fetchone()
+        if found_room_data is not None:
+            rid, is_on, is_veg = found_room_data
+            found_room = Room(rid, bool(is_on), bool(is_veg))
+        else:
+            # Room was not found
+            found_room = None
+
         return found_room
 
 def read_all_rooms(conn) -> List[Room]:
