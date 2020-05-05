@@ -9,7 +9,7 @@ from app.models.recipe import Recipe
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
-from app.db.rack import create_rack_table, write_rack
+from app.db.rack import create_rack_table, write_rack, read_racks_in_room
 from app.db.recipe import create_recipe_table, write_recipe
 from app.db.schedules import create_schedule_table, write_schedule_for_shelf
 from app.db.shelf import create_shelf_table, write_shelf
@@ -46,6 +46,9 @@ class DB:
 
     def read_room(self, room_id: int) -> Optional[Room]:
         return read_room(self.conn, room_id)
+
+    def read_racks_in_room(self, room_id: int) -> List[Rack]:
+        return read_racks_in_room(self.conn, room_id)
 
     def write_room(self, room: Room) -> None:
         write_room(self.conn, room)

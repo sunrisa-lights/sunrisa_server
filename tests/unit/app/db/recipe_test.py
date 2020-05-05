@@ -47,7 +47,7 @@ def test_create_recipe_table():
 
     create_recipe_table(conn)
     sql = """CREATE TABLE IF NOT EXISTS recipes(
-    recipe_id INT NOT NULL,
+    recipe_id INT NOT NULL AUTO_INCREMENT,
     recipe_name VARCHAR(256) NOT NULL,
     power_level INT NOT NULL,
     red_level INT NOT NULL,

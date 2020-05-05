@@ -106,34 +106,34 @@ def test_send_rack(sio, room):
         "rack": {"rack_id": 2, "room_id": room.room_id, "voltage": 100, "is_on": True}
     }
     sio.emit("message_sent", rack_dict)
-    sio.sleep(1)  # wait for changes to propagate in the DB
-    get_rack_sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks WHERE rack_id={}".format(
-        rack_dict["rack"]["rack_id"]
-    )
-    with conn.cursor() as cursor:
-        cursor.execute(get_rack_sql)
-        rack_id, room_id, voltage, is_on, is_connected = cursor.fetchone()
-        foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
-        expected = Rack.from_json(rack_dict["rack"])
-        print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == expected
+
+    flag = []
+
+    @sio.on("return_racks_in_room")
+    def return_racks_in_room_listener(message) -> None:
+        found_racks = message['racks']
+        room_id = message['room_id']
+
+        assert len(found_racks) == 1
+        assert Rack.from_json(found_racks[0]) == Rack.from_json(rack_dict['rack'])
+        assert room_id == room.room_id
+
+        flag.append(True)
+
+    sio.emit("read_all_racks_in_room", {'room': {'room_id': room.room_id}})
+    wait_for_event(flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
+
+    print("first rack found and returned")
 
     # update same rack to on
     rack_dict["rack"]["is_on"] = not rack_dict["rack"]["is_on"]
     sio.emit("message_sent", rack_dict)
-    sio.sleep(1)  # wait for changes to propagate in the DB
-    get_rack_sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks WHERE rack_id={}".format(
-        rack_dict["rack"]["rack_id"]
-    )
-    with conn.cursor() as cursor:
-        cursor.execute(get_rack_sql)
-        rack_id, room_id, voltage, is_on, is_connected = cursor.fetchone()
-        foundRack = Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
-        expected = Rack.from_json(rack_dict["rack"])
-        print("foundRack:", foundRack, "expected:", expected)
-        assert foundRack == expected
+    sio.emit("read_all_racks_in_room", {'room': {'room_id': room.room_id}})
+    wait_for_event(flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
 
-        return foundRack
+    print("second rack found and returned")
+
+    return Rack.from_json(rack_dict["rack"])
 
 
 def test_send_recipe(sio):
