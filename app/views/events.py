@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from typing import Optional
 
@@ -73,6 +74,17 @@ def init_event_listeners(app_config, socketio):
             print("Saw plant in message")
             app_config.db.write_plant(plant)
 
+        if "schedule" in message:
+            # a schedule is contained in this update
+            entities_processed.append("schedule")
+            schedule_json = message["schedule"]
+            app_config.logger.debug(schedule_json)
+            print("Saw schedule in message")
+            shelf_id = int(schedule_json['shelf_id'])
+            start_time = schedule_json['start_time']
+            end_time = schedule_json['end_time']
+            app_config.db.write_schedule_for_shelf(shelf_id, start_time, end_time)
+
         socketio.emit("message_received", {"processed": entities_processed})
 
 
@@ -81,19 +93,9 @@ def init_event_listeners(app_config, socketio):
         all_rooms = app_config.db.read_all_rooms()
 
         rooms = [room.to_json() for room in all_rooms]
-        app_config.logger.debug("rooms:", rooms)
+        app_config.logger.debug("rooms: {}".format(rooms))
         print("rooms:", rooms)
         socketio.emit("return_rooms", {"rooms": rooms})
-
-
-    @socketio.on("post_schedule")
-    def post_schedule(message) -> None:
-        if 'schedule' in message:
-            schedule_dict = message['schedule']
-            shelf_id = schedule_dict['shelf_id']
-            rack_id = schedule_dict['rack_id']
-            room_id = schedule_dict['room_id']
-
 
     @socketio.on("read_room")
     def read_room(message) -> None:

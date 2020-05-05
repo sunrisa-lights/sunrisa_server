@@ -11,6 +11,7 @@ from app.models.plant import Plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
 from app.db.rack import create_rack_table, write_rack
 from app.db.recipe import create_recipe_table, write_recipe
+from app.db.schedules import create_schedule_table, write_schedule_for_shelf
 from app.db.shelf import create_shelf_table, write_shelf
 from app.db.plant import create_plant_table, write_plant
 
@@ -38,6 +39,7 @@ class DB:
         create_recipe_table(self.conn)
         create_shelf_table(self.conn)
         create_plant_table(self.conn)
+        create_schedule_table(self.conn)
 
     def read_all_rooms(self) -> List[Room]:
         return read_all_rooms(self.conn)
@@ -59,3 +61,6 @@ class DB:
 
     def write_plant(self, plant: Plant) -> None:
         write_plant(self.conn, plant)
+
+    def write_schedule_for_shelf(self, shelf_id: int, start_time: str, end_time: str) -> None:
+        write_schedule_for_shelf(self.conn, shelf_id, start_time, end_time)
