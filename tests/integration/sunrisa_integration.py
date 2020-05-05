@@ -3,6 +3,7 @@ import pymysql.cursors
 import logging
 import sys
 import time
+from datetime import date, datetime
 
 # TODO(lwotton): Remove this hack
 sys.path.append(".")
@@ -249,6 +250,30 @@ def test_send_plant(sio, shelf):
 
         return foundPlant
 
+def test_send_schedule(sio, shelf_id):
+    global expected_processed_entities
+    expected_processed_entities = ["schedule"]
+
+    start = datetime.now()
+    end = date(2021, 4, 13)
+
+    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
+
+    schedule_dict = {"schedule": {"shelf_id": shelf_id, 'start_time': start_time, 'end_time': end_time}}
+    sio.emit("message_sent", schedule_dict)
+    sio.sleep(1)
+    get_schedule_sql = "SELECT shelf_id, start_time, end_time FROM schedules WHERE shelf_id={} AND start_time='{}' AND end_time='{}'".format(
+        schedule_dict["schedule"]["shelf_id"], schedule_dict["schedule"]["start_time"], schedule_dict["schedule"]["end_time"]
+    )
+    with conn.cursor() as cursor:
+        cursor.execute(get_schedule_sql)
+        shelf_id, start_time, end_time = cursor.fetchone()
+        print("foundSchedule:", (shelf_id, start_time, end_time), "expected:", schedule_dict["schedule"])
+        assert shelf_id == schedule_dict["schedule"]["shelf_id"]
+        assert start_time.strftime('%Y-%m-%d %H:%M:%S') == schedule_dict["schedule"]["start_time"]
+        assert end_time.strftime('%Y-%m-%d %H:%M:%S') == schedule_dict["schedule"]["end_time"]
+
 
 def create_entities_test(sio):
     @sio.on("message_received")
@@ -260,6 +285,7 @@ def create_entities_test(sio):
     recipe = test_send_recipe(sio)
     shelf = test_send_shelf(sio, rack, recipe)
     test_send_plant(sio, shelf)
+    test_send_schedule(sio, shelf.shelf_id)
     print("create_entities_test passed!")
 
 def test_room_not_found(sio):
@@ -279,7 +305,7 @@ def test_room_not_found(sio):
 
 def entities_not_found_test(sio):
     test_room_not_found(sio)
-    print("entities_not_found passed!")
+    print("entities_not_found_test passed!")
 
 def run_tests():
     def run_test_and_disconnect(test_func):
