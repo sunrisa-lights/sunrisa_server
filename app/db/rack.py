@@ -1,7 +1,9 @@
+from typing import List
+
 from app.models.rack import Rack
 
 
-def write_rack(conn, rack: Rack):
+def write_rack(conn, rack: Rack) -> None:
     rack_id = rack.rack_id
     room_id = rack.room_id
     voltage = rack.voltage
@@ -14,6 +16,14 @@ def write_rack(conn, rack: Rack):
         (rack_id, room_id, voltage, is_on, is_connected, voltage, is_on, is_connected),
     )
     print("WROTE RACK", rack)
+
+def read_racks_in_room(conn, room_id: int) -> List[Rack]:
+    sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks WHERE room_id=%s"
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (room_id))
+        all_racks = cursor.fetchall()
+        racks = [Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected)) for (rack_id, room_id, voltage, is_on, is_connected) in all_racks]
+        return racks
 
 
 def create_rack_table(conn):

@@ -97,6 +97,16 @@ def init_event_listeners(app_config, socketio):
         print("rooms:", rooms)
         socketio.emit("return_rooms", {"rooms": rooms})
 
+    @socketio.on("read_all_racks_in_room")
+    def read_all_racks_in_room(message) -> None:
+        all_racks_in_room = []
+        if 'room' in message:
+            room_id = int(message['room']['room_id'])
+            racks = app_config.db.read_racks_in_room(room_id)
+            all_racks_in_room = [r.to_json() for r in racks]
+
+        socketio.emit("return_racks_in_room", {"racks": all_racks_in_room, 'room_id': room_id})
+
     @socketio.on("read_room")
     def read_room(message) -> None:
         room: Optional[Room] = None

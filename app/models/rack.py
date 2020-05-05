@@ -26,6 +26,15 @@ class Rack:
         ) if "is_connected" in rack_json else False
         return cls(rack_id, room_id, voltage, is_on, is_connected)
 
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "rack_id": self.rack_id,
+            "room_id": self.room_id,
+            "voltage": self.voltage,
+            "is_on": self.is_on,
+            "is_connected": self.is_connected,
+        }
+
     def __str__(self):
         return json.dumps(
             {
