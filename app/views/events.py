@@ -105,7 +105,25 @@ def init_event_listeners(app_config, socketio):
             racks = app_config.db.read_racks_in_room(room_id)
             all_racks_in_room = [r.to_json() for r in racks]
 
+        app_config.logger.debug("room_id: {}, racks: {}".format(room_id, all_racks_in_room))
         socketio.emit("return_racks_in_room", {"racks": all_racks_in_room, 'room_id': room_id})
+
+
+    @socketio.on("read_all_entities")
+    def read_all_entities(message) -> None:
+        print("read_all_entities event emitted")
+        all_entities = []
+        all_rooms = app_config.db.read_all_rooms()
+        for room in all_rooms:
+            racks = app_config.db.read_racks_in_room(room.room_id)
+            all_racks_in_room = [rack.to_json() for rack in racks]
+            room_json = room.to_json()
+            room_json['racks'] = all_racks_in_room
+            all_entities.append(room_json)
+
+        app_config.logger.debug("returning entities: {}".format(all_entities))
+        print("Returning entities:", all_entities)
+        socketio.emit("return_all_entities", {"rooms": all_entities})
 
     @socketio.on("read_room")
     def read_room(message) -> None:

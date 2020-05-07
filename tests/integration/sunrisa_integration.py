@@ -5,6 +5,8 @@ import sys
 import time
 from datetime import date, datetime
 
+from typing import List
+
 # TODO(lwotton): Remove this hack
 sys.path.append(".")
 
@@ -94,7 +96,7 @@ def test_send_room(sio):
     wait_for_event(rooms, 2, 5, "test_send_room.read_rooms")
     print("read all rooms")
 
-    return Room.from_json(room_dict["room"])
+    return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2['room'])]
 
 
 def test_send_rack(sio, room):
@@ -275,17 +277,48 @@ def test_send_schedule(sio, shelf_id):
         assert end_time.strftime('%Y-%m-%d %H:%M:%S') == schedule_dict["schedule"]["end_time"]
 
 
+def test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
+    entities = []
+    for room in rooms:
+        room_json = room.to_json()
+        racks_json = [rack.to_json() for rack in racks if rack.room_id == room.room_id]
+        room_json['racks'] = racks_json
+        entities.append(room_json)
+
+    def ordered(obj):
+        if isinstance(obj, dict):
+            return sorted((k, ordered(v)) for k, v in obj.items())
+        elif isinstance(obj, list):
+            return sorted(ordered(x) for x in obj)
+        else:
+            return obj
+
+    flag = []
+
+    @sio.on("return_all_entities")
+    def return_all_entities_listener(message) -> None:
+        assert 'rooms' in message
+        assert ordered(message['rooms']) == ordered(entities)
+
+        flag.append(True)
+
+    sio.emit("read_all_entities", {})
+    wait_for_event(flag, 1, 5, "test_find_all_entities")
+    print("all entities found")
+
+
 def create_entities_test(sio):
     @sio.on("message_received")
     def verify_message_received(entities_processed):
         assert entities_processed["processed"] == expected_processed_entities
 
-    room = test_send_room(sio)
-    rack = test_send_rack(sio, room)
+    rooms = test_send_room(sio)
+    rack = test_send_rack(sio, rooms[0])
     recipe = test_send_recipe(sio)
     shelf = test_send_shelf(sio, rack, recipe)
     test_send_plant(sio, shelf)
     test_send_schedule(sio, shelf.shelf_id)
+    test_find_all_entities(sio, rooms, [rack])
     print("create_entities_test passed!")
 
 def test_room_not_found(sio):
@@ -300,11 +333,31 @@ def test_room_not_found(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(flag, 1, 5, "test_send_room.create_room")
+    wait_for_event(flag, 1, 5, "test_room_not_found")
+
+    print("room not found test passed!")
+
+def test_racks_not_found_in_room(sio):
+    flag = []
+
+    room_dict = {'room': {'room_id': 5000}}
+
+    @sio.on("return_racks_in_room")
+    def return_racks_in_room_listener(message) -> None:
+        assert message['racks'] == [], "Found nonexistent racks"
+        assert message['room_id'] == room_dict['room']['room_id']
+        flag.append(True)
+
+    sio.emit("read_all_racks_in_room", room_dict)
+
+    wait_for_event(flag, 1, 5, "test_racks_not_found_in_room")
+
+    print("racks not found in room test passed!")
 
 
 def entities_not_found_test(sio):
     test_room_not_found(sio)
+    test_racks_not_found_in_room(sio)
     print("entities_not_found_test passed!")
 
 def run_tests():
