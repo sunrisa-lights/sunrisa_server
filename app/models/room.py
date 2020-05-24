@@ -1,12 +1,13 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import json
 
 
 class Room:
-    def __init__(self, room_id: int, is_on: bool, is_veg_room: bool):
+    def __init__(self, room_id: int, is_on: bool, is_veg_room: bool, brightness: Optional[int]):
         self.room_id = room_id
         self.is_on = is_on
         self.is_veg_room = is_veg_room
+        self.brightness = brightness
 
     @classmethod
     def from_json(cls, room_json: Dict[Any, Any]):
@@ -17,13 +18,15 @@ class Room:
         is_veg_room: bool = bool(
             room_json["is_veg_room"]
         ) if "is_veg_room" in room_json else False
-        return cls(room_id, is_on, is_veg_room)
+        brightness: Optional[int] = room_json.get("brightness")
+        return cls(room_id, is_on, is_veg_room, brightness)
 
     def to_json(self) -> Dict[str, Any]:
         return {
             "room_id": self.room_id,
             "is_on": self.is_on,
             "is_veg_room": self.is_veg_room,
+            "brightness": self.brightness,
         }
 
     def __str__(self):
@@ -32,6 +35,7 @@ class Room:
                 "room_id": self.room_id,
                 "is_on": self.is_on,
                 "is_veg_room": self.is_veg_room,
+                "brightness": self.brightness,
             }
         )
 
@@ -44,4 +48,5 @@ class Room:
             self.room_id == other.room_id
             and self.is_on == other.is_on
             and self.is_veg_room == other.is_veg_room
+            and self.brightness == other.brightness
         )

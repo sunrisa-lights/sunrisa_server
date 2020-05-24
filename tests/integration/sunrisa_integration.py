@@ -19,7 +19,8 @@ from app.models.plant import Plant
 
 # standard Python
 sio = socketio.Client()
-sio.connect("http://localhost:5000")
+#sio.connect("http://localhost:5000")
+sio.connect("https://sunrisalights.com")
 
 expected_processed_entities = None
 
@@ -45,7 +46,7 @@ def test_send_room(sio):
     expected_processed_entities = ["room"]
 
     # send initial room update
-    room_dict = {"room": {"room_id": 1, "is_on": False, "is_veg_room": True}}
+    room_dict = {"room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}}
     sio.emit("message_sent", room_dict)
 
     flag = []
@@ -75,7 +76,7 @@ def test_send_room(sio):
     print("second room read and updated")
 
     # create new room
-    room_dict2 = {"room": {"room_id": 2, "is_on": False, "is_veg_room": True}}
+    room_dict2 = {"room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80}}
     sio.emit("message_sent", room_dict2)
 
     # return both rooms
@@ -105,7 +106,7 @@ def test_send_rack(sio, room):
 
     # send initial rack update with created room id
     rack_dict = {
-        "rack": {"rack_id": 2, "room_id": room.room_id, "voltage": 100, "is_on": True}
+            "rack": {"rack_id": 2, "room_id": room.room_id, "voltage": 100, "is_on": True, "is_connected": True},
     }
     sio.emit("message_sent", rack_dict)
 
@@ -116,6 +117,7 @@ def test_send_rack(sio, room):
         found_racks = message['racks']
         room_id = message['room_id']
 
+        print("found_racks:", found_racks, rack_dict)
         assert len(found_racks) == 1
         assert Rack.from_json(found_racks[0]) == Rack.from_json(rack_dict['rack'])
         assert room_id == room.room_id
@@ -181,34 +183,18 @@ def test_send_shelf(sio, rack, recipe):
     global expected_processed_entities
     expected_processed_entities = ["shelf"]
 
-    # initially leave recipe_id nil to test out nil recipe
-    shelf_dict = {"shelf": {"shelf_id": 1, "rack_id": rack.rack_id}}
-    sio.emit("message_sent", shelf_dict)
-    sio.sleep(1)
-    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id FROM shelves WHERE shelf_id={}".format(
-        shelf_dict["shelf"]["shelf_id"]
-    )
-    with conn.cursor() as cursor:
-        cursor.execute(get_shelf_sql)
-        shelf_id, rack_id, recipe_id = cursor.fetchone()
-        foundShelf = Shelf(shelf_id, rack_id, recipe_id)
-        expected = Shelf.from_json(shelf_dict["shelf"])
-        print("foundShelf:", foundShelf, "expected:", expected)
-        assert foundShelf == expected
-
-    # add recipe in and verify that it is updated properly
     shelf_dict = {
         "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "recipe_id": recipe.recipe_id}
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
-    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id FROM shelves WHERE shelf_id={}".format(
+    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id, power_level, red_level, blue_level FROM shelves WHERE shelf_id={}".format(
         shelf_dict["shelf"]["shelf_id"]
     )
     with conn.cursor() as cursor:
         cursor.execute(get_shelf_sql)
-        shelf_id, rack_id, recipe_id = cursor.fetchone()
-        foundShelf = Shelf(shelf_id, rack_id, recipe_id)
+        shelf_id, rack_id, recipe_id, power_level, red_level, blue_level = cursor.fetchone()
+        foundShelf = Shelf(shelf_id, rack_id, recipe_id, power_level, red_level, blue_level)
         expected = Shelf.from_json(shelf_dict["shelf"])
         print("foundShelf:", foundShelf, "expected:", expected)
         assert foundShelf == expected

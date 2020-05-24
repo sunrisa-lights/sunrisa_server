@@ -2,11 +2,12 @@ from app.models.room import Room
 
 
 def test_create_room():
-    room = Room(1, False, True)
+    room = Room(1, False, True, 0)
 
     assert room.room_id == 1
     assert room.is_on == False
     assert room.is_veg_room == True
+    assert room.brightness == 0
 
 
 def test_create_room_from_json():
@@ -14,3 +15,5 @@ def test_create_room_from_json():
 
     assert room.room_id == 1
     assert room.is_on == False  # auto-initialized to False if not present
+    assert room.is_veg_room == False  # auto-initialized to False if not present
+    assert room.brightness == None  # auto-initialized to None

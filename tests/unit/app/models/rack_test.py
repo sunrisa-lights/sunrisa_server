@@ -16,6 +16,6 @@ def test_create_rack_from_json():
 
     assert rack.rack_id == 1
     assert rack.room_id == 2
-    assert rack.voltage == 0  # auto-initialized to False if not present
-    assert rack.is_on == False  # auto-initialized to False if not present
-    assert rack.is_connected == False  # auto-initialized to False if not present
+    assert rack.voltage == None  # auto-initialized to None
+    assert rack.is_on == None # auto-initialized to None
+    assert rack.is_connected == None # auto-initialized to None

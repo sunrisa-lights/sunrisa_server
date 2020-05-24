@@ -19,11 +19,9 @@ class Rack:
 
         rack_id: int = int(rack_json["rack_id"])
         room_id: int = rack_json["room_id"]
-        voltage: int = int(rack_json["voltage"]) if "voltage" in rack_json else 0
-        is_on: bool = bool(rack_json["is_on"]) if "is_on" in rack_json else False
-        is_connected: bool = bool(
-            rack_json["is_connected"]
-        ) if "is_connected" in rack_json else False
+        voltage: Optional[int] = rack_json.get("voltage")
+        is_on: Optional[bool] = rack_json.get("is_on")
+        is_connected: Optional[bool] = rack_json.get("is_connected")
         return cls(rack_id, room_id, voltage, is_on, is_connected)
 
     def to_json(self) -> Dict[str, Any]:
