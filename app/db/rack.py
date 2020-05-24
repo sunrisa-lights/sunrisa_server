@@ -1,4 +1,5 @@
 from typing import List
+from typing import Tuple
 
 from app.models.rack import Rack
 
@@ -14,7 +15,7 @@ def write_rack(conn, rack: Rack) -> None:
     set_values = (rack_id, room_id, voltage, is_on, is_connected)
 
     update_strings = ["room_id=%s"]
-    update_values = (room_id,)
+    update_values: Tuple[int, ...]  = (room_id,)
 
     if voltage is not None:
         update_strings.append("voltage=%s")

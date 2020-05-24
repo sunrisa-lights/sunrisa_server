@@ -1,3 +1,4 @@
+from typing import Tuple
 from app.models.shelf import Shelf
 
 
@@ -13,7 +14,7 @@ def write_shelf(conn, shelf: Shelf):
     set_values = (shelf_id, rack_id, recipe_id, power_level, red_level, blue_level)
 
     update_strings = ["rack_id=%s"]
-    update_values = (rack_id,)
+    update_values: Tuple[int, ...] = (rack_id,)
 
     if recipe_id is not None:
         update_strings.append("recipe_id=%s")

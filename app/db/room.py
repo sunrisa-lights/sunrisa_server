@@ -1,4 +1,5 @@
 from typing import List
+from typing import Tuple
 from typing import Optional
 
 from app.models.room import Room
@@ -13,7 +14,7 @@ def write_room(conn, room: Room) -> None:
     set_values = (room_id, is_on, is_veg_room, brightness)
 
     update_strings = ["room_id=%s", "is_on=%s", "is_veg_room=%s"]
-    update_values = (room_id, is_on, is_veg_room)
+    update_values: Tuple[int, ...]  = (room_id, is_on, is_veg_room)
 
     if brightness is not None:
         update_strings.append("brightness=%s")
