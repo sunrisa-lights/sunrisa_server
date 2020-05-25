@@ -34,20 +34,17 @@ jobs:
     # runs mypy for type annotation checking
     - name: Run mypy
       run: |
-        . venv/bin/activate
-        mypy app/
+        ./venv/bin/mypy app/
 
     # lints code with black
     - name: Run black
       run: |
-        . venv/bin/activate
-        black app/ tests/ sunrisa.py app_config.py
+        ./venv/bin/black app/ tests/ sunrisa.py app_config.py
 
     # Runs pytest on the tests/unit directory
     - name: Run unit tests
       run: |
-        . venv/bin/activate
-        pytest tests/
+        ./venv/bin/pytest tests/
 
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
@@ -61,16 +58,11 @@ jobs:
       run: |
         sudo systemctl start mysql
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v2
-
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
       run: |
-        . venv/bin/activate
-        python sunrisa.py &
-        echo "Sleeping 5 seconds before starting integration test"
-        sleep 5
-        . integration_venv/bin/activate
-        python tests/integration/sunrisa_integration.py
+        venv/bin/python sunrisa.py &
+        echo "Sleeping 3 seconds before starting integration test"
+        sleep 3
+        integration_venv/bin/python tests/integration/sunrisa_integration.py
 
