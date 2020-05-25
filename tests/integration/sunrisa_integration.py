@@ -56,6 +56,7 @@ def test_send_room(sio):
         returned_room = Room.from_json(message["room"])
         expected_room = Room.from_json(room_dict["room"])
 
+        print("returned_room:", returned_room, "expected_room:", expected_room)
         assert returned_room == expected_room
         flag.append(True)
 
