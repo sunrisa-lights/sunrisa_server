@@ -49,6 +49,9 @@ jobs:
         . venv/bin/activate
         pytest tests/
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v2
+
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
       run: |
