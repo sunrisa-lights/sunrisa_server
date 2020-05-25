@@ -10,7 +10,6 @@ def write_rack(conn, rack: Rack) -> None:
     voltage = rack.voltage
     is_on = rack.is_on
     is_connected = rack.is_connected
-    print("is_connected:", is_connected)
 
     set_values = (rack_id, room_id, voltage, is_on, is_connected)
 
