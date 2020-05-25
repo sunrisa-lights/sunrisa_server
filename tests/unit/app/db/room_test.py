@@ -16,7 +16,7 @@ def test_write_room(mock_room):
     write_room(conn, mock_room)
 
     conn.cursor().execute.assert_called_with(
-        "INSERT INTO `rooms` VALUES (%s, %r, %r, %s) ON DUPLICATE KEY UPDATE room_id=%s, is_on=%r, is_veg_room=%r, brightness=%s",
+        "INSERT INTO `rooms` VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE room_id=%s, is_on=%s, is_veg_room=%s, brightness=%s",
         (
             mock_room.room_id,
             mock_room.is_on,
@@ -36,8 +36,8 @@ def test_create_room_table():
     create_room_table(conn)
     sql = """CREATE TABLE IF NOT EXISTS rooms(
     room_id INT NOT NULL,
-    is_on BOOLEAN NOT NULL,
     is_veg_room BOOLEAN NOT NULL,
+    is_on BOOLEAN,
     brightness INT,
     PRIMARY KEY (room_id)
     );
