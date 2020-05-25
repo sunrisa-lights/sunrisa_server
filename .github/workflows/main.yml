@@ -49,9 +49,6 @@ jobs:
         . venv/bin/activate
         pytest tests/
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v2
-
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
       run: |
@@ -63,6 +60,9 @@ jobs:
     - name: Setup MySQL
       run: |
         sudo systemctl start mysql
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v2
 
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
