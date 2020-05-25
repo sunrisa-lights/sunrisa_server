@@ -19,8 +19,8 @@ from app.models.plant import Plant
 
 # standard Python
 sio = socketio.Client()
-#sio.connect("http://localhost:5000")
-sio.connect("https://sunrisalights.com")
+sio.connect("http://localhost:5000")
+#sio.connect("https://sunrisalights.com")
 
 expected_processed_entities = None
 
