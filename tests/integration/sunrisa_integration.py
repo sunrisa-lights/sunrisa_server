@@ -3,7 +3,7 @@ import pymysql.cursors
 import logging
 import sys
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from typing import List
 
@@ -24,11 +24,9 @@ sio.connect("http://localhost:5000")
 
 expected_processed_entities = None
 
-conn = pymysql.connect(host="localhost", user="root", password="root")
-conn.autocommit(True)  # necessary so we don't get stale reads back
 logging.basicConfig(filename="error.log", level=logging.DEBUG)
 db_name = "sunrisa_test"
-db = DB(conn, db_name, logging)
+db = DB(db_name, logging)
 
 
 # flag should be an empty list that is populated and has a certain length
@@ -160,7 +158,7 @@ def test_send_recipe(sio):
     get_recipe_sql = "SELECT recipe_id, recipe_name, power_level, red_level, blue_level, num_hours FROM recipes WHERE recipe_id={}".format(
         recipe_dict["recipe"]["recipe_id"]
     )
-    with conn.cursor() as cursor:
+    with db._new_connection(db_name) as cursor:
         cursor.execute(get_recipe_sql)
         (
             recipe_id,
@@ -192,7 +190,7 @@ def test_send_shelf(sio, rack, recipe):
     get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id, power_level, red_level, blue_level FROM shelves WHERE shelf_id={}".format(
         shelf_dict["shelf"]["shelf_id"]
     )
-    with conn.cursor() as cursor:
+    with db._new_connection(db_name) as cursor:
         cursor.execute(get_shelf_sql)
         shelf_id, rack_id, recipe_id, power_level, red_level, blue_level = cursor.fetchone()
         foundShelf = Shelf(shelf_id, rack_id, recipe_id, power_level, red_level, blue_level)
@@ -214,7 +212,7 @@ def test_send_plant(sio, shelf):
     get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
         plant_dict["plant"]["olcc_number"]
     )
-    with conn.cursor() as cursor:
+    with db._new_connection(db_name) as cursor:
         cursor.execute(get_plant_sql)
         olcc_number, shelf_id = cursor.fetchone()
         foundPlant = Plant(olcc_number, shelf_id)
@@ -229,7 +227,7 @@ def test_send_plant(sio, shelf):
     get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
         plant_dict["plant"]["olcc_number"]
     )
-    with conn.cursor() as cursor:
+    with db._new_connection(db_name) as cursor:
         cursor.execute(get_plant_sql)
         olcc_number, shelf_id = cursor.fetchone()
         foundPlant = Plant(olcc_number, shelf_id)
@@ -249,19 +247,50 @@ def test_send_schedule(sio, shelf_id):
     start_time = start.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end.strftime('%Y-%m-%d %H:%M:%S')
 
-    schedule_dict = {"schedule": {"shelf_id": shelf_id, 'start_time': start_time, 'end_time': end_time}}
+    schedule_dict = {"schedule": {"shelf_id": shelf_id, 'start_time': start_time, 'end_time': end_time, 'power_level': 1, 'red_level': 2, 'blue_level': 3}}
     sio.emit("message_sent", schedule_dict)
     sio.sleep(1)
-    get_schedule_sql = "SELECT shelf_id, start_time, end_time FROM schedules WHERE shelf_id={} AND start_time='{}' AND end_time='{}'".format(
+    get_schedule_sql = "SELECT shelf_id, start_time, end_time, power_level, red_level, blue_level FROM schedules WHERE shelf_id={} AND start_time='{}' AND end_time='{}'".format(
         schedule_dict["schedule"]["shelf_id"], schedule_dict["schedule"]["start_time"], schedule_dict["schedule"]["end_time"]
     )
-    with conn.cursor() as cursor:
+    with db._new_connection(db_name) as cursor:
         cursor.execute(get_schedule_sql)
-        shelf_id, start_time, end_time = cursor.fetchone()
-        print("foundSchedule:", (shelf_id, start_time, end_time), "expected:", schedule_dict["schedule"])
+        shelf_id, start_time, end_time, power_level, red_level, blue_level  = cursor.fetchone()
+        print("foundSchedule:", (shelf_id, start_time, end_time, power_level, red_level, blue_level), "expected:", schedule_dict["schedule"])
         assert shelf_id == schedule_dict["schedule"]["shelf_id"]
         assert start_time.strftime('%Y-%m-%d %H:%M:%S') == schedule_dict["schedule"]["start_time"]
         assert end_time.strftime('%Y-%m-%d %H:%M:%S') == schedule_dict["schedule"]["end_time"]
+        assert power_level == schedule_dict['schedule']['power_level']
+        assert red_level == schedule_dict['schedule']['red_level']
+        assert blue_level == schedule_dict['schedule']['blue_level']
+
+
+def test_send_room_schedule(sio, room_id):
+    start = datetime.now() + timedelta(0, 3) # 3 seconds from now
+    end = start + timedelta(0, 2) # 5 seconds from now
+
+    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
+
+    schedule_dict = {"schedule": {"room_id": room_id, 'start_time': start_time, 'end_time': end_time, 'power_level': 1, 'red_level': 2, 'blue_level': 3}}
+
+    flag = []
+
+    @sio.on("set_lights_for_room")
+    def set_lights_for_room(message) -> None:
+        assert 'room' in message
+        if len(flag) == 0:
+            assert Room.from_json(message['room']) == Room.from_json(schedule_dict['schedule'])
+        elif len(flag) == 1:
+            expected_room_dict = {"room_id": room_id, 'start_time': start_time, 'end_time': end_time, 'power_level': 0, 'red_level': 0, 'blue_level': 0}
+            assert Room.from_json(message['room']) == Room.from_json(expected_room_dict)
+
+        flag.append(True)
+
+    sio.emit('post_room_schedule', schedule_dict)
+    wait_for_event(flag, 2, 10, "test_post_room_schedule")
+
+    print("test send room schedule passed")
 
 
 def test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
@@ -284,6 +313,7 @@ def test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
 
     @sio.on("return_all_entities")
     def return_all_entities_listener(message) -> None:
+        print("Received message in entities_listener:", message, "expected:", entities)
         assert 'rooms' in message
         assert ordered(message['rooms']) == ordered(entities)
 
@@ -305,8 +335,10 @@ def create_entities_test(sio):
     shelf = test_send_shelf(sio, rack, recipe)
     test_send_plant(sio, shelf)
     test_send_schedule(sio, shelf.shelf_id)
+    test_send_room_schedule(sio, rooms[0].room_id)
     test_find_all_entities(sio, rooms, [rack])
     print("create_entities_test passed!")
+
 
 def test_room_not_found(sio):
     flag = []
@@ -323,6 +355,7 @@ def test_room_not_found(sio):
     wait_for_event(flag, 1, 5, "test_room_not_found")
 
     print("room not found test passed!")
+
 
 def test_racks_not_found_in_room(sio):
     flag = []

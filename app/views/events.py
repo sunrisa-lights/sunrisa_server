@@ -9,6 +9,8 @@ from app.models.recipe import Recipe
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
+from app.resources.schedule_jobs import schedule_job_for_room
+
 
 def init_event_listeners(app_config, socketio):
     @socketio.on("connect")
@@ -83,10 +85,31 @@ def init_event_listeners(app_config, socketio):
             shelf_id = int(schedule_json['shelf_id'])
             start_time = schedule_json['start_time']
             end_time = schedule_json['end_time']
-            app_config.db.write_schedule_for_shelf(shelf_id, start_time, end_time)
+            power_level = schedule_json['power_level']
+            red_level = schedule_json['red_level']
+            blue_level = schedule_json['blue_level']
+            app_config.db.write_schedule_for_shelf(shelf_id, start_time, end_time, power_level, red_level, blue_level)
 
         socketio.emit("message_received", {"processed": entities_processed})
 
+    @socketio.on("post_room_schedule")
+    def post_room_schedule(message) -> None:
+        schedule_json = message["schedule"]
+        app_config.logger.debug(schedule_json)
+        room_id = int(schedule_json['room_id'])
+        start_time = schedule_json['start_time']
+        end_time = schedule_json['end_time']
+        power_level = schedule_json['power_level']
+        red_level = schedule_json['red_level']
+        blue_level = schedule_json['blue_level']
+
+        start_datetime = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+        end_datetime = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+
+        app_config.scheduler.add_job(schedule_job_for_room, 'date', run_date=start_datetime, args=[socketio, room_id, power_level, red_level, blue_level])
+        app_config.scheduler.add_job(schedule_job_for_room, 'date', run_date=end_datetime, args=[socketio, room_id, 0, 0, 0]) # assume we turn off the room after the job is done
+        # write room schedule to db
+        app_config.db.write_schedule_for_shelf(room_id, start_time, end_time, power_level, red_level, blue_level)
 
     @socketio.on("read_all_rooms")
     def read_all_rooms(message) -> None:

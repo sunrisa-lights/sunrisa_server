@@ -1,5 +1,8 @@
 #!/bin/env python
 
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask
 from flask_socketio import SocketIO
 from app.views.events import init_event_listeners

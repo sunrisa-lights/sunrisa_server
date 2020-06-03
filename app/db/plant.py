@@ -6,8 +6,10 @@ def write_plant(conn, plant: Plant):
     shelf_id = plant.shelf_id
 
     sql = "INSERT INTO `plants` VALUES (%s, %s) ON DUPLICATE KEY UPDATE shelf_id=%s"
-    conn.cursor().execute(sql, (olcc_number, shelf_id, shelf_id))
+    cursor = conn.cursor()
+    cursor.execute(sql, (olcc_number, shelf_id, shelf_id))
     print("WROTE plant", plant)
+    cursor.close()
 
 
 def create_plant_table(conn):
@@ -20,4 +22,6 @@ def create_plant_table(conn):
         REFERENCES shelves(shelf_id)
     );
     """
-    conn.cursor().execute(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()
