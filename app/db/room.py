@@ -46,7 +46,10 @@ def read_all_rooms(conn) -> List[Room]:
         cursor.execute(sql)
         all_rooms = cursor.fetchall()
         rooms = [Room(rid, bool(is_on), bool(is_veg), brightness) for (rid, is_on, is_veg, brightness) in all_rooms]
+<<<<<<< HEAD
         cursor.close()
+=======
+>>>>>>> master
         return rooms
 
 
