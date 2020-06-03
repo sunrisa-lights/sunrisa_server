@@ -9,7 +9,7 @@ from app.models.recipe import Recipe
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
-from app.resources.schedule_jobs import schedule_job_for_room
+from app.resources.schedule_jobs import schedule_job_for_room # type: ignore
 
 
 def init_event_listeners(app_config, socketio):
