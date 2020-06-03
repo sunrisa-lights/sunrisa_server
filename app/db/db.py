@@ -1,4 +1,4 @@
-import pymysql.cursors
+import pymysql
 
 from typing import List
 from typing import Optional
