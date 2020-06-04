@@ -26,7 +26,7 @@ class DB:
             conn.autocommit(True)
             self.create_db(conn, db_name)
         finally:
-            db_conn.close()
+            conn.close()
 
     def _new_connection(self, db_name):
         conn = pymysql.connect(host="localhost", user="root", password="root")
