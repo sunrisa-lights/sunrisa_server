@@ -53,8 +53,8 @@ def read_all_rooms(conn) -> List[Room]:
 def create_room_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS rooms(
     room_id INT NOT NULL,
-    is_veg_room BOOLEAN NOT NULL,
     is_on BOOLEAN,
+    is_veg_room BOOLEAN NOT NULL,
     brightness INT,
     PRIMARY KEY (room_id)
     );
