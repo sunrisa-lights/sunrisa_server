@@ -51,7 +51,7 @@ def _test_send_room(sio):
 
     @sio.on("return_room")
     def find_room_listener(message) -> None:
-        returned_room = Room.from_json(message["room"])
+        returned_room = Room.from_json(message["room"]) if message and "room" in message else None
         expected_room = Room.from_json(room_dict["room"])
 
         print("returned_room:", returned_room, "expected_room:", expected_room)

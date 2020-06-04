@@ -156,4 +156,5 @@ def init_event_listeners(app_config, socketio):
             # room is None if not found
             room = app_config.db.read_room(room_id)
 
+        print("found_room:", room)
         socketio.emit("return_room", {"room": room.to_json() if room else None})
