@@ -35,7 +35,9 @@ def write_shelf(conn, shelf: Shelf):
     sql = (
         "INSERT INTO `shelves` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(', '.join(update_strings))
     )
-    conn.cursor().execute(sql, set_values + update_values)
+    cursor = conn.cursor()
+    cursor.execute(sql, set_values + update_values)
+    cursor.close()
 
     print("WROTE SHELF", shelf)
 
@@ -57,4 +59,6 @@ def create_shelf_table(conn):
         REFERENCES recipes(recipe_id)
     );
     """
-    conn.cursor().execute(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()

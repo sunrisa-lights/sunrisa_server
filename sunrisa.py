@@ -1,12 +1,12 @@
-#!/bin/env python
+import eventlet
+eventlet.monkey_patch()
 
 from flask import Flask
 from flask_socketio import SocketIO
 from app.views.events import init_event_listeners
-
-socketio = SocketIO(cors_allowed_origins="*")
 from app_config import AppConfig
 
+socketio = SocketIO(cors_allowed_origins="*")
 
 app = Flask(__name__)
 

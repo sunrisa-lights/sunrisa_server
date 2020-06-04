@@ -29,7 +29,9 @@ def write_rack(conn, rack: Rack) -> None:
         update_values += (is_connected,)
 
     sql = "INSERT INTO `racks` VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(', '.join(update_strings))
-    conn.cursor().execute(sql, set_values + update_values)
+    cursor = conn.cursor()
+    cursor.execute(sql, set_values + update_values)
+    cursor.close()
 
     print("WROTE RACK", rack)
 
@@ -39,6 +41,7 @@ def read_racks_in_room(conn, room_id: int) -> List[Rack]:
         cursor.execute(sql, (room_id))
         all_racks = cursor.fetchall()
         racks = [Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected)) for (rack_id, room_id, voltage, is_on, is_connected) in all_racks]
+        cursor.close()
         return racks
 
 
@@ -56,4 +59,6 @@ def create_rack_table(conn):
 
     );
     """
-    conn.cursor().execute(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()

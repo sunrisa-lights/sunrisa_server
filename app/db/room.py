@@ -21,7 +21,9 @@ def write_room(conn, room: Room) -> None:
         update_values += (brightness,)
 
     sql = "INSERT INTO `rooms` VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(', '.join(update_strings))
-    conn.cursor().execute(sql, set_values + update_values)
+    cursor = conn.cursor()
+    cursor.execute(sql, set_values + update_values)
+    cursor.close()
     print("WROTE ROOM", room)
 
 
@@ -35,6 +37,7 @@ def read_room(conn, room_id: int) -> Optional[Room]:
             rid, is_on, is_veg, brightness = found_room_data
             found_room = Room(rid, bool(is_on), bool(is_veg), brightness)
 
+        cursor.close()
         return found_room
 
 def read_all_rooms(conn) -> List[Room]:
@@ -43,16 +46,19 @@ def read_all_rooms(conn) -> List[Room]:
         cursor.execute(sql)
         all_rooms = cursor.fetchall()
         rooms = [Room(rid, bool(is_on), bool(is_veg), brightness) for (rid, is_on, is_veg, brightness) in all_rooms]
+        cursor.close()
         return rooms
 
 
 def create_room_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS rooms(
     room_id INT NOT NULL,
-    is_veg_room BOOLEAN NOT NULL,
     is_on BOOLEAN,
+    is_veg_room BOOLEAN NOT NULL,
     brightness INT,
     PRIMARY KEY (room_id)
     );
     """
-    conn.cursor().execute(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()

@@ -10,7 +10,8 @@ def write_recipe(conn, recipe: Recipe):
     num_hours = recipe.num_hours
 
     sql = "INSERT INTO `recipes` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE recipe_name=%s, power_level=%s, red_level=%s, blue_level=%s, num_hours=%s"
-    conn.cursor().execute(
+    cursor = conn.cursor()
+    cursor.execute(
         sql,
         (
             recipe_id,
@@ -26,6 +27,7 @@ def write_recipe(conn, recipe: Recipe):
             num_hours,
         ),
     )
+    cursor.close()
     print("WROTE RECIPE", recipe)
 
 
@@ -40,4 +42,6 @@ def create_recipe_table(conn):
     PRIMARY KEY (recipe_id)
     );
     """
-    conn.cursor().execute(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()
