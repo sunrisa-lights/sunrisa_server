@@ -39,7 +39,7 @@ def wait_for_event(flag, length_condition, num_seconds, test_name):
     assert flag, "Timed out waiting for event for test {}".format(test_name)
 
 
-def test_send_room(sio):
+def _test_send_room(sio):
     global expected_processed_entities
     expected_processed_entities = ["room"]
 
@@ -99,7 +99,7 @@ def test_send_room(sio):
     return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2['room'])]
 
 
-def test_send_rack(sio, room):
+def _test_send_rack(sio, room):
     global expected_processed_entities
     expected_processed_entities = ["rack"]
 
@@ -139,7 +139,7 @@ def test_send_rack(sio, room):
     return Rack.from_json(rack_dict["rack"])
 
 
-def test_send_recipe(sio):
+def _test_send_recipe(sio):
     global expected_processed_entities
     expected_processed_entities = ["recipe"]
 
@@ -178,7 +178,7 @@ def test_send_recipe(sio):
         return foundRecipe
 
 
-def test_send_shelf(sio, rack, recipe):
+def _test_send_shelf(sio, rack, recipe):
     global expected_processed_entities
     expected_processed_entities = ["shelf"]
 
@@ -201,7 +201,7 @@ def test_send_shelf(sio, rack, recipe):
         return foundShelf
 
 
-def test_send_plant(sio, shelf):
+def _test_send_plant(sio, shelf):
     global expected_processed_entities
     expected_processed_entities = ["plant"]
 
@@ -237,7 +237,7 @@ def test_send_plant(sio, shelf):
 
         return foundPlant
 
-def test_send_schedule(sio, shelf_id):
+def _test_send_schedule(sio, shelf_id):
     global expected_processed_entities
     expected_processed_entities = ["schedule"]
 
@@ -265,7 +265,7 @@ def test_send_schedule(sio, shelf_id):
         assert blue_level == schedule_dict['schedule']['blue_level']
 
 
-def test_send_room_schedule(sio, room_id):
+def _test_send_room_schedule(sio, room_id):
     start = datetime.now() + timedelta(0, 3) # 3 seconds from now
     end = start + timedelta(0, 2) # 5 seconds from now
 
@@ -293,7 +293,7 @@ def test_send_room_schedule(sio, room_id):
     print("test send room schedule passed")
 
 
-def test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
+def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
     entities = []
     for room in rooms:
         room_json = room.to_json()
@@ -324,23 +324,23 @@ def test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
     print("all entities found")
 
 
-def create_entities_test(sio):
+def _test_create_entities(sio):
     @sio.on("message_received")
     def verify_message_received(entities_processed):
         assert entities_processed["processed"] == expected_processed_entities
 
-    rooms = test_send_room(sio)
-    rack = test_send_rack(sio, rooms[0])
-    recipe = test_send_recipe(sio)
-    shelf = test_send_shelf(sio, rack, recipe)
-    test_send_plant(sio, shelf)
-    test_send_schedule(sio, shelf.shelf_id)
-    test_send_room_schedule(sio, rooms[0].room_id)
-    test_find_all_entities(sio, rooms, [rack])
+    rooms = _test_send_room(sio)
+    rack = _test_send_rack(sio, rooms[0])
+    recipe = _test_send_recipe(sio)
+    shelf = _test_send_shelf(sio, rack, recipe)
+    _test_send_plant(sio, shelf)
+    _test_send_schedule(sio, shelf.shelf_id)
+    _test_send_room_schedule(sio, rooms[0].room_id)
+    _test_find_all_entities(sio, rooms, [rack])
     print("create_entities_test passed!")
 
 
-def test_room_not_found(sio):
+def _test_room_not_found(sio):
     flag = []
 
     room_dict = {'room': {'room_id': 5000, 'is_on': True}}
@@ -357,7 +357,7 @@ def test_room_not_found(sio):
     print("room not found test passed!")
 
 
-def test_racks_not_found_in_room(sio):
+def _test_racks_not_found_in_room(sio):
     flag = []
 
     room_dict = {'room': {'room_id': 5000}}
@@ -375,25 +375,21 @@ def test_racks_not_found_in_room(sio):
     print("racks not found in room test passed!")
 
 
-def entities_not_found_test(sio):
-    test_room_not_found(sio)
-    test_racks_not_found_in_room(sio)
+def _test_entities_not_found(sio):
+    _test_room_not_found(sio)
+    _test_racks_not_found_in_room(sio)
     print("entities_not_found_test passed!")
 
-def run_tests():
+def test_integration():
     def run_test_and_disconnect(test_func):
         sio = socketio.Client()
         sio.connect("http://localhost:5000")
         test_func(sio)
         sio.disconnect()
 
-    run_test_and_disconnect(create_entities_test)
-    run_test_and_disconnect(entities_not_found_test)
+    run_test_and_disconnect(_test_create_entities)
+    run_test_and_disconnect(_test_entities_not_found)
     print("Integration tests passed!")
-
-
-if __name__ == "__main__":
-    run_tests()
 
     # sleep because we get BrokenPipeError when we disconnect too fast after sending events
     sio.sleep(2)
