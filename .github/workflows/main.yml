@@ -59,10 +59,6 @@ jobs:
         sudo systemctl start mysql
 
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v2
-
-
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
       run: |

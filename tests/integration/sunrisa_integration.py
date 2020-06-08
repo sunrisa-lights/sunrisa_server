@@ -30,7 +30,6 @@ db_name = "sunrisa_test"
 db = DB(db_name, logging)
 
 
-
 # flag should be an empty list that is populated and has a certain length
 def wait_for_event(flag, length_condition, num_seconds, test_name):
     seconds_counter = 0
@@ -140,8 +139,7 @@ def _test_send_rack(sio, room):
         flag.append(True)
 
     sio.emit(
-        "read_all_racks_in_room",
-        {"room": {"room_id": room.room_id}},
+        "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
     wait_for_event(flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
 
@@ -151,8 +149,7 @@ def _test_send_rack(sio, room):
     rack_dict["rack"]["is_on"] = not rack_dict["rack"]["is_on"]
     sio.emit("message_sent", rack_dict)
     sio.emit(
-        "read_all_racks_in_room",
-        {"room": {"room_id": room.room_id}},
+        "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
     wait_for_event(flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
 
