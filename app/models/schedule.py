@@ -72,8 +72,12 @@ class Schedule:
         return {
             "room_id": self.room_id,
             "shelf_id": self.shelf_id,
-            "start_datetime": self.start_datetime.astimezone().replace(microsecond=0).isoformat(),
-            "end_datetime": self.end_datetime.astimezone().replace(microsecond=0).isoformat(),
+            "start_datetime": self.start_datetime.astimezone()
+            .replace(microsecond=0)
+            .isoformat(),
+            "end_datetime": self.end_datetime.astimezone()
+            .replace(microsecond=0)
+            .isoformat(),
             "power_level": self.power_level,
             "red_level": self.red_level,
             "blue_level": self.blue_level,

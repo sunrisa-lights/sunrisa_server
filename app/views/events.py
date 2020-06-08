@@ -142,13 +142,15 @@ def init_event_listeners(app_config, socketio):
         )
         print("Room schedule sent successfully, emitting post_room_schedule succeeded")
 
-
     @socketio.on("get_current_room_schedules")
     def get_current_room_schedules(message) -> None:
         print("get_current_room_schedules called with message:", message)
         if "room" not in message:
             send_message_to_namespace_if_specified(
-                socketio, message, "get_current_room_schedules_succeeded", {"succeeded": False}
+                socketio,
+                message,
+                "get_current_room_schedules_succeeded",
+                {"succeeded": False},
             )
         print("Returned get_current_room_schedules_succeeded")
 

@@ -7,7 +7,9 @@ from app.db.rack import create_rack_table, write_rack
 
 @pytest.fixture
 def mock_rack():
-    return Rack.from_json({"rack_id": 1, "room_id": 2, "is_on": True, "is_connected": True})
+    return Rack.from_json(
+        {"rack_id": 1, "room_id": 2, "is_on": True, "is_connected": True}
+    )
 
 
 def test_write_rack(mock_rack):
