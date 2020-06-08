@@ -14,7 +14,7 @@ def write_rack(conn, rack: Rack) -> None:
     set_values = (rack_id, room_id, voltage, is_on, is_connected)
 
     update_strings = ["room_id=%s"]
-    update_values: Tuple[int, ...]  = (room_id,)
+    update_values: Tuple[int, ...] = (room_id,)
 
     if voltage is not None:
         update_strings.append("voltage=%s")
@@ -28,19 +28,25 @@ def write_rack(conn, rack: Rack) -> None:
         update_strings.append("is_connected=%s")
         update_values += (is_connected,)
 
-    sql = "INSERT INTO `racks` VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(', '.join(update_strings))
+    sql = "INSERT INTO `racks` VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(
+        ", ".join(update_strings)
+    )
     cursor = conn.cursor()
     cursor.execute(sql, set_values + update_values)
     cursor.close()
 
     print("WROTE RACK", rack)
 
+
 def read_racks_in_room(conn, room_id: int) -> List[Rack]:
     sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks WHERE room_id=%s"
     with conn.cursor() as cursor:
         cursor.execute(sql, (room_id))
         all_racks = cursor.fetchall()
-        racks = [Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected)) for (rack_id, room_id, voltage, is_on, is_connected) in all_racks]
+        racks = [
+            Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
+            for (rack_id, room_id, voltage, is_on, is_connected) in all_racks
+        ]
         cursor.close()
         return racks
 

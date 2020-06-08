@@ -3,7 +3,9 @@ import json
 
 
 class Room:
-    def __init__(self, room_id: int, is_on: bool, is_veg_room: bool, brightness: Optional[int]):
+    def __init__(
+        self, room_id: int, is_on: bool, is_veg_room: bool, brightness: Optional[int]
+    ):
         self.room_id = room_id
         self.is_on = is_on
         self.is_veg_room = is_veg_room

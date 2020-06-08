@@ -4,7 +4,12 @@ import json
 
 class Rack:
     def __init__(
-        self, rack_id: int, room_id: int, voltage: Optional[int], is_on: Optional[bool], is_connected: Optional[bool]
+        self,
+        rack_id: int,
+        room_id: int,
+        voltage: Optional[int],
+        is_on: Optional[bool],
+        is_connected: Optional[bool],
     ):
         self.rack_id = rack_id
         self.room_id = room_id
