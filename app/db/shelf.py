@@ -32,8 +32,8 @@ def write_shelf(conn, shelf: Shelf):
         update_strings.append("blue_level=%s")
         update_values += (blue_level,)
 
-    sql = (
-        "INSERT INTO `shelves` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(', '.join(update_strings))
+    sql = "INSERT INTO `shelves` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(
+        ", ".join(update_strings)
     )
     cursor = conn.cursor()
     cursor.execute(sql, set_values + update_values)

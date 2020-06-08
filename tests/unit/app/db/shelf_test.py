@@ -7,7 +7,16 @@ from app.db.shelf import create_shelf_table, write_shelf
 
 @pytest.fixture
 def mock_shelf():
-    return Shelf.from_json({"shelf_id": 1, "rack_id": 2, "recipe_id": 3, "power_level": 4, "red_level": 5, "blue_level": 6})
+    return Shelf.from_json(
+        {
+            "shelf_id": 1,
+            "rack_id": 2,
+            "recipe_id": 3,
+            "power_level": 4,
+            "red_level": 5,
+            "blue_level": 6,
+        }
+    )
 
 
 def test_write_shelf(mock_shelf):

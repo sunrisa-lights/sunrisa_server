@@ -7,7 +7,9 @@ from app.db.room import create_room_table, read_room, write_room
 
 @pytest.fixture
 def mock_room():
-    return Room.from_json({"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 0})
+    return Room.from_json(
+        {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 0}
+    )
 
 
 def test_write_room(mock_room):

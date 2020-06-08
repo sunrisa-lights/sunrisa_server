@@ -1,15 +1,29 @@
 import logging
 from datetime import datetime
+from dateutil.parser import parse
+from time import mktime
 
-from typing import Optional
+from typing import List, Optional
 
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
+from app.models.schedule import Schedule
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
-from app.resources.schedule_jobs import schedule_job_for_room # type: ignore
+from app.resources.schedule_jobs import schedule_job_for_room  # type: ignore
+
+NAMESPACE = "namespace"
+
+
+def send_message_to_namespace_if_specified(socketio, message, event_name, event_data):
+    if NAMESPACE in message:
+        message_namespace = message[NAMESPACE]
+        print("Emitting event with namespace:", message_namespace)
+        socketio.emit(event_name, event_data, namespace=message_namespace)
+    else:
+        socketio.emit(event_name, event_data)
 
 
 def init_event_listeners(app_config, socketio):
@@ -26,7 +40,7 @@ def init_event_listeners(app_config, socketio):
         print("I'm disconnected!")
 
     @socketio.on("message_sent")
-    def log_changes(message):
+    def message_sent(message):
         logging.debug("message sent:", message)
         entities_processed = []
 
@@ -76,40 +90,84 @@ def init_event_listeners(app_config, socketio):
             print("Saw plant in message")
             app_config.db.write_plant(plant)
 
-        if "schedule" in message:
-            # a schedule is contained in this update
-            entities_processed.append("schedule")
-            schedule_json = message["schedule"]
-            app_config.logger.debug(schedule_json)
-            print("Saw schedule in message")
-            shelf_id = int(schedule_json['shelf_id'])
-            start_time = schedule_json['start_time']
-            end_time = schedule_json['end_time']
-            power_level = schedule_json['power_level']
-            red_level = schedule_json['red_level']
-            blue_level = schedule_json['blue_level']
-            app_config.db.write_schedule_for_shelf(shelf_id, start_time, end_time, power_level, red_level, blue_level)
-
-        socketio.emit("message_received", {"processed": entities_processed})
+        send_message_to_namespace_if_specified(
+            socketio, message, "message_received", {"processed": entities_processed}
+        )
 
     @socketio.on("post_room_schedule")
     def post_room_schedule(message) -> None:
+        logging.debug("message sent to post_room_schedule:", message)
+        if "schedule" not in message:
+            send_message_to_namespace_if_specified(
+                socketio, message, "post_room_schedule_succeeded", {"succeeded": False}
+            )
+
         schedule_json = message["schedule"]
         app_config.logger.debug(schedule_json)
-        room_id = int(schedule_json['room_id'])
-        start_time = schedule_json['start_time']
-        end_time = schedule_json['end_time']
-        power_level = schedule_json['power_level']
-        red_level = schedule_json['red_level']
-        blue_level = schedule_json['blue_level']
+        room_id = int(schedule_json["room_id"])
+        start_time = schedule_json["start_datetime"]
+        end_time = schedule_json["end_datetime"]
+        power_level = schedule_json["power_level"]
+        red_level = schedule_json["red_level"]
+        blue_level = schedule_json["blue_level"]
 
-        start_datetime = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
-        end_datetime = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+        start_time = parse(start_time).utctimetuple()
+        end_time = parse(end_time).utctimetuple()
 
-        app_config.scheduler.add_job(schedule_job_for_room, 'date', run_date=start_datetime, args=[socketio, room_id, power_level, red_level, blue_level])
-        app_config.scheduler.add_job(schedule_job_for_room, 'date', run_date=end_datetime, args=[socketio, room_id, 0, 0, 0]) # assume we turn off the room after the job is done
+        start_datetime = datetime.fromtimestamp(mktime(start_time))
+        end_datetime = datetime.fromtimestamp(mktime(end_time))
+
+        print("start_datetime:", start_datetime)
+
+        app_config.scheduler.add_job(
+            schedule_job_for_room,
+            "date",
+            run_date=start_datetime,
+            args=[socketio, room_id, power_level, red_level, blue_level],
+        )
+        app_config.scheduler.add_job(
+            schedule_job_for_room,
+            "date",
+            run_date=end_datetime,
+            args=[socketio, room_id, 0, 0, 0],
+        )  # assume we turn off the room after the job is done
         # write room schedule to db
-        app_config.db.write_schedule_for_shelf(room_id, start_time, end_time, power_level, red_level, blue_level)
+        app_config.db.write_schedule_for_room(
+            room_id, start_datetime, end_datetime, power_level, red_level, blue_level
+        )
+
+        logging.debug("post_room_schedule succeeded!")
+        send_message_to_namespace_if_specified(
+            socketio, message, "post_room_schedule_succeeded", {"succeeded": True}
+        )
+        print("Room schedule sent successfully, emitting post_room_schedule succeeded")
+
+    @socketio.on("get_current_room_schedules")
+    def get_current_room_schedules(message) -> None:
+        print("get_current_room_schedules called with message:", message)
+        if "room" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_current_room_schedules_succeeded",
+                {"succeeded": False},
+            )
+        print("Returned get_current_room_schedules_succeeded")
+
+        room_dict = message["room"]
+        room_id = room_dict["room_id"]
+
+        current_room_schedules: List[
+            Schedule
+        ] = app_config.db.read_current_room_schedules(room_id)
+        schedule_json = [sched.to_json() for sched in current_room_schedules]
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "get_current_room_schedules_succeeded",
+            {"succeeded": True, "current_room_schedules": schedule_json},
+        )
+        print("Returned get_current_room_schedules_succeeded2")
 
     @socketio.on("read_all_rooms")
     def read_all_rooms(message) -> None:
@@ -118,19 +176,27 @@ def init_event_listeners(app_config, socketio):
         rooms = [room.to_json() for room in all_rooms]
         app_config.logger.debug("rooms: {}".format(rooms))
         print("rooms:", rooms)
-        socketio.emit("return_rooms", {"rooms": rooms})
+        send_message_to_namespace_if_specified(
+            socketio, message, "return_rooms", {"rooms": rooms}
+        )
 
     @socketio.on("read_all_racks_in_room")
     def read_all_racks_in_room(message) -> None:
         all_racks_in_room = []
-        if 'room' in message:
-            room_id = int(message['room']['room_id'])
+        if "room" in message:
+            room_id = int(message["room"]["room_id"])
             racks = app_config.db.read_racks_in_room(room_id)
             all_racks_in_room = [r.to_json() for r in racks]
 
-        app_config.logger.debug("room_id: {}, racks: {}".format(room_id, all_racks_in_room))
-        socketio.emit("return_racks_in_room", {"racks": all_racks_in_room, 'room_id': room_id})
-
+        app_config.logger.debug(
+            "room_id: {}, racks: {}".format(room_id, all_racks_in_room)
+        )
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "return_racks_in_room",
+            {"racks": all_racks_in_room, "room_id": room_id},
+        )
 
     @socketio.on("read_all_entities")
     def read_all_entities(message) -> None:
@@ -141,12 +207,14 @@ def init_event_listeners(app_config, socketio):
             racks = app_config.db.read_racks_in_room(room.room_id)
             all_racks_in_room = [rack.to_json() for rack in racks]
             room_json = room.to_json()
-            room_json['racks'] = all_racks_in_room
+            room_json["racks"] = all_racks_in_room
             all_entities.append(room_json)
 
         app_config.logger.debug("returning entities: {}".format(all_entities))
         print("Returning entities:", all_entities)
-        socketio.emit("return_all_entities", {"rooms": all_entities})
+        send_message_to_namespace_if_specified(
+            socketio, message, "return_all_entities", {"rooms": all_entities}
+        )
 
     @socketio.on("read_room")
     def read_room(message) -> None:
@@ -157,4 +225,11 @@ def init_event_listeners(app_config, socketio):
             room = app_config.db.read_room(room_id)
 
         print("found_room:", room)
-        socketio.emit("return_room", {"room": room.to_json() if room else None})
+        send_message_to_namespace_if_specified(
+            socketio, message, "return_room", {"room": room.to_json() if room else None}
+        )
+
+    @socketio.on("test_it_out", namespace="/test-namespace")
+    def testing_it_out(message):
+        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOH YEAH")
+        socketio.emit("test", namespace="/test-namespace")

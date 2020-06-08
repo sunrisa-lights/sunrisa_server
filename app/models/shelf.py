@@ -3,7 +3,15 @@ import json
 
 
 class Shelf:
-    def __init__(self, shelf_id: int, rack_id: int, recipe_id: Optional[int], power_level: Optional[int], red_level: Optional[int], blue_level: Optional[int]):
+    def __init__(
+        self,
+        shelf_id: int,
+        rack_id: int,
+        recipe_id: Optional[int],
+        power_level: Optional[int],
+        red_level: Optional[int],
+        blue_level: Optional[int],
+    ):
         self.shelf_id = shelf_id
         self.rack_id = rack_id
         self.recipe_id = recipe_id
