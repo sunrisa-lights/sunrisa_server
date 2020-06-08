@@ -57,6 +57,7 @@ def _test_send_room(sio):
     def find_room_listener(message) -> None:
         print("got message:", message)
         assert "room" in message
+        assert message["room"] is not None
         returned_room = Room.from_json(message["room"])
         expected_room = Room.from_json(room_dict["room"])
 
