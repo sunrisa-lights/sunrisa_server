@@ -3,11 +3,12 @@ from datetime import datetime
 from dateutil.parser import parse
 from time import mktime
 
-from typing import Optional
+from typing import List, Optional
 
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
+from app.models.schedule import Schedule
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
@@ -140,6 +141,7 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "post_room_schedule_succeeded", {"succeeded": True}
         )
         print("Room schedule sent successfully, emitting post_room_schedule succeeded")
+
 
     @socketio.on("get_current_room_schedules")
     def get_current_room_schedules(message) -> None:
