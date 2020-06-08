@@ -66,4 +66,3 @@ jobs:
         echo "Sleeping 10 seconds before starting integration test"
         sleep 10
         ./integration_venv/bin/pytest --timeout=60 tests/integration/sunrisa_integration.py # run test for 60 seconds
-
