@@ -101,7 +101,7 @@ def _test_send_room(sio):
         assert room_map[first_id] == Room.from_json(room_dict["room"])
         assert room_map[second_id] == Room.from_json(room_dict2["room"])
 
-    sio.emit("read_all_rooms")
+    sio.emit("read_all_rooms", {})
     wait_for_event(rooms, 2, 5, "test_send_room.read_rooms")
     print("read all rooms")
 
@@ -362,7 +362,7 @@ def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
 
         flag.append(True)
 
-    sio.emit("read_all_entities"})
+    sio.emit("read_all_entities", {})
     wait_for_event(flag, 1, 5, "test_find_all_entities")
     print("all entities found")
 
