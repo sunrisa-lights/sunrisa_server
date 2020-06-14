@@ -5,12 +5,12 @@ from time import mktime
 
 from typing import List, Optional
 
+from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
-from app.models.schedule import Schedule
+from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
 
 from app.resources.schedule_jobs import schedule_job_for_room  # type: ignore
 
@@ -142,32 +142,32 @@ def init_event_listeners(app_config, socketio):
         )
         print("Room schedule sent successfully, emitting post_room_schedule succeeded")
 
-    @socketio.on("get_current_room_schedules")
-    def get_current_room_schedules(message) -> None:
-        print("get_current_room_schedules called with message:", message)
-        if "room" not in message:
+    @socketio.on("get_current_shelf_schedules")
+    def get_current_shelf_grows(message) -> None:
+        print("get_current_shelf_grows called with message:", message)
+        if "shelf" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
-                "get_current_room_schedules_succeeded",
+                "get_current_shelf_schedules_response",
                 {"succeeded": False},
             )
-        print("Returned get_current_room_schedules_succeeded")
+        print("Returned get_current_shelf_schedules_succeeded")
 
-        room_dict = message["room"]
-        room_id = room_dict["room_id"]
+        shelf_dict = message["shelf"]
+        shelf_id = shelf_dict["shelf_id"]
 
-        current_room_schedules: List[
-            Schedule
-        ] = app_config.db.read_current_room_schedules(room_id)
-        schedule_json = [sched.to_json() for sched in current_room_schedules]
+        current_grows: List[
+            Grow 
+        ] = app_config.db.read_current_shelf_grow_schedules(room_id)
+        shelf_grow_json = [grow.to_json() for grow in current_grows]
         send_message_to_namespace_if_specified(
             socketio,
             message,
-            "get_current_room_schedules_succeeded",
-            {"succeeded": True, "current_room_schedules": schedule_json},
+                "get_current_shelf_schedules_response",
+            {"succeeded": True, "current_shelf_grows": shelf_grow_json},
         )
-        print("Returned get_current_room_schedules_succeeded2")
+        print("Returned get_current_shelf_grows_succeeded2")
 
     @socketio.on("read_all_rooms")
     def read_all_rooms(message) -> None:

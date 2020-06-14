@@ -3,24 +3,23 @@ import pymysql
 from typing import List
 from typing import Optional
 
+from app.models.grow import Grow
+from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
-from app.models.schedule import Schedule
+from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
+from app.db.grow import create_grow_table, write_grow
+from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
 from app.db.rack import create_rack_table, write_rack, read_racks_in_room
 from app.db.recipe import create_recipe_table, write_recipe
-from app.db.schedules import (
-    create_room_schedule_table,
-    create_shelf_schedule_table,
-    read_current_room_schedules,
-    write_schedule_for_shelf,
-    write_schedule_for_room,
+from app.db.recipe_phase import (
+    create_recipe_phases_table,
+    write_recipe_phase,
 )
 from app.db.shelf import create_shelf_table, write_shelf
-from app.db.plant import create_plant_table, write_plant
 
 
 class DB:
@@ -64,8 +63,8 @@ class DB:
             create_recipe_table(db_conn)
             create_shelf_table(db_conn)
             create_plant_table(db_conn)
-            create_shelf_schedule_table(db_conn)
-            create_room_schedule_table(db_conn)
+            create_recipe_phases_table(db_conn)
+            create_grow_table(db_conn)
         finally:
             db_conn.close()
 
@@ -94,13 +93,13 @@ class DB:
             db_conn.close()
         return racks
 
-    def read_current_room_schedules(self, room_id: int) -> List[Schedule]:
+    def read_current_grows(self) -> List[Grow]:
         db_conn = self._new_connection(self.db_name)
         try:
-            room_schedules = read_current_room_schedules(db_conn, room_id)
+            current_grows = read_current_grows(db_conn, room_id)
         finally:
             db_conn.close()
-        return room_schedules
+        return current_grows
 
     def write_room(self, room: Room) -> None:
         db_conn = self._new_connection(self.db_name)
