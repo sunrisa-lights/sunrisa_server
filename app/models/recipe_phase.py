@@ -1,5 +1,4 @@
 from dateutil.parser import parse
-from time import mktime
 from typing import Any, Dict, List, Optional
 import json
 
