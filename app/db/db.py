@@ -1,26 +1,31 @@
 import pymysql
 
 from typing import List
-from typing import Optional
+from typing import Optional, Tuple
 
+from app.models.grow import Grow
+from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
-from app.models.schedule import Schedule
+from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
+from app.db.grow import (
+    read_current_grows,
+    read_shelf_current_grows,
+    create_grow_table,
+    write_grow,
+)
+from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
 from app.db.rack import create_rack_table, write_rack, read_racks_in_room
 from app.db.recipe import create_recipe_table, write_recipe
-from app.db.schedules import (
-    create_room_schedule_table,
-    create_shelf_schedule_table,
-    read_current_room_schedules,
-    write_schedule_for_shelf,
-    write_schedule_for_room,
+from app.db.recipe_phase import (
+    create_recipe_phases_table,
+    read_lights_from_recipe_phase,
+    write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, write_shelf
-from app.db.plant import create_plant_table, write_plant
 
 
 class DB:
@@ -64,8 +69,8 @@ class DB:
             create_recipe_table(db_conn)
             create_shelf_table(db_conn)
             create_plant_table(db_conn)
-            create_shelf_schedule_table(db_conn)
-            create_room_schedule_table(db_conn)
+            create_recipe_phases_table(db_conn)
+            create_grow_table(db_conn)
         finally:
             db_conn.close()
 
@@ -94,13 +99,40 @@ class DB:
             db_conn.close()
         return racks
 
-    def read_current_room_schedules(self, room_id: int) -> List[Schedule]:
+    def read_current_grows(self) -> List[Grow]:
         db_conn = self._new_connection(self.db_name)
         try:
-            room_schedules = read_current_room_schedules(db_conn, room_id)
+            current_grows = read_current_grows(db_conn)
         finally:
             db_conn.close()
-        return room_schedules
+        return current_grows
+
+    def read_lights_from_recipe_phase(
+        self, recipe_id: int, recipe_phase_num: int
+    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            power_level, red_level, blue_level = read_lights_from_recipe_phase(
+                db_conn, recipe_id, recipe_phase_num
+            )
+        finally:
+            db_conn.close()
+        return power_level, red_level, blue_level
+
+    def read_shelf_current_grows(self, shelf_id) -> List[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            current_shelf_grows = read_shelf_current_grows(db_conn, shelf_id)
+        finally:
+            db_conn.close()
+        return current_shelf_grows
+
+    def write_grow(self, grow: Grow) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            write_grow(db_conn, grow)
+        finally:
+            db_conn.close()
 
     def write_room(self, room: Room) -> None:
         db_conn = self._new_connection(self.db_name)
@@ -116,10 +148,13 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_recipe(self, recipe: Recipe) -> None:
+    def write_recipe_with_phases(
+        self, recipe: Recipe, recipe_phases: List[RecipePhase]
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             write_recipe(db_conn, recipe)
+            write_recipe_phases(db_conn, recipe_phases)
         finally:
             db_conn.close()
 
@@ -134,51 +169,5 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_plant(db_conn, plant)
-        finally:
-            db_conn.close()
-
-    def write_schedule_for_shelf(
-        self,
-        shelf_id: int,
-        start_time: str,
-        end_time: str,
-        power_level: int,
-        red_level: int,
-        blue_level: int,
-    ) -> None:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            write_schedule_for_shelf(
-                db_conn,
-                shelf_id,
-                start_time,
-                end_time,
-                power_level,
-                red_level,
-                blue_level,
-            )
-        finally:
-            db_conn.close()
-
-    def write_schedule_for_room(
-        self,
-        room_id: int,
-        start_time: str,
-        end_time: str,
-        power_level: int,
-        red_level: int,
-        blue_level: int,
-    ) -> None:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            write_schedule_for_room(
-                db_conn,
-                room_id,
-                start_time,
-                end_time,
-                power_level,
-                red_level,
-                blue_level,
-            )
         finally:
             db_conn.close()

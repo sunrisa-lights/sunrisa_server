@@ -11,10 +11,11 @@ from typing import List
 sys.path.append(".")
 
 from app.db.db import DB
+from app.models.grow import Grow
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
-from app.models.schedule import Schedule
+from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
@@ -159,42 +160,40 @@ def _test_send_rack(sio, room):
 
 
 def _test_send_recipe(sio):
-    global expected_processed_entities
-    expected_processed_entities = ["recipe"]
-
     recipe_dict = {
         "recipe": {
             "recipe_id": 1,
             "recipe_name": "purp",
-            "power_level": 1000,
-            "red_level": 10,
-            "blue_level": 20,
-            "num_hours": 20000,
+            "recipe_phases": [
+                {
+                    "recipe_id": 1,
+                    "recipe_phase_num": 1,
+                    "num_hours": 10,
+                    "power_level": 9,
+                    "red_level": 8,
+                    "blue_level": 7,
+                },
+            ],
         },
     }
-    sio.emit("message_sent", recipe_dict)
-    sio.sleep(1)
-    get_recipe_sql = "SELECT recipe_id, recipe_name, power_level, red_level, blue_level, num_hours FROM recipes WHERE recipe_id={}".format(
-        recipe_dict["recipe"]["recipe_id"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_recipe_sql)
-        (
-            recipe_id,
-            recipe_name,
-            power_level,
-            red_level,
-            blue_level,
-            num_hours,
-        ) = cursor.fetchone()
-        foundRecipe = Recipe(
-            recipe_id, recipe_name, power_level, red_level, blue_level, num_hours
-        )
-        expected = Recipe.from_json(recipe_dict["recipe"])
-        print("foundRecipe:", foundRecipe, "expected:", expected)
-        assert foundRecipe == expected
 
-        return foundRecipe
+    flag = []
+
+    @sio.on("create_new_recipe_response")
+    def create_new_recipe_response(message) -> None:
+        assert "succeeded" in message
+        assert message["succeeded"]
+
+        flag.append(True)
+
+    sio.emit("create_new_recipe", recipe_dict)
+    wait_for_event(flag, 1, 5, "test_create_recipe_with_phases")
+    print("Created new recipe with phases")
+
+    recipe = Recipe.from_json(recipe_dict["recipe"])
+    recipe_phases = [RecipePhase.from_json(recipe_dict["recipe"]["recipe_phases"][0])]
+
+    return recipe, recipe_phases
 
 
 def _test_send_shelf(sio, rack, recipe):
@@ -272,66 +271,51 @@ def _test_send_plant(sio, shelf):
         return foundPlant
 
 
-def _test_send_room_schedule(sio, room_id):
+def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
+    assert len(recipe_phases) == 1  # only support 1 phase for now
+
+    print("Sending shelf grow")
     start = datetime.now() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
 
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    room_schedule = Schedule.from_json(
+    shelf_grow = Grow.from_json(
         {
             "room_id": room_id,
+            "rack_id": rack_id,
+            "shelf_id": shelf_id,
+            "recipe_id": recipe_phases[0].recipe_id,
+            "recipe_phase_num": recipe_phases[0].recipe_phase_num,
             "start_datetime": start_time,
             "end_datetime": end_time,
-            "power_level": 1,
-            "red_level": 2,
-            "blue_level": 3,
         }
     )
-    print("Created schedule")
-
-    schedule_dict = {"schedule": room_schedule.to_json()}
+    print("created grow")
 
     flag = []
 
-    @sio.on("set_lights_for_room")
-    def set_lights_for_room(message) -> None:
-        assert "schedule" in message
-        room_dict = message["schedule"]
-        if len(flag) == 0:
-            assert room_schedule.room_id == room_dict["room_id"]
-            assert room_schedule.power_level == room_dict["power_level"]
-            assert room_schedule.red_level == room_dict["red_level"]
-            assert room_schedule.blue_level == room_dict["blue_level"]
-        elif len(flag) == 1:
-            assert room_schedule.room_id == room_dict["room_id"]
-            assert room_schedule.power_level == 0
-            assert room_schedule.red_level == 0
-            assert room_schedule.blue_level == 0
-
+    @sio.on("start_grow_for_shelf_succeeded")
+    def start_grow_for_shelf_succeeded(message) -> None:
+        assert "succeeded" in message
+        assert message["succeeded"]
         flag.append(True)
 
-    sio.emit("post_room_schedule", schedule_dict)
-    wait_for_event(flag, 2, 10, "test_post_room_schedule")
+    @sio.on("set_lights_for_grow")
+    def set_lights_for_grow(message) -> None:
+        assert "grow" in message
+        assert "power_level" in message
+        assert "red_level" in message
+        assert "blue_level" in message
+        flag.append(True)
 
-    print("test send room schedule passed")
+    sio.emit("start_grow_for_shelf", {"grow": shelf_grow.to_json()})
+    wait_for_event(flag, 1, 5, "test_start_grow_for_shelf")
 
-    @sio.on("get_current_room_schedules_succeeded")
-    def get_current_room_schedules(message) -> None:
-        assert message["succeeded"]
-        assert "current_room_schedules" in message
+    wait_for_event(flag, 2, 5, "test_set_lights_for_grow_job")
 
-        schedule_json_list = message["current_room_schedules"]
-        schedules = [Schedule.from_json(s) for s in schedule_json_list]
-
-        assert len(schedules) == 1
-        assert room_schedule == schedules[0]
-
-    sio.emit("get_current_room_schedules", {"room": {"room_id": room_id}})
-    wait_for_event(flag, 3, 5, "test_get_room_schedules")
-
-    print("test get room schedules passed")
+    print("test send shelf grow passed")
 
 
 def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
@@ -372,10 +356,12 @@ def _test_create_entities(sio):
 
     rooms = _test_send_room(sio)
     rack = _test_send_rack(sio, rooms[0])
-    recipe = _test_send_recipe(sio)
+    recipe, recipe_phases = _test_send_recipe(sio)
     shelf = _test_send_shelf(sio, rack, recipe)
     _test_send_plant(sio, shelf)
-    _test_send_room_schedule(sio, rooms[0].room_id)
+    _test_send_shelf_grow(
+        sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
+    )
     _test_find_all_entities(sio, rooms, [rack])
     print("create_entities_test passed!")
 

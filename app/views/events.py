@@ -5,14 +5,15 @@ from time import mktime
 
 from typing import List, Optional
 
+from app.models.grow import Grow
+from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
-from app.models.schedule import Schedule
+from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
 
-from app.resources.schedule_jobs import schedule_job_for_room  # type: ignore
+from app.resources.schedule_jobs import schedule_grow_for_shelf  # type: ignore
 
 NAMESPACE = "namespace"
 
@@ -94,80 +95,107 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "message_received", {"processed": entities_processed}
         )
 
-    @socketio.on("post_room_schedule")
-    def post_room_schedule(message) -> None:
+    @socketio.on("start_grow_for_shelf")
+    def create_grow(message) -> None:
+        print("message:", message)
         logging.debug("message sent to post_room_schedule:", message)
-        if "schedule" not in message:
-            send_message_to_namespace_if_specified(
-                socketio, message, "post_room_schedule_succeeded", {"succeeded": False}
-            )
-
-        schedule_json = message["schedule"]
-        app_config.logger.debug(schedule_json)
-        room_id = int(schedule_json["room_id"])
-        start_time = schedule_json["start_datetime"]
-        end_time = schedule_json["end_datetime"]
-        power_level = schedule_json["power_level"]
-        red_level = schedule_json["red_level"]
-        blue_level = schedule_json["blue_level"]
-
-        start_time = parse(start_time).utctimetuple()
-        end_time = parse(end_time).utctimetuple()
-
-        start_datetime = datetime.fromtimestamp(mktime(start_time))
-        end_datetime = datetime.fromtimestamp(mktime(end_time))
-
-        print("start_datetime:", start_datetime)
-
-        app_config.scheduler.add_job(
-            schedule_job_for_room,
-            "date",
-            run_date=start_datetime,
-            args=[socketio, room_id, power_level, red_level, blue_level],
-        )
-        app_config.scheduler.add_job(
-            schedule_job_for_room,
-            "date",
-            run_date=end_datetime,
-            args=[socketio, room_id, 0, 0, 0],
-        )  # assume we turn off the room after the job is done
-        # write room schedule to db
-        app_config.db.write_schedule_for_room(
-            room_id, start_datetime, end_datetime, power_level, red_level, blue_level
-        )
-
-        logging.debug("post_room_schedule succeeded!")
-        send_message_to_namespace_if_specified(
-            socketio, message, "post_room_schedule_succeeded", {"succeeded": True}
-        )
-        print("Room schedule sent successfully, emitting post_room_schedule succeeded")
-
-    @socketio.on("get_current_room_schedules")
-    def get_current_room_schedules(message) -> None:
-        print("get_current_room_schedules called with message:", message)
-        if "room" not in message:
+        if "grow" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
-                "get_current_room_schedules_succeeded",
-                {"succeeded": False},
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "Grow not included"},
             )
-        print("Returned get_current_room_schedules_succeeded")
 
-        room_dict = message["room"]
-        room_id = room_dict["room_id"]
+        grow: Grow = Grow.from_json(message["grow"])
 
-        current_room_schedules: List[
-            Schedule
-        ] = app_config.db.read_current_room_schedules(room_id)
-        schedule_json = [sched.to_json() for sched in current_room_schedules]
+        (
+            power_level,
+            red_level,
+            blue_level,
+        ) = app_config.db.read_lights_from_recipe_phase(
+            grow.recipe_id, grow.recipe_phase_num
+        )
+
+        app_config.scheduler.add_job(
+            schedule_grow_for_shelf,
+            "date",
+            run_date=grow.start_datetime,
+            args=[socketio, grow, power_level, red_level, blue_level],
+        )
+
+        # TODO (lww515): What to do after harvest is finished?
+
+        # write grow to db
+        app_config.db.write_grow(grow)
+
+        logging.debug("start_grow_for_shelf succeeded!")
+        send_message_to_namespace_if_specified(
+            socketio, message, "start_grow_for_shelf_succeeded", {"succeeded": True}
+        )
+        print("Grow started successfully, event emitted")
+
+    @socketio.on("get_current_shelf_grows")
+    def get_current_shelf_grows(message) -> None:
+        print("get_current_shelf_grows called with message:", message)
+        if "shelf" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_current_shelf_schedules_response",
+                {"succeeded": False, "reason": "Shelf ID missing",},
+            )
+        print("Returned get_current_shelf_schedules_succeeded")
+
+        shelf_dict = message["shelf"]
+        shelf_id = shelf_dict["shelf_id"]
+
+        current_grows: List[Grow] = app_config.db.read_current_shelf_grows(shelf_id)
+        shelf_grow_json = [grow.to_json() for grow in current_grows]
         send_message_to_namespace_if_specified(
             socketio,
             message,
-            "get_current_room_schedules_succeeded",
-            {"succeeded": True, "current_room_schedules": schedule_json},
+            "get_current_shelf_schedules_response",
+            {"succeeded": True, "current_shelf_grows": shelf_grow_json},
         )
-        print("Returned get_current_room_schedules_succeeded2")
+        print("Returned get_current_shelf_grows_succeeded2")
+
+    @socketio.on("create_new_recipe")
+    def create_new_recipe(message) -> None:
+        if "recipe" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "create_new_recipe_response",
+                {"succeeded": False, "reason": "no recipe"},
+            )
+        elif "recipe_phases" not in message["recipe"]:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "create_new_recipe_response",
+                {"succeeded": False, "reason": "no recipe phases"},
+            )
+
+        recipe_json = message["recipe"]
+        recipe = Recipe.from_json(recipe_json)
+
+        recipe_phases: List[RecipePhase] = []
+
+        json_recipe_phases = recipe_json["recipe_phases"]
+        for rpl in json_recipe_phases:
+            recipe_phase = RecipePhase.from_json(rpl)
+            recipe_phases.append(recipe_phase)
+
+        app_config.logger.debug(recipe)
+        app_config.logger.debug(recipe_phases)
+
+        print("Saw recipe in message")
+        app_config.db.write_recipe_with_phases(recipe, recipe_phases)
+        print("CREATED RECIPE WITH PHASES")
+        send_message_to_namespace_if_specified(
+            socketio, message, "create_new_recipe_response", {"succeeded": True}
+        )
 
     @socketio.on("read_all_rooms")
     def read_all_rooms(message) -> None:
@@ -228,8 +256,3 @@ def init_event_listeners(app_config, socketio):
         send_message_to_namespace_if_specified(
             socketio, message, "return_room", {"room": room.to_json() if room else None}
         )
-
-    @socketio.on("test_it_out", namespace="/test-namespace")
-    def testing_it_out(message):
-        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOH YEAH")
-        socketio.emit("test", namespace="/test-namespace")
