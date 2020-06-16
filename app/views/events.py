@@ -13,7 +13,7 @@ from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 
-from app.resources.schedule_jobs import schedule_grow_for_shelf # type: ignore
+from app.resources.schedule_jobs import schedule_grow_for_shelf  # type: ignore
 
 NAMESPACE = "namespace"
 
@@ -101,12 +101,21 @@ def init_event_listeners(app_config, socketio):
         logging.debug("message sent to post_room_schedule:", message)
         if "grow" not in message:
             send_message_to_namespace_if_specified(
-                    socketio, message, "start_grow_for_shelf_succeeded", {"succeeded": False, "reason": "Grow not included"}
+                socketio,
+                message,
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "Grow not included"},
             )
 
         grow: Grow = Grow.from_json(message["grow"])
 
-        power_level, red_level, blue_level = app_config.db.read_lights_from_recipe_phase(grow.recipe_id, grow.recipe_phase_num)
+        (
+            power_level,
+            red_level,
+            blue_level,
+        ) = app_config.db.read_lights_from_recipe_phase(
+            grow.recipe_id, grow.recipe_phase_num
+        )
 
         app_config.scheduler.add_job(
             schedule_grow_for_shelf,
@@ -122,7 +131,7 @@ def init_event_listeners(app_config, socketio):
 
         logging.debug("start_grow_for_shelf succeeded!")
         send_message_to_namespace_if_specified(
-                socketio, message, "start_grow_for_shelf_succeeded", {"succeeded": True}
+            socketio, message, "start_grow_for_shelf_succeeded", {"succeeded": True}
         )
         print("Grow started successfully, event emitted")
 
@@ -134,23 +143,19 @@ def init_event_listeners(app_config, socketio):
                 socketio,
                 message,
                 "get_current_shelf_schedules_response",
-                {"succeeded": False,
-                 "reason": "Shelf ID missing",
-                 },
+                {"succeeded": False, "reason": "Shelf ID missing",},
             )
         print("Returned get_current_shelf_schedules_succeeded")
 
         shelf_dict = message["shelf"]
         shelf_id = shelf_dict["shelf_id"]
 
-        current_grows: List[
-            Grow
-        ] = app_config.db.read_current_shelf_grows(shelf_id)
+        current_grows: List[Grow] = app_config.db.read_current_shelf_grows(shelf_id)
         shelf_grow_json = [grow.to_json() for grow in current_grows]
         send_message_to_namespace_if_specified(
             socketio,
             message,
-                "get_current_shelf_schedules_response",
+            "get_current_shelf_schedules_response",
             {"succeeded": True, "current_shelf_grows": shelf_grow_json},
         )
         print("Returned get_current_shelf_grows_succeeded2")
@@ -159,11 +164,17 @@ def init_event_listeners(app_config, socketio):
     def create_new_recipe(message) -> None:
         if "recipe" not in message:
             send_message_to_namespace_if_specified(
-                    socketio, message, "create_new_recipe_response", {"succeeded": False, "reason": "no recipe"}
+                socketio,
+                message,
+                "create_new_recipe_response",
+                {"succeeded": False, "reason": "no recipe"},
             )
         elif "recipe_phases" not in message["recipe"]:
             send_message_to_namespace_if_specified(
-                    socketio, message, "create_new_recipe_response", {"succeeded": False, "reason": "no recipe phases"}
+                socketio,
+                message,
+                "create_new_recipe_response",
+                {"succeeded": False, "reason": "no recipe phases"},
             )
 
         recipe_json = message["recipe"]
@@ -183,9 +194,8 @@ def init_event_listeners(app_config, socketio):
         app_config.db.write_recipe_with_phases(recipe, recipe_phases)
         print("CREATED RECIPE WITH PHASES")
         send_message_to_namespace_if_specified(
-                socketio, message, "create_new_recipe_response", {"succeeded": True}
+            socketio, message, "create_new_recipe_response", {"succeeded": True}
         )
-
 
     @socketio.on("read_all_rooms")
     def read_all_rooms(message) -> None:

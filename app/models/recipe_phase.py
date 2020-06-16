@@ -40,12 +40,7 @@ class RecipePhase:
         blue_level: int = int(recipe_phase_json["blue_level"])
 
         return cls(
-            recipe_id,
-            recipe_phase_num,
-            num_hours,
-            power_level,
-            red_level,
-            blue_level,
+            recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level,
         )
 
     def to_json(self) -> Dict[str, Any]:

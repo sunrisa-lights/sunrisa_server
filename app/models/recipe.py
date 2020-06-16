@@ -5,9 +5,7 @@ import json
 
 class Recipe:
     def __init__(
-        self,
-        recipe_id: int,
-        recipe_name: Optional[str],
+        self, recipe_id: int, recipe_name: Optional[str],
     ):
         self.recipe_id = recipe_id
         self.recipe_name = recipe_name
@@ -24,10 +22,7 @@ class Recipe:
 
     def __str__(self):
         return json.dumps(
-            {
-                "recipe_id": self.recipe_id,
-                "recipe_name": self.recipe_name,
-            }
+            {"recipe_id": self.recipe_id, "recipe_name": self.recipe_name,}
         )
 
     def __eq__(self, other):
@@ -36,6 +31,5 @@ class Recipe:
             return NotImplemented
 
         return (
-            self.recipe_id == other.recipe_id
-            and self.recipe_name == other.recipe_name
+            self.recipe_id == other.recipe_id and self.recipe_name == other.recipe_name
         )

@@ -7,13 +7,9 @@ def test_create_recipe():
     assert recipe.recipe_id == 1
     assert recipe.recipe_name == "Bamboo"
 
+
 def test_create_recipe_from_json():
-    recipe = Recipe.from_json(
-        {
-            "recipe_id": 1,
-            "recipe_name": "purp",
-        }
-    )
+    recipe = Recipe.from_json({"recipe_id": 1, "recipe_name": "purp",})
 
     assert recipe.recipe_id == 1
     assert recipe.recipe_name == "purp"

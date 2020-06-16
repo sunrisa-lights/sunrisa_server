@@ -166,12 +166,13 @@ def _test_send_recipe(sio):
             "recipe_name": "purp",
             "recipe_phases": [
                 {
-                "recipe_id": 1,
-                "recipe_phase_num": 1,
-                "num_hours": 10,
-                "power_level": 9,
-                "red_level": 8,
-                "blue_level": 7,},
+                    "recipe_id": 1,
+                    "recipe_phase_num": 1,
+                    "num_hours": 10,
+                    "power_level": 9,
+                    "red_level": 8,
+                    "blue_level": 7,
+                },
             ],
         },
     }
@@ -271,7 +272,7 @@ def _test_send_plant(sio, shelf):
 
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
-    assert len(recipe_phases) == 1 # only support 1 phase for now
+    assert len(recipe_phases) == 1  # only support 1 phase for now
 
     print("Sending shelf grow")
     start = datetime.now() + timedelta(0, 3)  # 3 seconds from now
@@ -358,7 +359,9 @@ def _test_create_entities(sio):
     recipe, recipe_phases = _test_send_recipe(sio)
     shelf = _test_send_shelf(sio, rack, recipe)
     _test_send_plant(sio, shelf)
-    _test_send_shelf_grow(sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases)
+    _test_send_shelf_grow(
+        sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
+    )
     _test_find_all_entities(sio, rooms, [rack])
     print("create_entities_test passed!")
 

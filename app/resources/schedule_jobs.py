@@ -4,7 +4,7 @@ from app.models.grow import Grow
 
 
 def schedule_grow_for_shelf(
-        socketio, grow: Grow, power_level: int, red_level: int, blue_level: int
+    socketio, grow: Grow, power_level: int, red_level: int, blue_level: int
 ) -> None:
     shelf_grow_dict = {
         "grow": grow.to_json(),

@@ -10,7 +10,12 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.db.grow import read_current_grows, read_shelf_current_grows, create_grow_table, write_grow
+from app.db.grow import (
+    read_current_grows,
+    read_shelf_current_grows,
+    create_grow_table,
+    write_grow,
+)
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
 from app.db.rack import create_rack_table, write_rack, read_racks_in_room
@@ -102,10 +107,14 @@ class DB:
             db_conn.close()
         return current_grows
 
-    def read_lights_from_recipe_phase(self, recipe_id: int, recipe_phase_num: int) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+    def read_lights_from_recipe_phase(
+        self, recipe_id: int, recipe_phase_num: int
+    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
         db_conn = self._new_connection(self.db_name)
         try:
-            power_level, red_level, blue_level = read_lights_from_recipe_phase(db_conn, recipe_id, recipe_phase_num)
+            power_level, red_level, blue_level = read_lights_from_recipe_phase(
+                db_conn, recipe_id, recipe_phase_num
+            )
         finally:
             db_conn.close()
         return power_level, red_level, blue_level
@@ -139,7 +148,9 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_recipe_with_phases(self, recipe: Recipe, recipe_phases: List[RecipePhase]) -> None:
+    def write_recipe_with_phases(
+        self, recipe: Recipe, recipe_phases: List[RecipePhase]
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             write_recipe(db_conn, recipe)

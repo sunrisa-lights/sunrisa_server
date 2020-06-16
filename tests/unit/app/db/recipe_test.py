@@ -7,12 +7,7 @@ from app.db.recipe import create_recipe_table, write_recipe
 
 @pytest.fixture
 def mock_recipe():
-    return Recipe.from_json(
-        {
-            "recipe_id": 1,
-            "recipe_name": "purp",
-        }
-    )
+    return Recipe.from_json({"recipe_id": 1, "recipe_name": "purp",})
 
 
 def test_write_recipe(mock_recipe):
