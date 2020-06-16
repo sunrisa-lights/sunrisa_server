@@ -1,7 +1,7 @@
 import pymysql
 
 from typing import List
-from typing import Optional
+from typing import Optional, Tuple
 
 from app.models.grow import Grow
 from app.models.plant import Plant
@@ -102,7 +102,7 @@ class DB:
             db_conn.close()
         return current_grows
 
-    def read_lights_from_recipe_phase(self, recipe_id: int, recipe_phase_num: int) -> (Optional[int], Optional[int], Optional[int]):
+    def read_lights_from_recipe_phase(self, recipe_id: int, recipe_phase_num: int) -> Tuple[Optional[int], Optional[int], Optional[int]]:
         db_conn = self._new_connection(self.db_name)
         try:
             power_level, red_level, blue_level = read_lights_from_recipe_phase(db_conn, recipe_id, recipe_phase_num)
@@ -158,28 +158,5 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_plant(db_conn, plant)
-        finally:
-            db_conn.close()
-
-    def write_schedule_for_shelf(
-        self,
-        shelf_id: int,
-        start_time: str,
-        end_time: str,
-        power_level: int,
-        red_level: int,
-        blue_level: int,
-    ) -> None:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            write_schedule_for_shelf(
-                db_conn,
-                shelf_id,
-                start_time,
-                end_time,
-                power_level,
-                red_level,
-                blue_level,
-            )
         finally:
             db_conn.close()

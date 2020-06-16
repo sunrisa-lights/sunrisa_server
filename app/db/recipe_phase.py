@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.recipe_phase import RecipePhase
 
@@ -8,9 +8,8 @@ def write_recipe_phases(
     conn,
     recipe_phases: List[RecipePhase]
 ) -> None:
-    
-    recipe_phase_sql_args = ()
-    value_list = []
+    recipe_phase_sql_args: Tuple[int, ...] = ()
+    value_list: List[str] = []
     for rp in recipe_phases:
         recipe_phase_sql_args += (rp.recipe_id, rp.recipe_phase_num, rp.num_hours, rp.power_level, rp.red_level, rp.blue_level)
         value_list.append("(%s, %s, %s, %s, %s, %s)")
@@ -23,7 +22,7 @@ def write_recipe_phases(
     )
     cursor.close()
 
-def read_lights_from_recipe_phase(conn, recipe_id, recipe_phase_num) -> (Optional[int], Optional[int], Optional[int]):
+def read_lights_from_recipe_phase(conn, recipe_id, recipe_phase_num) -> Tuple[Optional[int], Optional[int], Optional[int]]:
     sql = "SELECT power_level, red_level, blue_level FROM `recipe_phases` WHERE recipe_id=%s AND recipe_phase_num=%s"
     cursor = conn.cursor()
     with conn.cursor() as cursor:
