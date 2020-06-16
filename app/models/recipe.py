@@ -7,7 +7,7 @@ class Recipe:
     def __init__(
         self,
         recipe_id: int,
-        recipe_name: str,
+        recipe_name: Optional[str],
     ):
         self.recipe_id = recipe_id
         self.recipe_name = recipe_name

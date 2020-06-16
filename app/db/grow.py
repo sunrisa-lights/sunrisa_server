@@ -40,8 +40,8 @@ def read_shelf_current_grows(conn, shelf_id) -> List[Grow]:
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_shelf_grows: List[Grow] = [
-            Grow(sid, rid, rpn, sd, ed)
-            for (sid, rid, rpn, sd, ed) in all_grows
+            Grow(room_id, rack_id, sid, rid, rpn, sd, ed)
+            for (room_id, rack_id, sid, rid, rpn, sd, ed) in all_grows
         ]
 
         cursor.close()
