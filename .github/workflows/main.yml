@@ -62,8 +62,8 @@ jobs:
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
       run: |
-        ./venv/bin/python sunrisa.py &
-        echo "Sleeping 10 seconds before starting integration test"
-        sleep 10
+        nohup ./venv/bin/python sunrisa.py > integration_test.log &
+        echo "Sleeping 5 seconds before starting integration test"
+        sleep 5
         ./integration_venv/bin/pytest tests/integration/sunrisa_integration.py
 
