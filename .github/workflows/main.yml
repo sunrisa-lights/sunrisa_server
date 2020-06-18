@@ -58,7 +58,6 @@ jobs:
       run: |
         sudo systemctl start mysql
 
-
     # Runs pytest on the tests/integration directory
     - name: Run integration tests
       run: |

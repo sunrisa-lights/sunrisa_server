@@ -19,26 +19,28 @@ from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
-# standard Python
-sio = socketio.Client()
-sio.connect("http://localhost:5000")
-# sio.connect("https://sunrisalights.com")
-
 expected_processed_entities = None
 
-logging.basicConfig(filename="error.log", level=logging.DEBUG)
+logging.basicConfig(filename="integration_error.log", level=logging.DEBUG)
 db_name = "sunrisa_test"
 db = DB(db_name, logging)
 
 
+def kill_server_on_assert_failure(sio, condition, assert_arg=''):
+    if not condition:
+        sio.disconnect()
+
+    assert condition, assert_arg
+
 # flag should be an empty list that is populated and has a certain length
-def wait_for_event(flag, length_condition, num_seconds, test_name):
+def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
     seconds_counter = 0
     while len(flag) != length_condition and seconds_counter < num_seconds:
         time.sleep(1)
         seconds_counter += 1
 
-    assert flag, "Timed out waiting for event for test {}".format(test_name)
+    if not flag:
+        kill_server_on_assert_failure(sio, False, "Timed out waiting for event for test {}".format(test_name))
 
 
 def _test_send_room(sio):
@@ -67,7 +69,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(flag, 1, 5, "test_send_room.create_room")
+    wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
 
     print("first room found and returned")
 
@@ -77,7 +79,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(flag, 2, 5, "test_send_room.update_room")
+    wait_for_event(sio, flag, 2, 5, "test_send_room.update_room")
 
     print("second room read and updated")
 
@@ -103,7 +105,7 @@ def _test_send_room(sio):
         assert room_map[second_id] == Room.from_json(room_dict2["room"])
 
     sio.emit("read_all_rooms", {})
-    wait_for_event(rooms, 2, 5, "test_send_room.read_rooms")
+    wait_for_event(sio, rooms, 2, 5, "test_send_room.read_rooms")
     print("read all rooms")
 
     return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2["room"])]
@@ -142,7 +144,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
+    wait_for_event(sio, flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
 
     print("first rack found and returned")
 
@@ -152,7 +154,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
+    wait_for_event(sio, flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
 
     print("second rack found and returned")
 
@@ -187,7 +189,7 @@ def _test_send_recipe(sio):
         flag.append(True)
 
     sio.emit("create_new_recipe", recipe_dict)
-    wait_for_event(flag, 1, 5, "test_create_recipe_with_phases")
+    wait_for_event(sio, flag, 1, 5, "test_create_recipe_with_phases")
     print("Created new recipe with phases")
 
     recipe = Recipe.from_json(recipe_dict["recipe"])
@@ -311,9 +313,9 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         flag.append(True)
 
     sio.emit("start_grow_for_shelf", {"grow": shelf_grow.to_json()})
-    wait_for_event(flag, 1, 5, "test_start_grow_for_shelf")
+    wait_for_event(sio, flag, 1, 5, "test_start_grow_for_shelf")
 
-    wait_for_event(flag, 2, 5, "test_set_lights_for_grow_job")
+    wait_for_event(sio, flag, 2, 5, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
 
@@ -345,7 +347,7 @@ def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
         flag.append(True)
 
     sio.emit("read_all_entities", {})
-    wait_for_event(flag, 1, 5, "test_find_all_entities")
+    wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
 
 
@@ -378,7 +380,7 @@ def _test_room_not_found(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(flag, 1, 5, "test_room_not_found")
+    wait_for_event(sio, flag, 1, 5, "test_room_not_found")
 
     print("room not found test passed!")
 
@@ -396,7 +398,7 @@ def _test_racks_not_found_in_room(sio):
 
     sio.emit("read_all_racks_in_room", room_dict)
 
-    wait_for_event(flag, 1, 5, "test_racks_not_found_in_room")
+    wait_for_event(sio, flag, 1, 5, "test_racks_not_found_in_room")
 
     print("racks not found in room test passed!")
 
