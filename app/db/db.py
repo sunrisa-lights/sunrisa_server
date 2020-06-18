@@ -71,6 +71,8 @@ class DB:
             create_plant_table(db_conn)
             create_recipe_phases_table(db_conn)
             create_grow_table(db_conn)
+        except Exception as e:
+            print("Error initializing tables", e)
         finally:
             db_conn.close()
 
