@@ -73,6 +73,7 @@ class DB:
             create_grow_table(db_conn)
         except Exception as e:
             print("Error initializing tables", e)
+            raise
         finally:
             db_conn.close()
 
