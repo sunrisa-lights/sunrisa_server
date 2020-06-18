@@ -19,14 +19,9 @@ from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.plant import Plant
 
-# standard Python
-sio = socketio.Client()
-sio.connect("http://localhost:5000")
-# sio.connect("https://sunrisalights.com")
-
 expected_processed_entities = None
 
-logging.basicConfig(filename="error.log", level=logging.DEBUG)
+logging.basicConfig(filename="integration_error.log", level=logging.DEBUG)
 db_name = "sunrisa_test"
 db = DB(db_name, logging)
 
