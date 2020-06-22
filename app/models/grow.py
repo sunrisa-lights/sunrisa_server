@@ -95,6 +95,9 @@ class Grow:
             }
         )
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __eq__(self, other):
         if not isinstance(other, Grow):
             # don't attempt to compare against unrelated types

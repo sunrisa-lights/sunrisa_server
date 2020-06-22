@@ -1,3 +1,4 @@
+import collections
 import socketio
 import pymysql.cursors
 import logging
@@ -206,12 +207,11 @@ def _test_send_shelf(sio, rack, recipe):
         "shelf": {
             "shelf_id": 1,
             "rack_id": rack.rack_id,
-            "recipe_id": recipe.recipe_id,
         },
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
-    get_shelf_sql = "SELECT shelf_id, rack_id, recipe_id, power_level, red_level, blue_level FROM shelves WHERE shelf_id={}".format(
+    get_shelf_sql = "SELECT shelf_id, rack_id FROM shelves WHERE shelf_id={}".format(
         shelf_dict["shelf"]["shelf_id"]
     )
     with db._new_connection(db_name) as cursor:
@@ -219,13 +219,9 @@ def _test_send_shelf(sio, rack, recipe):
         (
             shelf_id,
             rack_id,
-            recipe_id,
-            power_level,
-            red_level,
-            blue_level,
         ) = cursor.fetchone()
         foundShelf = Shelf(
-            shelf_id, rack_id, recipe_id, power_level, red_level, blue_level
+            shelf_id, rack_id,
         )
         expected = Shelf.from_json(shelf_dict["shelf"])
         print("foundShelf:", foundShelf, "expected:", expected)
@@ -318,36 +314,35 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     wait_for_event(sio, flag, 2, 5, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
+    return shelf_grow
 
 
-def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack]):
-    entities = []
-    for room in rooms:
-        room_json = room.to_json()
-        racks_json = [rack.to_json() for rack in racks if rack.room_id == room.room_id]
-        room_json["racks"] = racks_json
-        entities.append(room_json)
-
-    def ordered(obj):
-        if isinstance(obj, dict):
-            return sorted((k, ordered(v)) for k, v in obj.items())
-        elif isinstance(obj, list):
-            return sorted(ordered(x) for x in obj)
-        else:
-            return obj
-
+def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]):
     flag = []
 
     @sio.on("return_all_entities")
     def return_all_entities_listener(message) -> None:
-        print("Received message in entities_listener:", message, "expected:", entities)
+        print("Received message in entities_listener:", message)
         assert "rooms" in message
-        assert ordered(message["rooms"]) == ordered(entities)
+        assert "racks" in message
+        assert "shelves" in message
+        assert "grows" in message
+
+        found_rooms = [Room.from_json(r) for r in message["rooms"]]
+        found_racks = [Rack.from_json(r) for r in message["racks"]]
+        found_shelves = [Shelf.from_json(s) for s in message["shelves"]]
+        found_grows = [Grow.from_json(g) for g in message["grows"]]
+
+        assert collections.Counter(found_rooms) == collections.Counter(rooms)
+        assert collections.Counter(found_racks) == collections.Counter(racks)
+        assert collections.Counter(found_shelves) == collections.Counter(shelves)
+        assert collections.Counter(found_grows) == collections.Counter(grows)
 
         flag.append(True)
 
     sio.emit("read_all_entities", {})
-    wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
+    print("WAITING FOR IT!")
+    wait_for_event(sio, flag, 1, 10, "test_find_all_entities")
     print("all entities found")
 
 
@@ -361,10 +356,10 @@ def _test_create_entities(sio):
     recipe, recipe_phases = _test_send_recipe(sio)
     shelf = _test_send_shelf(sio, rack, recipe)
     _test_send_plant(sio, shelf)
-    _test_send_shelf_grow(
+    grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
-    _test_find_all_entities(sio, rooms, [rack])
+    _test_find_all_entities(sio, rooms, [rack], [shelf], [grow])
     print("create_entities_test passed!")
 
 

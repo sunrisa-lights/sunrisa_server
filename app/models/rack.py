@@ -20,7 +20,7 @@ class Rack:
     @classmethod
     def from_json(cls, rack_json: Dict[Any, Any]):
         if not "rack_id" in rack_json or not "room_id" in rack_json:
-            raise Exception("Invalid")
+            raise Exception("Invalid rack")
 
         rack_id: int = int(rack_json["rack_id"])
         room_id: int = rack_json["room_id"]
@@ -48,6 +48,9 @@ class Rack:
                 "is_connected": self.is_connected,
             }
         )
+
+    def __hash__(self):
+        return hash(str(self))
 
     def __eq__(self, other):
         if not isinstance(other, Rack):

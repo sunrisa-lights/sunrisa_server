@@ -229,19 +229,22 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("read_all_entities")
     def read_all_entities(message) -> None:
         print("read_all_entities event emitted")
-        all_entities = []
         all_rooms = app_config.db.read_all_rooms()
-        for room in all_rooms:
-            racks = app_config.db.read_racks_in_room(room.room_id)
-            all_racks_in_room = [rack.to_json() for rack in racks]
-            room_json = room.to_json()
-            room_json["racks"] = all_racks_in_room
-            all_entities.append(room_json)
+        all_racks = app_config.db.read_all_racks()
+        all_shelves = app_config.db.read_all_shelves()
+        all_current_grows = app_config.db.read_current_grows()
 
-        app_config.logger.debug("returning entities: {}".format(all_entities))
-        print("Returning entities:", all_entities)
+        entities_dict = {
+            "rooms": [rm.to_json() for rm in all_rooms],
+            "racks": [rck.to_json() for rck in all_racks],
+            "shelves": [s.to_json() for s in all_shelves],
+            "grows": [g.to_json() for g in all_current_grows],
+        }
+
+        app_config.logger.debug("returning entities: {}".format(entities_dict))
+        print("Returning entities:", entities_dict)
         send_message_to_namespace_if_specified(
-            socketio, message, "return_all_entities", {"rooms": all_entities}
+            socketio, message, "return_all_entities", entities_dict
         )
 
     @socketio.on("read_room")

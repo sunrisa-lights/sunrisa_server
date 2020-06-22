@@ -1,62 +1,52 @@
-from typing import Tuple
+from typing import List, Tuple
 from app.models.shelf import Shelf
 
 
 def write_shelf(conn, shelf: Shelf):
     shelf_id = shelf.shelf_id
     rack_id = shelf.rack_id
-    recipe_id = shelf.recipe_id
-    power_level = shelf.power_level
-    red_level = shelf.red_level
-    blue_level = shelf.blue_level
 
-    print("RECIPE_ID:", recipe_id)
-    set_values = (shelf_id, rack_id, recipe_id, power_level, red_level, blue_level)
+    set_values = (shelf_id, rack_id, rack_id)
 
-    update_strings = ["rack_id=%s"]
-    update_values: Tuple[int, ...] = (rack_id,)
-
-    if recipe_id is not None:
-        update_strings.append("recipe_id=%s")
-        update_values += (recipe_id,)
-
-    if power_level is not None:
-        update_strings.append("power_level=%s")
-        update_values += (power_level,)
-
-    if red_level is not None:
-        update_strings.append("red_level=%s")
-        update_values += (red_level,)
-
-    if blue_level is not None:
-        update_strings.append("blue_level=%s")
-        update_values += (blue_level,)
-
-    sql = "INSERT INTO `shelves` VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE {}".format(
-        ", ".join(update_strings)
-    )
+    sql = "INSERT INTO `shelves` VALUES (%s, %s) ON DUPLICATE KEY UPDATE rack_id=%s"
     cursor = conn.cursor()
-    cursor.execute(sql, set_values + update_values)
+    cursor.execute(sql, set_values)
     cursor.close()
 
     print("WROTE SHELF", shelf)
 
+def read_all_shelves(conn) -> List[Shelf]:
+    sql = "SELECT shelf_id, rack_id FROM shelves"
+    with conn.cursor() as cursor:
+        cursor.execute(sql)
+        all_shelves = cursor.fetchall()
+        shelves = [
+            Shelf(shelf_id, rack_id)
+            for (shelf_id, rack_id) in all_shelves
+        ]
+        cursor.close()
+        return shelves
+
+def read_shelves_in_rack(conn, rack_id: int) -> List[Shelf]:
+    sql = "SELECT shelf_id, rack_id FROM shelves WHERE rack_id=%s"
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (rack_id))
+        all_shelves = cursor.fetchall()
+        shelves = [
+            Shelf(shelf_id, rack_id)
+            for (shelf_id, rack_id) in all_shelves
+        ]
+        cursor.close()
+        return shelves
 
 def create_shelf_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS shelves(
     shelf_id INT NOT NULL,
     rack_id INT NOT NULL,
-    recipe_id INT,
-    power_level INT,
-    red_level INT,
-    blue_level INT,
     PRIMARY KEY (shelf_id),
     CONSTRAINT fk_rack
     FOREIGN KEY (rack_id)
-        REFERENCES racks(rack_id),
-    CONSTRAINT fk_recipe
-    FOREIGN KEY (recipe_id)
-        REFERENCES recipes(recipe_id)
+        REFERENCES racks(rack_id)
     );
     """
     cursor = conn.cursor()

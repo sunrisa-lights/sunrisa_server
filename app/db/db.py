@@ -18,14 +18,14 @@ from app.db.grow import (
 )
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
-from app.db.rack import create_rack_table, write_rack, read_racks_in_room
+from app.db.rack import create_rack_table, write_rack, read_all_racks, read_racks_in_room
 from app.db.recipe import create_recipe_table, write_recipe
 from app.db.recipe_phase import (
     create_recipe_phases_table,
     read_lights_from_recipe_phase,
     write_recipe_phases,
 )
-from app.db.shelf import create_shelf_table, write_shelf
+from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
 
 
 class DB:
@@ -77,6 +77,15 @@ class DB:
         finally:
             db_conn.close()
 
+    def read_all_racks(self) -> List[Rack]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            racks = read_all_racks(db_conn)
+        finally:
+            db_conn.close()
+
+        return racks
+
     def read_all_rooms(self) -> List[Room]:
         db_conn = self._new_connection(self.db_name)
         try:
@@ -85,6 +94,15 @@ class DB:
             db_conn.close()
 
         return rooms
+    
+    def read_all_shelves(self) -> List[Shelf]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            shelves = read_all_shelves(db_conn)
+        finally:
+            db_conn.close()
+
+        return shelves
 
     def read_room(self, room_id: int) -> Optional[Room]:
         db_conn = self._new_connection(self.db_name)
