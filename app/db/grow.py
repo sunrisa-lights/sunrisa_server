@@ -23,7 +23,7 @@ def write_grow(conn, grow: Grow) -> None:
 
 
 def read_current_grows(conn) -> List[Grow]:
-    sql = "SELECT room_id, rack_id, shelf_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grows WHERE end_time > %s"
+    sql = "SELECT room_id, rack_id, shelf_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grows WHERE end_datetime > %s"
 
     utc_now = datetime.utcnow()
     with conn.cursor() as cursor:
@@ -40,7 +40,7 @@ def read_current_grows(conn) -> List[Grow]:
 
 
 def read_shelf_current_grows(conn, shelf_id) -> List[Grow]:
-    sql = "SELECT room_id, rack_id, shelf_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grows WHERE shelf_id=%s AND end_time > %s"
+    sql = "SELECT room_id, rack_id, shelf_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grows WHERE shelf_id=%s AND end_datetime > %s"
 
     utc_now = datetime.utcnow()
     with conn.cursor() as cursor:

@@ -66,3 +66,9 @@ jobs:
         sleep 5
         ./integration_venv/bin/pytest tests/integration/sunrisa_integration.py
 
+    - name: Print integration test logs if job failed
+      if: ${{ failure() }}
+      run: |
+        echo "===================================================="
+        cat integration_test.log
+

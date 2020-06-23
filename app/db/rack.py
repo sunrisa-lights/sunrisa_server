@@ -37,6 +37,17 @@ def write_rack(conn, rack: Rack) -> None:
 
     print("WROTE RACK", rack)
 
+def read_all_racks(conn) -> List[Rack]:
+    sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks"
+    with conn.cursor() as cursor:
+        cursor.execute(sql)
+        all_racks = cursor.fetchall()
+        racks = [
+            Rack(rack_id, room_id, voltage, bool(is_on), bool(is_connected))
+            for (rack_id, room_id, voltage, is_on, is_connected) in all_racks
+        ]
+        cursor.close()
+        return racks
 
 def read_racks_in_room(conn, room_id: int) -> List[Rack]:
     sql = "SELECT rack_id, room_id, voltage, is_on, is_connected FROM racks WHERE room_id=%s"

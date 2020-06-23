@@ -41,6 +41,9 @@ class Room:
             }
         )
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __eq__(self, other):
         if not isinstance(other, Room):
             # don't attempt to compare against unrelated types
