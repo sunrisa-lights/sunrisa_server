@@ -171,6 +171,14 @@ def _test_send_recipe(sio):
                     "red_level": 8,
                     "blue_level": 7,
                 },
+                {
+                    "recipe_id": 1,
+                    "recipe_phase_num": 2,
+                    "num_hours": 69,
+                    "power_level": 69,
+                    "red_level": 68,
+                    "blue_level": 67,
+                },
             ],
         },
     }
@@ -268,18 +276,21 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grow = Grow.from_json(
-        {
-            "room_id": room_id,
-            "rack_id": rack_id,
-            "shelf_id": shelf_id,
-            "recipe_id": recipe_phases[0].recipe_id,
-            "recipe_phase_num": recipe_phases[0].recipe_phase_num,
-            "start_datetime": start_time,
-            "end_datetime": end_time,
-        }
-    )
-    print("created grow")
+    shelf_grows = []
+    for rp in recipe_phases:
+
+        shelf_grow = Grow.from_json(
+            {
+                "room_id": room_id,
+                "rack_id": rack_id,
+                "shelf_id": shelf_id,
+                "recipe_id": rp.recipe_id,
+                "recipe_phase_num": rp.recipe_phase_num,
+                "start_datetime": start_time,
+                "end_datetime": end_time,
+            }
+        )
+        shelf_grows.append(shelf_grow)
 
     flag = []
 
@@ -297,10 +308,11 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         assert "blue_level" in message
         flag.append(True)
 
-    sio.emit("start_grows_for_shelves", {"grows": [shelf_grow.to_json()]})
+    sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows]})
     wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
 
-    wait_for_event(sio, flag, 2, 5, "test_set_lights_for_grow_job")
+    for i in range(len(shelf_grows)):
+        wait_for_event(sio, flag, i + 2, 5, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
     return shelf_grow
