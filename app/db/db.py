@@ -15,6 +15,7 @@ from app.db.grow import (
     read_shelf_current_grows,
     create_grow_table,
     write_grow,
+    write_grows,
 )
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
@@ -152,6 +153,13 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_grow(db_conn, grow)
+        finally:
+            db_conn.close()
+
+    def write_grows(self, grows: List[Grow]) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            write_grows(db_conn, grows)
         finally:
             db_conn.close()
 

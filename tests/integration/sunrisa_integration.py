@@ -283,8 +283,8 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
 
     flag = []
 
-    @sio.on("start_grow_for_shelf_succeeded")
-    def start_grow_for_shelf_succeeded(message) -> None:
+    @sio.on("start_grows_for_shelves_succeeded")
+    def start_grows_for_shelves_succeeded(message) -> None:
         assert "succeeded" in message
         assert message["succeeded"]
         flag.append(True)
@@ -297,8 +297,8 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         assert "blue_level" in message
         flag.append(True)
 
-    sio.emit("start_grow_for_shelf", {"grow": shelf_grow.to_json()})
-    wait_for_event(sio, flag, 1, 5, "test_start_grow_for_shelf")
+    sio.emit("start_grows_for_shelves", {"grows": [shelf_grow.to_json()]})
+    wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
 
     wait_for_event(sio, flag, 2, 5, "test_set_lights_for_grow_job")
 

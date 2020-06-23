@@ -21,6 +21,26 @@ def write_grow(conn, grow: Grow) -> None:
     )
     cursor.close()
 
+def write_grows(conn, grows: List[Grow]) -> None:
+    grow_sql_args: Tuple[int, ...] = ()
+    value_list: List[str] = []
+    for g in grows:
+        grow_sql_args += (
+            g.room_id,
+            g.rack_id,
+            g.shelf_id,
+            g.recipe_id,
+            g.recipe_phase_num,
+            g.start_datetime,
+            g.end_datetime,
+        )
+        value_list.append("(%s, %s, %s, %s, %s, %s, %s)")
+
+    sql = "INSERT INTO `grows` VALUES {}".format(", ".join(value_list))
+    cursor = conn.cursor()
+    cursor.execute(sql, grow_sql_args)
+    cursor.close()
+
 
 def read_current_grows(conn) -> List[Grow]:
     sql = "SELECT room_id, rack_id, shelf_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grows WHERE end_datetime > %s"
