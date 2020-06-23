@@ -45,14 +45,12 @@ def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
 
 
 def _test_send_room(sio):
-    global expected_processed_entities
-    expected_processed_entities = ["room"]
-
     # send initial room update
     room_dict = {
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
     sio.emit("message_sent", room_dict)
+    sio.sleep(5)
 
     flag = []
 

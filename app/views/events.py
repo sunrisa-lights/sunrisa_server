@@ -250,10 +250,12 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("read_room")
     def read_room(message) -> None:
         room: Optional[Room] = None
+        print("message:", message)
         if "room" in message:
             room_id = message["room"]["room_id"]
             # room is None if not found
             room = app_config.db.read_room(room_id)
+            print("Queried for room:", room)
 
         print("found_room:", room)
         send_message_to_namespace_if_specified(
