@@ -50,7 +50,7 @@ def _test_send_room(sio):
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
     sio.emit("message_sent", room_dict)
-    sio.sleep(5)
+    sio.sleep(1)
 
     flag = []
 
@@ -396,7 +396,7 @@ def _test_racks_not_found_in_room(sio):
 
 
 def _test_entities_not_found(sio):
-    sio.sleep(5)
+    sio.sleep(1)
     _test_room_not_found(sio)
     _test_racks_not_found_in_room(sio)
     print("entities_not_found_test passed!")
