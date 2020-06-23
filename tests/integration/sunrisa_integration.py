@@ -27,11 +27,12 @@ db_name = "sunrisa_test"
 db = DB(db_name, logging)
 
 
-def kill_server_on_assert_failure(sio, condition, assert_arg=''):
+def kill_server_on_assert_failure(sio, condition, assert_arg=""):
     if not condition:
         sio.disconnect()
 
     assert condition, assert_arg
+
 
 # flag should be an empty list that is populated and has a certain length
 def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
@@ -41,7 +42,9 @@ def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
         seconds_counter += 1
 
     if not flag:
-        kill_server_on_assert_failure(sio, False, "Timed out waiting for event for test {}".format(test_name))
+        kill_server_on_assert_failure(
+            sio, False, "Timed out waiting for event for test {}".format(test_name)
+        )
 
 
 def _test_send_room(sio):
@@ -50,7 +53,7 @@ def _test_send_room(sio):
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
     sio.emit("message_sent", room_dict)
-    sio.sleep(5)
+    sio.sleep(1)
 
     flag = []
 
@@ -171,6 +174,14 @@ def _test_send_recipe(sio):
                     "red_level": 8,
                     "blue_level": 7,
                 },
+                {
+                    "recipe_id": 1,
+                    "recipe_phase_num": 2,
+                    "num_hours": 69,
+                    "power_level": 69,
+                    "red_level": 68,
+                    "blue_level": 67,
+                },
             ],
         },
     }
@@ -196,10 +207,7 @@ def _test_send_recipe(sio):
 
 def _test_send_shelf(sio, rack, recipe):
     shelf_dict = {
-        "shelf": {
-            "shelf_id": 1,
-            "rack_id": rack.rack_id,
-        },
+        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id,},
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
@@ -208,13 +216,8 @@ def _test_send_shelf(sio, rack, recipe):
     )
     with db._new_connection(db_name) as cursor:
         cursor.execute(get_shelf_sql)
-        (
-            shelf_id,
-            rack_id,
-        ) = cursor.fetchone()
-        foundShelf = Shelf(
-            shelf_id, rack_id,
-        )
+        (shelf_id, rack_id,) = cursor.fetchone()
+        foundShelf = Shelf(shelf_id, rack_id,)
         expected = Shelf.from_json(shelf_dict["shelf"])
         print("foundShelf:", foundShelf, "expected:", expected)
         assert foundShelf == expected
@@ -268,23 +271,26 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grow = Grow.from_json(
-        {
-            "room_id": room_id,
-            "rack_id": rack_id,
-            "shelf_id": shelf_id,
-            "recipe_id": recipe_phases[0].recipe_id,
-            "recipe_phase_num": recipe_phases[0].recipe_phase_num,
-            "start_datetime": start_time,
-            "end_datetime": end_time,
-        }
-    )
-    print("created grow")
+    shelf_grows = []
+    for rp in recipe_phases:
+
+        shelf_grow = Grow.from_json(
+            {
+                "room_id": room_id,
+                "rack_id": rack_id,
+                "shelf_id": shelf_id,
+                "recipe_id": rp.recipe_id,
+                "recipe_phase_num": rp.recipe_phase_num,
+                "start_datetime": start_time,
+                "end_datetime": end_time,
+            }
+        )
+        shelf_grows.append(shelf_grow)
 
     flag = []
 
-    @sio.on("start_grow_for_shelf_succeeded")
-    def start_grow_for_shelf_succeeded(message) -> None:
+    @sio.on("start_grows_for_shelves_succeeded")
+    def start_grows_for_shelves_succeeded(message) -> None:
         assert "succeeded" in message
         assert message["succeeded"]
         flag.append(True)
@@ -297,16 +303,19 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         assert "blue_level" in message
         flag.append(True)
 
-    sio.emit("start_grow_for_shelf", {"grow": shelf_grow.to_json()})
-    wait_for_event(sio, flag, 1, 5, "test_start_grow_for_shelf")
+    sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows]})
+    wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
 
-    wait_for_event(sio, flag, 2, 5, "test_set_lights_for_grow_job")
+    for i in range(len(shelf_grows)):
+        wait_for_event(sio, flag, i + 2, 5, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
     return shelf_grow
 
 
-def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]):
+def _test_find_all_entities(
+    sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]
+):
     flag = []
 
     @sio.on("return_all_entities")
@@ -384,7 +393,7 @@ def _test_racks_not_found_in_room(sio):
 
 
 def _test_entities_not_found(sio):
-    sio.sleep(5)
+    sio.sleep(1)
     _test_room_not_found(sio)
     _test_racks_not_found_in_room(sio)
     print("entities_not_found_test passed!")

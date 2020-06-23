@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from app.models.grow import Grow
 
@@ -19,6 +19,27 @@ def write_grow(conn, grow: Grow) -> None:
             grow.end_datetime,
         ),
     )
+    cursor.close()
+
+
+def write_grows(conn, grows: List[Grow]) -> None:
+    grow_sql_args: Tuple[int, ...] = ()
+    value_list: List[str] = []
+    for g in grows:
+        grow_sql_args += (
+            g.room_id,
+            g.rack_id,
+            g.shelf_id,
+            g.recipe_id,
+            g.recipe_phase_num,
+            g.start_datetime,
+            g.end_datetime,
+        )
+        value_list.append("(%s, %s, %s, %s, %s, %s, %s)")
+
+    sql = "INSERT INTO `grows` VALUES {}".format(", ".join(value_list))
+    cursor = conn.cursor()
+    cursor.execute(sql, grow_sql_args)
     cursor.close()
 
 

@@ -95,11 +95,11 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "message_received", {"processed": entities_processed}
         )
 
-    @socketio.on("start_grow_for_shelf")
-    def create_grow(message) -> None:
+    @socketio.on("start_grows_for_shelves")
+    def start_grows_for_shelves(message) -> None:
         print("message:", message)
         logging.debug("message sent to post_room_schedule:", message)
-        if "grow" not in message:
+        if "grows" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -107,31 +107,32 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Grow not included"},
             )
 
-        grow: Grow = Grow.from_json(message["grow"])
+        grows: List[Grow] = [Grow.from_json(g) for g in message["grows"]]
 
-        (
-            power_level,
-            red_level,
-            blue_level,
-        ) = app_config.db.read_lights_from_recipe_phase(
-            grow.recipe_id, grow.recipe_phase_num
-        )
+        for grow in grows:
+            (
+                power_level,
+                red_level,
+                blue_level,
+            ) = app_config.db.read_lights_from_recipe_phase(
+                grow.recipe_id, grow.recipe_phase_num
+            )
 
-        app_config.scheduler.add_job(
-            schedule_grow_for_shelf,
-            "date",
-            run_date=grow.start_datetime,
-            args=[socketio, grow, power_level, red_level, blue_level],
-        )
+            app_config.scheduler.add_job(
+                schedule_grow_for_shelf,
+                "date",
+                run_date=grow.start_datetime,
+                args=[socketio, grow, power_level, red_level, blue_level],
+            )
 
         # TODO (lww515): What to do after harvest is finished?
 
-        # write grow to db
-        app_config.db.write_grow(grow)
+        # write grows to db
+        app_config.db.write_grows(grows)
 
         logging.debug("start_grow_for_shelf succeeded!")
         send_message_to_namespace_if_specified(
-            socketio, message, "start_grow_for_shelf_succeeded", {"succeeded": True}
+            socketio, message, "start_grows_for_shelves_succeeded", {"succeeded": True}
         )
         print("Grow started successfully, event emitted")
 
