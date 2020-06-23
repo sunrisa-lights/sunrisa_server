@@ -65,4 +65,4 @@ jobs:
         echo "Sleeping 5 seconds before starting integration test"
         sleep 5
         ./integration_venv/bin/pytest tests/integration/sunrisa_integration.py
-
+        cat integration_test.log
