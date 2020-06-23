@@ -111,9 +111,6 @@ def _test_send_room(sio):
 
 
 def _test_send_rack(sio, room):
-    global expected_processed_entities
-    expected_processed_entities = ["rack"]
-
     # send initial rack update with created room id
     rack_dict = {
         "rack": {
@@ -198,9 +195,6 @@ def _test_send_recipe(sio):
 
 
 def _test_send_shelf(sio, rack, recipe):
-    global expected_processed_entities
-    expected_processed_entities = ["shelf"]
-
     shelf_dict = {
         "shelf": {
             "shelf_id": 1,
@@ -229,9 +223,6 @@ def _test_send_shelf(sio, rack, recipe):
 
 
 def _test_send_plant(sio, shelf):
-    global expected_processed_entities
-    expected_processed_entities = ["plant"]
-
     # initially leave shelf_id nil to test out nil shelf
     plant_dict = {"plant": {"olcc_number": 1}}
     sio.emit("message_sent", plant_dict)
@@ -345,10 +336,6 @@ def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack], shelves: 
 
 
 def _test_create_entities(sio):
-    @sio.on("message_received")
-    def verify_message_received(entities_processed):
-        assert entities_processed["processed"] == expected_processed_entities
-
     rooms = _test_send_room(sio)
     rack = _test_send_rack(sio, rooms[0])
     recipe, recipe_phases = _test_send_recipe(sio)
