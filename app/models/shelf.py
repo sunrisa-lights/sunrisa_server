@@ -4,9 +4,7 @@ import json
 
 class Shelf:
     def __init__(
-        self,
-        shelf_id: int,
-        rack_id: int,
+        self, shelf_id: int, rack_id: int,
     ):
         self.shelf_id = shelf_id
         self.rack_id = rack_id
@@ -26,14 +24,8 @@ class Shelf:
             "rack_id": self.rack_id,
         }
 
-
     def __str__(self):
-        return json.dumps(
-            {
-                "shelf_id": self.shelf_id,
-                "rack_id": self.rack_id,
-            }
-        )
+        return json.dumps({"shelf_id": self.shelf_id, "rack_id": self.rack_id,})
 
     def __hash__(self):
         return hash(str(self))
@@ -43,7 +35,4 @@ class Shelf:
             # don't attempt to compare against unrelated types
             return NotImplemented
 
-        return (
-            self.shelf_id == other.shelf_id
-            and self.rack_id == other.rack_id
-        )
+        return self.shelf_id == other.shelf_id and self.rack_id == other.rack_id

@@ -27,11 +27,12 @@ db_name = "sunrisa_test"
 db = DB(db_name, logging)
 
 
-def kill_server_on_assert_failure(sio, condition, assert_arg=''):
+def kill_server_on_assert_failure(sio, condition, assert_arg=""):
     if not condition:
         sio.disconnect()
 
     assert condition, assert_arg
+
 
 # flag should be an empty list that is populated and has a certain length
 def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
@@ -41,7 +42,9 @@ def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
         seconds_counter += 1
 
     if not flag:
-        kill_server_on_assert_failure(sio, False, "Timed out waiting for event for test {}".format(test_name))
+        kill_server_on_assert_failure(
+            sio, False, "Timed out waiting for event for test {}".format(test_name)
+        )
 
 
 def _test_send_room(sio):
@@ -204,10 +207,7 @@ def _test_send_recipe(sio):
 
 def _test_send_shelf(sio, rack, recipe):
     shelf_dict = {
-        "shelf": {
-            "shelf_id": 1,
-            "rack_id": rack.rack_id,
-        },
+        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id,},
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
@@ -216,13 +216,8 @@ def _test_send_shelf(sio, rack, recipe):
     )
     with db._new_connection(db_name) as cursor:
         cursor.execute(get_shelf_sql)
-        (
-            shelf_id,
-            rack_id,
-        ) = cursor.fetchone()
-        foundShelf = Shelf(
-            shelf_id, rack_id,
-        )
+        (shelf_id, rack_id,) = cursor.fetchone()
+        foundShelf = Shelf(shelf_id, rack_id,)
         expected = Shelf.from_json(shelf_dict["shelf"])
         print("foundShelf:", foundShelf, "expected:", expected)
         assert foundShelf == expected
@@ -318,7 +313,9 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     return shelf_grow
 
 
-def _test_find_all_entities(sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]):
+def _test_find_all_entities(
+    sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]
+):
     flag = []
 
     @sio.on("return_all_entities")

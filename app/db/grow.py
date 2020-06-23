@@ -21,6 +21,7 @@ def write_grow(conn, grow: Grow) -> None:
     )
     cursor.close()
 
+
 def write_grows(conn, grows: List[Grow]) -> None:
     grow_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []

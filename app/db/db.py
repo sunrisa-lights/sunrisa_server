@@ -19,7 +19,12 @@ from app.db.grow import (
 )
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
-from app.db.rack import create_rack_table, write_rack, read_all_racks, read_racks_in_room
+from app.db.rack import (
+    create_rack_table,
+    write_rack,
+    read_all_racks,
+    read_racks_in_room,
+)
 from app.db.recipe import create_recipe_table, write_recipe
 from app.db.recipe_phase import (
     create_recipe_phases_table,
@@ -95,7 +100,7 @@ class DB:
             db_conn.close()
 
         return rooms
-    
+
     def read_all_shelves(self) -> List[Shelf]:
         db_conn = self._new_connection(self.db_name)
         try:

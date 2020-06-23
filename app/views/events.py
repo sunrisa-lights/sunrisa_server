@@ -107,7 +107,7 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Grow not included"},
             )
 
-        grows: List[Grow] = [Grow.from_json(g) for g in message['grows']]
+        grows: List[Grow] = [Grow.from_json(g) for g in message["grows"]]
 
         for grow in grows:
             (
