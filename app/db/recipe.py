@@ -15,16 +15,16 @@ def write_recipe(conn, recipe: Recipe):
     cursor.close()
     print("WROTE RECIPE", recipe)
 
+
 def read_recipes(conn, recipe_ids: List[int]) -> List[Recipe]:
-    recipe_id_str = ','.join([str(rid) for rid in recipe_ids])
-    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_id in ({})".format(recipe_id_str)
+    recipe_id_str = ",".join([str(rid) for rid in recipe_ids])
+    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_id in ({})".format(
+        recipe_id_str
+    )
     with conn.cursor() as cursor:
         cursor.execute(sql)
         found_recipes = cursor.fetchall()
-        recipes = [
-            Recipe(rid, name)
-            for (rid, name) in found_recipes
-        ]
+        recipes = [Recipe(rid, name) for (rid, name) in found_recipes]
         cursor.close()
         return recipes
 

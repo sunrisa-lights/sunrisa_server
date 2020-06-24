@@ -40,12 +40,17 @@ def read_lights_from_recipe_phase(
 
         return None, None, None
 
-def read_recipe_phases(conn, recipe_id_phase_num_pairs: List[Tuple[int, int]]) -> List[RecipePhase]:
+
+def read_recipe_phases(
+    conn, recipe_id_phase_num_pairs: List[Tuple[int, int]]
+) -> List[RecipePhase]:
     values_list: List[str] = []
     for recipe_id, recipe_phase_num in recipe_id_phase_num_pairs:
-        values_list.append('({},{})'.format(recipe_id, recipe_phase_num))
+        values_list.append("({},{})".format(recipe_id, recipe_phase_num))
 
-    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id, recipe_phase_num) in ({})".format(','.join(values_list))
+    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id, recipe_phase_num) in ({})".format(
+        ",".join(values_list)
+    )
     print("sql:", sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)

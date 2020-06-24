@@ -135,7 +135,7 @@ class DB:
             db_conn.close()
         return current_grows
 
-    def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]: 
+    def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
         db_conn = self._new_connection(self.db_name)
         try:
             recipes = read_recipes(db_conn, recipe_ids)
@@ -143,7 +143,9 @@ class DB:
             db_conn.close()
         return recipes
 
-    def read_recipe_phases(self, recipe_id_phase_num_pairs: List[Tuple[int, int]]) -> List[RecipePhase]:
+    def read_recipe_phases(
+        self, recipe_id_phase_num_pairs: List[Tuple[int, int]]
+    ) -> List[RecipePhase]:
         db_conn = self._new_connection(self.db_name)
         try:
             recipe_phases = read_recipe_phases(db_conn, recipe_id_phase_num_pairs)
