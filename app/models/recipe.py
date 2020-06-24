@@ -20,6 +20,15 @@ class Recipe:
 
         return cls(recipe_id, recipe_name)
 
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "recipe_id": self.recipe_id,
+            "recipe_name": self.recipe_name,
+        }
+
+    def __hash__(self):
+        return hash(str(self))
+
     def __str__(self):
         return json.dumps(
             {"recipe_id": self.recipe_id, "recipe_name": self.recipe_name,}

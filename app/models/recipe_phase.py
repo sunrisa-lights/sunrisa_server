@@ -53,6 +53,9 @@ class RecipePhase:
             "blue_level": self.blue_level,
         }
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __str__(self):
         return json.dumps(
             {
@@ -66,7 +69,7 @@ class RecipePhase:
         )
 
     def __eq__(self, other):
-        if not isinstance(other, recipe_phase):
+        if not isinstance(other, RecipePhase):
             # don't attempt to compare against unrelated types
             return NotImplemented
 

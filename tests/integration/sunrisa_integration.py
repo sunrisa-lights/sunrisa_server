@@ -314,7 +314,13 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
 
 
 def _test_find_all_entities(
-    sio, rooms: List[Room], racks: List[Rack], shelves: List[Shelf], grows: List[Grow]
+    sio,
+    rooms: List[Room],
+    racks: List[Rack],
+    shelves: List[Shelf],
+    grows: List[Grow],
+    recipes: List[Recipe],
+    recipe_phases: List[RecipePhase],
 ):
     flag = []
 
@@ -325,16 +331,26 @@ def _test_find_all_entities(
         assert "racks" in message
         assert "shelves" in message
         assert "grows" in message
+        assert "recipes" in message
+        assert "recipe_phases" in message
 
         found_rooms = [Room.from_json(r) for r in message["rooms"]]
         found_racks = [Rack.from_json(r) for r in message["racks"]]
         found_shelves = [Shelf.from_json(s) for s in message["shelves"]]
         found_grows = [Grow.from_json(g) for g in message["grows"]]
+        found_recipes = [Recipe.from_json(r) for r in message["recipes"]]
+        found_recipe_phases = [
+            RecipePhase.from_json(rp) for rp in message["recipe_phases"]
+        ]
 
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
         assert collections.Counter(found_grows) == collections.Counter(grows)
+        assert collections.Counter(found_recipes) == collections.Counter(recipes)
+        assert collections.Counter(found_recipe_phases) == collections.Counter(
+            recipe_phases
+        )
 
         flag.append(True)
 
@@ -353,7 +369,9 @@ def _test_create_entities(sio):
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
-    _test_find_all_entities(sio, rooms, [rack], [shelf], [grow])
+    _test_find_all_entities(
+        sio, rooms, [rack], [shelf], [grow], [recipe], recipe_phases
+    )
     print("create_entities_test passed!")
 
 
