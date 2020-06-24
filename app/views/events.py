@@ -235,11 +235,19 @@ def init_event_listeners(app_config, socketio):
         all_shelves = app_config.db.read_all_shelves()
         all_current_grows = app_config.db.read_current_grows()
 
+        recipe_ids = {g.recipe_id for g in all_current_grows} # use a set comprehension since grows may have duplicate recipes
+        all_current_recipes = app_config.db.read_recipes(list(recipe_ids))
+
+        recipe_id_phase_num_pairs = [(g.recipe_id, g.recipe_phase_num) for g in all_current_grows]
+        all_current_recipe_phases = app_config.db.read_recipe_phases(recipe_id_phase_num_pairs)
+
         entities_dict = {
             "rooms": [rm.to_json() for rm in all_rooms],
             "racks": [rck.to_json() for rck in all_racks],
             "shelves": [s.to_json() for s in all_shelves],
             "grows": [g.to_json() for g in all_current_grows],
+            "recipes": [r.to_json() for r in all_current_recipes],
+            "recipe_phases": [rp.to_json() for rp in all_current_recipe_phases],
         }
 
         app_config.logger.debug("returning entities: {}".format(entities_dict))
