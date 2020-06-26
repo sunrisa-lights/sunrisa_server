@@ -120,9 +120,12 @@ def init_event_listeners(app_config, socketio):
 
             app_config.scheduler.add_job(
                 schedule_grow_for_shelf,
-                "date",
-                run_date=grow.start_datetime,
-                args=[socketio, grow, power_level, red_level, blue_level],
+                "interval",
+                start_date=grow.start_datetime,
+                end_date=grow.end_datetime,
+                args=[grow, power_level, red_level, blue_level],
+                id=grow.to_job_id(),
+                minutes=5,
             )
 
         # TODO (lww515): What to do after harvest is finished?
