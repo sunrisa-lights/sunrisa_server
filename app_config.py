@@ -6,6 +6,8 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
+# Based off of this stack overflow answer: https://stackoverflow.com/a/6798042/13297130
+# any class using this as a metaclass can only be created once, ie is a singleton
 class Singleton(type):
     _instances = {}
 
