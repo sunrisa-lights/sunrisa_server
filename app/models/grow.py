@@ -63,7 +63,7 @@ class Grow:
             end_datetime,
         )
 
-    def to_json(self) -> str:
+    def to_json(self):
         return {
             "room_id": self.room_id,
             "rack_id": self.rack_id,
@@ -80,7 +80,15 @@ class Grow:
 
     def to_job_id(self) -> str:
         date_format = "%b %d %Y %H:%M:%S"
-        job_id = "room-{}-rack-{}-shelf-{}-recipe-{}-phase-{}-start-{}-end-{}".format(self.room_id, self.rack_id, self.shelf_id, self.recipe_id, self.recipe_phase_num, self.start_datetime.strftime(date_format), self.end_datetime.strftime(date_format))
+        job_id = "room-{}-rack-{}-shelf-{}-recipe-{}-phase-{}-start-{}-end-{}".format(
+            self.room_id,
+            self.rack_id,
+            self.shelf_id,
+            self.recipe_id,
+            self.recipe_phase_num,
+            self.start_datetime.strftime(date_format),
+            self.end_datetime.strftime(date_format),
+        )
         return job_id
 
     def __str__(self) -> str:

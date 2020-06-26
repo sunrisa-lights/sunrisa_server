@@ -7,7 +7,7 @@ from app_config import AppConfig
 def schedule_grow_for_shelf(
     grow: Grow, power_level: int, red_level: int, blue_level: int
 ) -> None:
-    config = AppConfig() # no arguments needed because it's a singleton instance
+    config = AppConfig()  # no arguments needed because it's a singleton instance
     shelf_grow_dict = {
         "grow": grow.to_json(),
         "power_level": power_level,
