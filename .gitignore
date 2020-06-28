@@ -4,10 +4,12 @@ __pycache__/
 
 # Virtualenv
 *venv*
-sunrisa
 
 # mypy
 .mypy_cache
 
 # log files
 *.log
+
+# pycharm files
+.idea
