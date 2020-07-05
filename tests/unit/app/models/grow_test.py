@@ -78,7 +78,6 @@ def test_to_job_id():
     end2 = start + timedelta(0, 2)
     grow = Grow(2, 3, 4, 5, 6, start, end2)
     assert grow.to_job_id() == "room-2-rack-3-shelf-4-recipe-5-phase-6-start-{}-end-{}".format(start.strftime(date_format), end2.strftime(date_format))
-    assert not grow.to_job_id() == "room-2-rack-3-shelf-4-recipe-5-phase-6-start-{}-end-{}".format(start2.strftime(date_format), end2.strftime(date_format))
 
 
 def test__str__():
@@ -103,7 +102,7 @@ def test__hash__fail():
     end2 = start + timedelta(0, 2)
     grow3 = Grow(2, 3, 4, 5, 6, start, end2)
     grow4 = Grow(2, 3, 4, 5, 6, start2, end2)
-    assert not hash(grow3) == hash(grow4)
+    assert hash(grow3) != hash(grow4)
 
 
 def test__eq__():
@@ -124,4 +123,4 @@ def test__eq__fail():
     grow3 = Grow(1, 2, 3, 4, 5, start, end)
     grow4 = Grow(1, 2, 3, 4, 5, start2, end)
 
-    assert not grow3 == grow4
+    assert grow3 != grow4
