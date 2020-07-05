@@ -19,3 +19,44 @@ def test_create_rack_from_json():
     assert rack.voltage == None  # auto-initialized to None
     assert rack.is_on == None  # auto-initialized to None
     assert rack.is_connected == None  # auto-initialized to None
+
+
+def test_to_json():
+    rack = Rack(1, 2, 40, None, True)
+    assert rack.to_json() == {
+        "rack_id": 1,
+        "room_id": 2,
+        "voltage": 40,
+        "is_on": None,
+        "is_connected": True,
+    }
+
+
+def test__str__():
+    rack = Rack(1, 2, 49, False, None)
+    rack2 = Rack(1, 2, 49, False, None)
+    assert str(rack) == str(rack2)
+
+
+def test__hash__():
+    rack = Rack(1, 3, 50, None, True)
+    rack2 = Rack(1, 3, 50, None, True)
+    assert hash(rack2) == hash(rack)
+
+
+def test__hash__fail():
+    rack = Rack(1, 3, 50, None, True)
+    rack2 = Rack(1, 2, 49, False, None)
+    assert not hash(rack) == hash(rack2)
+
+
+def test__eq__():
+    rack = Rack(1, 2, 49, False, None)
+    rack2 = Rack(1, 2, 49, False, None)
+    assert rack == rack2
+
+
+def test__eq__fail():
+    rack = Rack(1, 2, 49, False, None)
+    rack2 = Rack(1, 3, 49, True, False)
+    assert not rack == rack2

@@ -17,3 +17,43 @@ def test_create_room_from_json():
     assert room.is_on == False  # auto-initialized to False if not present
     assert room.is_veg_room == False  # auto-initialized to False if not present
     assert room.brightness == None  # auto-initialized to None
+
+
+def test_to_json():
+    room = Room(1, False, True, 0)
+    assert room.to_json() == {
+        "room_id": 1,
+        "is_on": False,
+        "is_veg_room": room.is_veg_room,
+        "brightness": room.brightness,
+    }
+
+
+def test__str__():
+    room = Room(1, False, True, 0)
+    room2 = Room(1, False, True, 0)
+    assert str(room2) == str(room)
+
+
+def test__hash__():
+    room = Room(1, False, True, 0)
+    room2 = Room(1, False, True, 0)
+    assert hash(room2) == hash(room)
+
+
+def test__hash__fail():
+    room = Room(1, False, True, 0)
+    room2 = Room(2, True, True, 0)
+    assert not hash(room) == hash(room2)
+
+
+def test__eq__():
+    room = Room(1, False, True, 0)
+    room2 = Room(1, False, True, 0)
+    assert room == room2
+
+
+def test__eq__fail():
+    room = Room(1, False, True, 0)
+    room2 = Room(4, True, True, 0)
+    assert not room == room2
