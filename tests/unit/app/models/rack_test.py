@@ -34,27 +34,29 @@ def test_to_json():
 
 def test__str__():
     rack = Rack(1, 2, 49, False, None)
-    assert rack.__str__() == str(rack)
+    rack2 = Rack(1, 2, 49, False, None)
+    assert str(rack) == str(rack2)
 
 
 def test__hash__():
     rack = Rack(1, 3, 50, None, True)
-    assert rack.__hash__() == hash(rack)
+    rack2 = Rack(1, 3, 50, None, True)
+    assert hash(rack2) == hash(rack)
 
 
 def test__hash__fail():
     rack = Rack(1, 3, 50, None, True)
     rack2 = Rack(1, 2, 49, False, None)
-    assert not rack.__hash__() == rack2.__hash__()
+    assert not hash(rack) == hash(rack2)
 
 
 def test__eq__():
     rack = Rack(1, 2, 49, False, None)
     rack2 = Rack(1, 2, 49, False, None)
-    assert rack.__eq__(rack2)
+    assert rack == rack2
 
 
 def test__eq__fail():
     rack = Rack(1, 2, 49, False, None)
     rack2 = Rack(1, 3, 49, True, False)
-    assert not rack.__eq__(rack2)
+    assert not rack == rack2

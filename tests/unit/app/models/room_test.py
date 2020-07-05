@@ -31,27 +31,29 @@ def test_to_json():
 
 def test__str__():
     room = Room(1, False, True, 0)
-    assert room.__str__() == str(room)
+    room2 = Room(1, False, True, 0)
+    assert str(room2) == str(room)
 
 
 def test__hash__():
     room = Room(1, False, True, 0)
-    assert room.__hash__() == hash(room)
+    room2 = Room(1, False, True, 0)
+    assert hash(room2) == hash(room)
 
 
 def test__hash__fail():
     room = Room(1, False, True, 0)
     room2 = Room(2, True, True, 0)
-    assert not room.__hash__() == room2.__hash__()
+    assert not hash(room) == hash(room2)
 
 
 def test__eq__():
     room = Room(1, False, True, 0)
     room2 = Room(1, False, True, 0)
-    assert room.__eq__(room2)
+    assert room == room2
 
 
 def test__eq__fail():
     room = Room(1, False, True, 0)
     room2 = Room(4, True, True, 0)
-    assert not room.__eq__(room2)
+    assert not room == room2

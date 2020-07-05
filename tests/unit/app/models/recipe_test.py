@@ -37,7 +37,8 @@ def test__hash__fail():
 
 def test__str__():
     recipe = Recipe(4, "Gorilla Glue #4")
-    assert recipe.__str__() == str(recipe)
+    recipe2 = Recipe(4, "Gorilla Glue #4")
+    assert str(recipe2) == str(recipe)
 
 
 def test__eq__():
@@ -51,4 +52,4 @@ def test__eq__fail():
     recipe = Recipe(4, "Gorilla Glue #4")
     recipe2 = Recipe(5, "Gorilla Glue #4")
 
-    assert not recipe.__eq__(recipe2)
+    assert not recipe == recipe2

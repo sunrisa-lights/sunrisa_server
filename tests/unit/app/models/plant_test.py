@@ -17,7 +17,8 @@ def test_create_plant_from_json():
 
 def test__str__():
     plant = Plant(3, 4)
-    assert plant.__str__() == str(plant)
+    plant2 = Plant(3, 4)
+    assert str(plant2) == str(plant)
 
 
 def test__eq__():
@@ -29,4 +30,4 @@ def test__eq__():
 def test__eq__fail():
     plant2 = Plant(7, 8)
     plant3 = Plant(5, 6)
-    assert not plant2.__eq__(plant3)
+    assert not plant2 == plant3

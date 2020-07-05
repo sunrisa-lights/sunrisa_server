@@ -46,27 +46,29 @@ def test_to_json():
 
 def test__hash__():
     recipephase = RecipePhase(1, 2, 3, 4, 5, 6)
-    assert recipephase.__hash__() == hash(recipephase)
+    recipephase2 = RecipePhase(1, 2, 3, 4, 5, 6)
+    assert hash(recipephase2) == hash(recipephase)
 
 
 def test__hash__fail():
     recipephase = RecipePhase(1, 2, 3, 4, 5, 6)
     recipephase2 = RecipePhase(2, 3, 4, 5, 6, 7)
-    assert not recipephase.__hash__() == recipephase2.__hash__()
+    assert not hash(recipephase) == hash(recipephase2)
 
 
 def test__str__():
     recipephase = RecipePhase(1, 2, 3, 4, 5, 6)
-    assert recipephase.__str__() == str(recipephase)
+    recipephase2 = RecipePhase(1, 2, 3, 4, 5, 6)
+    assert str(recipephase2) == str(recipephase)
 
 
 def test__eq__():
     recipephase = RecipePhase(1, 2, 3, 4, 5, 6)
     recipephase2 = RecipePhase(1, 2, 3, 4, 5, 6)
-    assert recipephase.__eq__(recipephase2)
+    assert recipephase == recipephase2
 
 
 def test__eq__fail():
     recipephase = RecipePhase(1, 2, 3, 4, 5, 6)
     recipephase2 = RecipePhase(1, 2, 3, 4, 6, 6)
-    assert not recipephase.__eq__(recipephase2)
+    assert not recipephase == recipephase2
