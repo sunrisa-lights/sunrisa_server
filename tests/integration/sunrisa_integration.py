@@ -238,12 +238,12 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     assert len(recipe_phases) == 1  # only support 1 phase for now
 
     print("Sending shelf grow")
-    start = datetime.now() + timedelta(0, 3)  # 3 seconds from now
+    start = datetime.utcnow() + timedelta(0, 3)   # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
     print(start)
     print(end)
-    start_time = start.strftime("%Y-%m-%d %H:%M:%S.%f")
-    end_time = end.strftime("%Y-%m-%d %H:%M:%S.%f")
+    start_time = start.strftime("%Y-%m-%d %H:%M:%S")
+    end_time = end.strftime("%Y-%m-%d %H:%M:%S")
     print(start_time)
     print(end_time)
 
@@ -324,6 +324,8 @@ def _test_find_all_entities(
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
+        print(collections.Counter(found_grows))
+        print(collections.Counter(grows))
         assert collections.Counter(found_grows) == collections.Counter(grows)
         assert collections.Counter(found_recipes) == collections.Counter(recipes)
         assert collections.Counter(found_recipe_phases) == collections.Counter(

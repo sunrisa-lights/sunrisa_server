@@ -51,7 +51,7 @@ def read_recipe_phases(
     sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id, recipe_phase_num) in ({})".format(
         ",".join(values_list)
     )
-    print("sql:", sql)
+
     with conn.cursor() as cursor:
         cursor.execute(sql)
         found_recipe_phases = cursor.fetchall()

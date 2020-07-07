@@ -40,8 +40,8 @@ def test_create_grow_from_json():
     assert grow.recipe_id == 4
     assert grow.recipe_phase_num == 5
     # needs to round because calendar.timegm is converting to seconds losing microsecond precision
-    assert grow.start_datetime == start - timedelta(microseconds=start.microsecond)
-    assert grow.end_datetime == end - timedelta(microseconds=end.microsecond)
+    assert grow.start_datetime == start
+    assert grow.end_datetime == end
 
 
 def test_create_grow_from_json_string_format():
@@ -56,8 +56,8 @@ def test_create_grow_from_json_string_format():
             "shelf_id": 3,
             "recipe_id": 4,
             "recipe_phase_num": 5,
-            "start_datetime": start.strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "end_datetime": end.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "start_datetime": start.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_datetime": end.strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
 
@@ -67,8 +67,8 @@ def test_create_grow_from_json_string_format():
     assert grow.recipe_id == 4
     assert grow.recipe_phase_num == 5
     # needs to round because calendar.timegm is converting to seconds losing microsecond precision
-    assert grow.start_datetime == start - timedelta(microseconds=start.microsecond)
-    assert grow.end_datetime == end - timedelta(microseconds=end.microsecond)
+    assert grow.start_datetime == start
+    assert grow.end_datetime == end
 
 
 
