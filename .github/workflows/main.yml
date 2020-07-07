@@ -41,17 +41,17 @@ jobs:
       run: |
         ./venv/bin/black app/ tests/ sunrisa.py app_config.py
 
-    # Runs pytest on the tests/unit directory
-    - name: Run unit tests
-      run: |
-        ./venv/bin/pytest tests/
-
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
       run: |
         python3 -m venv integration_venv
         . integration_venv/bin/activate
         pip install -r tests/integration/requirements_integration.txt
+
+    # Runs pytest on the tests/unit directory
+    - name: Run unit tests
+      run: |
+        ./integration_venv/bin/pytest tests/
 
     # Setup MySQL for integration tests
     - name: Setup MySQL
