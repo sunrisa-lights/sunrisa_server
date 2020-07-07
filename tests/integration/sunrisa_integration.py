@@ -4,7 +4,7 @@ import pymysql.cursors
 import logging
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from typing import List
 
@@ -21,10 +21,6 @@ from app.models.shelf import Shelf
 from app.models.plant import Plant
 
 expected_processed_entities = None
-
-logging.basicConfig(filename="integration_error.log", level=logging.DEBUG)
-db_name = "sunrisa_test"
-db = DB(db_name, logging)
 
 
 def kill_server_on_assert_failure(sio, condition, assert_arg=""):
@@ -90,6 +86,7 @@ def _test_send_room(sio):
         "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80},
     }
     sio.emit("message_sent", room_dict2)
+    sio.sleep(1)
 
     # return both rooms
     rooms = []
@@ -125,6 +122,7 @@ def _test_send_rack(sio, room):
         },
     }
     sio.emit("message_sent", rack_dict)
+    sio.sleep(1)
 
     flag = []
 
@@ -143,7 +141,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(sio, flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
+    wait_for_event(sio, flag, 1, 10, "test_send_rack.read_all_racks_in_room.1")
 
     print("first rack found and returned")
 
@@ -153,7 +151,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(sio, flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
+    wait_for_event(sio, flag, 2, 10, "test_send_rack.read_all_racks_in_room.2")
 
     print("second rack found and returned")
 
@@ -211,18 +209,9 @@ def _test_send_shelf(sio, rack, recipe):
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
-    get_shelf_sql = "SELECT shelf_id, rack_id FROM shelves WHERE shelf_id={}".format(
-        shelf_dict["shelf"]["shelf_id"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_shelf_sql)
-        (shelf_id, rack_id,) = cursor.fetchone()
-        foundShelf = Shelf(shelf_id, rack_id,)
-        expected = Shelf.from_json(shelf_dict["shelf"])
-        print("foundShelf:", foundShelf, "expected:", expected)
-        assert foundShelf == expected
+    expected = Shelf.from_json(shelf_dict["shelf"])
 
-        return foundShelf
+    return expected
 
 
 def _test_send_plant(sio, shelf):
@@ -230,16 +219,6 @@ def _test_send_plant(sio, shelf):
     plant_dict = {"plant": {"olcc_number": 1}}
     sio.emit("message_sent", plant_dict)
     sio.sleep(1)
-    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
-        plant_dict["plant"]["olcc_number"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_plant_sql)
-        olcc_number, shelf_id = cursor.fetchone()
-        foundPlant = Plant(olcc_number, shelf_id)
-        expected = Plant.from_json(plant_dict["plant"])
-        print("foundPlant:", foundPlant, "expected:", expected)
-        assert foundPlant == expected
 
     # add shelf in and verify that it is updated properly
     plant_dict = {
@@ -247,25 +226,16 @@ def _test_send_plant(sio, shelf):
     }
     sio.emit("message_sent", plant_dict)
     sio.sleep(1)
-    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
-        plant_dict["plant"]["olcc_number"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_plant_sql)
-        olcc_number, shelf_id = cursor.fetchone()
-        foundPlant = Plant(olcc_number, shelf_id)
-        expected = Plant.from_json(plant_dict["plant"])
-        print("foundPlant:", foundPlant, "expected:", expected)
-        assert foundPlant == expected
+    expected = Plant.from_json(plant_dict["plant"])
 
-        return foundPlant
+    return expected
 
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     assert len(recipe_phases) == 1  # only support 1 phase for now
 
     print("Sending shelf grow")
-    start = datetime.now() + timedelta(0, 3)  # 3 seconds from now
+    start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
 
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
@@ -356,7 +326,7 @@ def _test_find_all_entities(
 
     sio.emit("read_all_entities", {})
     print("WAITING FOR IT!")
-    wait_for_event(sio, flag, 1, 10, "test_find_all_entities")
+    wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
 
 
@@ -387,7 +357,7 @@ def _test_room_not_found(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 5, "test_room_not_found")
+    wait_for_event(sio, flag, 1, 10, "test_room_not_found")
 
     print("room not found test passed!")
 
@@ -405,7 +375,7 @@ def _test_racks_not_found_in_room(sio):
 
     sio.emit("read_all_racks_in_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 5, "test_racks_not_found_in_room")
+    wait_for_event(sio, flag, 1, 10, "test_racks_not_found_in_room")
 
     print("racks not found in room test passed!")
 

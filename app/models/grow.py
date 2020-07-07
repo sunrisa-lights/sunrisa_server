@@ -1,8 +1,8 @@
-from datetime import datetime
-from time import mktime
+from datetime import datetime, timezone, timedelta
 from dateutil.parser import parse
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import json
+import calendar
 
 
 class Grow:
@@ -23,6 +23,7 @@ class Grow:
         self.recipe_phase_num = recipe_phase_num
         self.start_datetime = start_datetime
         self.end_datetime = end_datetime
+        self.round_dates_to_seconds()
 
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
@@ -47,11 +48,11 @@ class Grow:
         start_date_str = grow_json["start_datetime"]
         end_date_str = grow_json["end_datetime"]
 
-        start_datetime = datetime.fromtimestamp(
-            mktime(parse(start_date_str).utctimetuple())
+        start_datetime = datetime.utcfromtimestamp(
+            calendar.timegm(parse(start_date_str).utctimetuple())
         )
-        end_datetime = datetime.fromtimestamp(
-            mktime(parse(end_date_str).utctimetuple())
+        end_datetime = datetime.utcfromtimestamp(
+            calendar.timegm(parse(end_date_str).utctimetuple())
         )
         return cls(
             room_id,
@@ -70,12 +71,8 @@ class Grow:
             "shelf_id": self.shelf_id,
             "recipe_id": self.recipe_id,
             "recipe_phase_num": self.recipe_phase_num,
-            "start_datetime": self.start_datetime.astimezone()
-            .replace(microsecond=0)
-            .isoformat(),
-            "end_datetime": self.end_datetime.astimezone()
-            .replace(microsecond=0)
-            .isoformat(),
+            "start_datetime": self.start_datetime.replace(microsecond=0).isoformat(),
+            "end_datetime": self.end_datetime.replace(microsecond=0).isoformat(),
         }
 
     def to_job_id(self) -> str:
@@ -91,6 +88,11 @@ class Grow:
         )
         return job_id
 
+    # Removes microseconds because they're lost in json conversions
+    def round_dates_to_seconds(self):
+        self.start_datetime -= timedelta(microseconds=self.start_datetime.microsecond)
+        self.end_datetime -= timedelta(microseconds=self.end_datetime.microsecond)
+
     def __str__(self) -> str:
         return json.dumps(
             {
@@ -99,10 +101,10 @@ class Grow:
                 "shelf_id": self.shelf_id,
                 "recipe_id": self.recipe_id,
                 "recipe_phase_num": self.recipe_phase_num,
-                "start_datetime": self.start_datetime.astimezone()
+                "start_datetime": self.start_datetime
                 .replace(microsecond=0)
                 .isoformat(),
-                "end_datetime": self.end_datetime.astimezone()
+                "end_datetime": self.end_datetime
                 .replace(microsecond=0)
                 .isoformat(),
             }
