@@ -23,7 +23,6 @@ from app.models.plant import Plant
 expected_processed_entities = None
 
 
-
 def kill_server_on_assert_failure(sio, condition, assert_arg=""):
     if not condition:
         sio.disconnect()
@@ -221,8 +220,6 @@ def _test_send_plant(sio, shelf):
     sio.emit("message_sent", plant_dict)
     sio.sleep(1)
 
-
-
     # add shelf in and verify that it is updated properly
     plant_dict = {
         "plant": {"olcc_number": 1, "shelf_id": shelf.shelf_id},
@@ -238,7 +235,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     assert len(recipe_phases) == 1  # only support 1 phase for now
 
     print("Sending shelf grow")
-    start = datetime.utcnow() + timedelta(0, 3)   # 3 seconds from now
+    start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
     print(start)
     print(end)

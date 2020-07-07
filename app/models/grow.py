@@ -7,14 +7,14 @@ import calendar
 
 class Grow:
     def __init__(
-            self,
-            room_id: int,
-            rack_id: int,
-            shelf_id: int,
-            recipe_id: int,
-            recipe_phase_num: int,
-            start_datetime: datetime,
-            end_datetime: datetime,
+        self,
+        room_id: int,
+        rack_id: int,
+        shelf_id: int,
+        recipe_id: int,
+        recipe_phase_num: int,
+        start_datetime: datetime,
+        end_datetime: datetime,
     ):
         self.room_id = room_id
         self.rack_id = rack_id
@@ -25,17 +25,16 @@ class Grow:
         self.end_datetime = end_datetime
         self.round_dates_to_seconds()
 
-
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
         if not (
-                "room_id" in grow_json
-                and "rack_id" in grow_json
-                and "shelf_id" in grow_json
-                and "recipe_id" in grow_json
-                and "recipe_phase_num" in grow_json
-                and "start_datetime" in grow_json
-                and "end_datetime" in grow_json
+            "room_id" in grow_json
+            and "rack_id" in grow_json
+            and "shelf_id" in grow_json
+            and "recipe_id" in grow_json
+            and "recipe_phase_num" in grow_json
+            and "start_datetime" in grow_json
+            and "end_datetime" in grow_json
         ):
             raise Exception("Invalid grow")
 
@@ -72,12 +71,8 @@ class Grow:
             "shelf_id": self.shelf_id,
             "recipe_id": self.recipe_id,
             "recipe_phase_num": self.recipe_phase_num,
-            "start_datetime": self.start_datetime
-                .replace(microsecond=0)
-                .isoformat(),
-            "end_datetime": self.end_datetime
-                .replace(microsecond=0)
-                .isoformat(),
+            "start_datetime": self.start_datetime.replace(microsecond=0).isoformat(),
+            "end_datetime": self.end_datetime.replace(microsecond=0).isoformat(),
         }
 
     def to_job_id(self) -> str:
@@ -107,11 +102,11 @@ class Grow:
                 "recipe_id": self.recipe_id,
                 "recipe_phase_num": self.recipe_phase_num,
                 "start_datetime": self.start_datetime.astimezone(timezone.utc)
-                    .replace(microsecond=0)
-                    .isoformat(),
+                .replace(microsecond=0)
+                .isoformat(),
                 "end_datetime": self.end_datetime.astimezone(timezone.utc)
-                    .replace(microsecond=0)
-                    .isoformat(),
+                .replace(microsecond=0)
+                .isoformat(),
             }
         )
 
@@ -124,11 +119,11 @@ class Grow:
             return NotImplemented
 
         return (
-                self.room_id == other.room_id
-                and self.rack_id == other.rack_id
-                and self.shelf_id == other.shelf_id
-                and self.recipe_id == other.recipe_id
-                and self.recipe_phase_num == other.recipe_phase_num
-                and self.start_datetime == other.start_datetime
-                and self.end_datetime == other.end_datetime
+            self.room_id == other.room_id
+            and self.rack_id == other.rack_id
+            and self.shelf_id == other.shelf_id
+            and self.recipe_id == other.recipe_id
+            and self.recipe_phase_num == other.recipe_phase_num
+            and self.start_datetime == other.start_datetime
+            and self.end_datetime == other.end_datetime
         )
