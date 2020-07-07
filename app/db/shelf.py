@@ -40,7 +40,7 @@ def create_shelf_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS shelves(
     shelf_id INT NOT NULL,
     rack_id INT NOT NULL,
-    PRIMARY KEY (shelf_id),
+    PRIMARY KEY (shelf_id, rack_id),
     CONSTRAINT fk_rack
     FOREIGN KEY (rack_id)
         REFERENCES racks(rack_id)

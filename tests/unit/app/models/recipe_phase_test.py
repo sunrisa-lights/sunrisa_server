@@ -14,7 +14,15 @@ def test_create_recipe_phase():
 
 def test_create_recipe_phase_from_json():
     recipephase = RecipePhase.from_json(
-        {"recipe_id": 1, "recipe_phase_num": 2, "num_hours": 3, "power_level": 4, "red_level": 5, "blue_level": 6})
+        {
+            "recipe_id": 1,
+            "recipe_phase_num": 2,
+            "num_hours": 3,
+            "power_level": 4,
+            "red_level": 5,
+            "blue_level": 6,
+        }
+    )
 
     assert recipephase.recipe_id == 1
     assert recipephase.recipe_phase_num == 2

@@ -31,8 +31,17 @@ def test_create_grow_from_json():
         mktime(parse(end.isoformat()).utctimetuple())
     )
 
-    grow = Grow.from_json({"room_id": 1, "rack_id": 2, "shelf_id": 3, "recipe_id": 4, "recipe_phase_num": 5,
-                           "start_datetime": start.isoformat(), "end_datetime": end.isoformat()})
+    grow = Grow.from_json(
+        {
+            "room_id": 1,
+            "rack_id": 2,
+            "shelf_id": 3,
+            "recipe_id": 4,
+            "recipe_phase_num": 5,
+            "start_datetime": start.isoformat(),
+            "end_datetime": end.isoformat(),
+        }
+    )
 
     assert grow.room_id == 1
     assert grow.rack_id == 2
