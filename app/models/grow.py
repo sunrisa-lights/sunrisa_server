@@ -101,10 +101,10 @@ class Grow:
                 "shelf_id": self.shelf_id,
                 "recipe_id": self.recipe_id,
                 "recipe_phase_num": self.recipe_phase_num,
-                "start_datetime": self.start_datetime.astimezone(timezone.utc)
+                "start_datetime": self.start_datetime
                 .replace(microsecond=0)
                 .isoformat(),
-                "end_datetime": self.end_datetime.astimezone(timezone.utc)
+                "end_datetime": self.end_datetime
                 .replace(microsecond=0)
                 .isoformat(),
             }
