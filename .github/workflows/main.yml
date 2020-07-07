@@ -48,7 +48,6 @@ jobs:
         . integration_venv/bin/activate
         pip install -r tests/integration/requirements_integration.txt
 
-
     # Runs pytest on the tests/unit directory
     - name: Run unit tests
       run: |
