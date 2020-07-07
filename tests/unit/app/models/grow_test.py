@@ -19,7 +19,7 @@ def test_create_grow():
 
 
 def test_create_grow_from_json():
-    start = datetime.utcnow().utcnow() + timedelta(0, 3)  # 3 seconds from now
+    start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
     start -= timedelta(microseconds=start.microsecond)
     end = start + timedelta(0, 2)  # 5 seconds from now
 
@@ -46,7 +46,7 @@ def test_create_grow_from_json():
 
 
 def test_create_grow_from_json_string_format():
-    start = datetime.utcnow().utcnow() + timedelta(0, 3)  # 3 seconds from now
+    start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
     start -= timedelta(microseconds=start.microsecond)
     end = start + timedelta(0, 2)  # 5 seconds from now
 

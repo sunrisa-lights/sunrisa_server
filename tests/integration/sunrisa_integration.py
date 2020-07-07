@@ -237,12 +237,9 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     print("Sending shelf grow")
     start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
-    print(start)
-    print(end)
+
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
-    print(start_time)
-    print(end_time)
 
     shelf_grows = []
     for rp in recipe_phases:
@@ -258,8 +255,6 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
                 "end_datetime": end_time,
             }
         )
-        print(shelf_grow.start_datetime)
-        print(shelf_grow.end_datetime)
         shelf_grows.append(shelf_grow)
 
     flag = []
@@ -321,8 +316,6 @@ def _test_find_all_entities(
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
-        print(collections.Counter(found_grows))
-        print(collections.Counter(grows))
         assert collections.Counter(found_grows) == collections.Counter(grows)
         assert collections.Counter(found_recipes) == collections.Counter(recipes)
         assert collections.Counter(found_recipe_phases) == collections.Counter(
@@ -346,7 +339,6 @@ def _test_create_entities(sio):
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
-    print("grow", grow)
     _test_find_all_entities(
         sio, rooms, [rack], [shelf], [grow], [recipe], recipe_phases
     )
