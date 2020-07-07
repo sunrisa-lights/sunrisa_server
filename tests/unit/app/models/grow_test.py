@@ -81,12 +81,12 @@ def test_to_json():
         "room_id": 1,
         "rack_id": 2,
         "shelf_id": 3,
-        "recipe_id": grow_to_json.recipe_id,
-        "recipe_phase_num": grow_to_json.recipe_phase_num,
-        "start_datetime": grow_to_json.start_datetime.replace(
+        "recipe_id": 4,
+        "recipe_phase_num": 5,
+        "start_datetime": start5.replace(
             microsecond=0
         ).isoformat(),
-        "end_datetime": grow_to_json.end_datetime.replace(microsecond=0).isoformat(),
+        "end_datetime": end.replace(microsecond=0).isoformat(),
     }
 
 
