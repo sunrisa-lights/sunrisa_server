@@ -398,7 +398,7 @@ def _test_entities_not_found(sio):
 def test_integration():
     def run_test_and_disconnect(test_func):
         sio = socketio.Client()
-        sio.connect("https://sunrisalights.com")
+        sio.connect("http://localhost:5000")
         test_func(sio)
         sio.disconnect()
 
