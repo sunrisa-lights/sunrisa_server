@@ -86,7 +86,7 @@ def _test_send_room(sio):
         "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80},
     }
     sio.emit("message_sent", room_dict2)
-    sio.sleep(10)
+    sio.sleep(1)
 
     # return both rooms
     rooms = []
@@ -122,7 +122,7 @@ def _test_send_rack(sio, room):
         },
     }
     sio.emit("message_sent", rack_dict)
-    sio.sleep(10)
+    sio.sleep(1)
 
     flag = []
 
