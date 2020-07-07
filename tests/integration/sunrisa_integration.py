@@ -49,7 +49,7 @@ def _test_send_room(sio):
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
     sio.emit("message_sent", room_dict)
-    sio.sleep(10)
+    sio.sleep(1)
 
     flag = []
 
@@ -67,7 +67,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 20, "test_send_room.create_room")
+    wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
 
     print("first room found and returned")
 
@@ -77,7 +77,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 2, 20, "test_send_room.update_room")
+    wait_for_event(sio, flag, 2, 5, "test_send_room.update_room")
 
     print("second room read and updated")
 
@@ -104,7 +104,7 @@ def _test_send_room(sio):
         assert room_map[second_id] == Room.from_json(room_dict2["room"])
 
     sio.emit("read_all_rooms", {})
-    wait_for_event(sio, rooms, 2, 25, "test_send_room.read_rooms")
+    wait_for_event(sio, rooms, 2, 5, "test_send_room.read_rooms")
     print("read all rooms")
 
     return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2["room"])]
@@ -141,7 +141,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(sio, flag, 1, 20, "test_send_rack.read_all_racks_in_room.1")
+    wait_for_event(sio, flag, 1, 10, "test_send_rack.read_all_racks_in_room.1")
 
     print("first rack found and returned")
 
@@ -194,7 +194,7 @@ def _test_send_recipe(sio):
         flag.append(True)
 
     sio.emit("create_new_recipe", recipe_dict)
-    wait_for_event(sio, flag, 1, 20, "test_create_recipe_with_phases")
+    wait_for_event(sio, flag, 1, 5, "test_create_recipe_with_phases")
     print("Created new recipe with phases")
 
     recipe = Recipe.from_json(recipe_dict["recipe"])
@@ -279,10 +279,10 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         flag.append(True)
 
     sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows]})
-    wait_for_event(sio, flag, 1, 20, "test_start_grows_for_shelves")
+    wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
 
     for i in range(len(shelf_grows)):
-        wait_for_event(sio, flag, i + 2, 20, "test_set_lights_for_grow_job")
+        wait_for_event(sio, flag, i + 2, 5, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
     return shelf_grow
@@ -333,7 +333,7 @@ def _test_find_all_entities(
 
     sio.emit("read_all_entities", {})
     print("WAITING FOR IT!")
-    wait_for_event(sio, flag, 1, 20, "test_find_all_entities")
+    wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
 
 
