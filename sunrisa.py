@@ -22,6 +22,7 @@ def create_app(debug):
 
     env = "development"
     app_config = AppConfig(socketio, env)
+    print("test2")
 
     socketio.init_app(app)
     init_event_listeners(app_config, socketio)
@@ -29,7 +30,9 @@ def create_app(debug):
 
 
 if __name__ == "__main__":
+    print("test")
     debug = True
     app = create_app(debug)
 
     socketio.run(app)
+

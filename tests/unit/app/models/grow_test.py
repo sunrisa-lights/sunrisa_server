@@ -1,7 +1,5 @@
 from app.models.grow import Grow
-from datetime import datetime, timedelta
-from time import mktime
-from dateutil.parser import parse
+from datetime import datetime, timedelta, timezone
 
 
 def test_create_grow():
@@ -22,14 +20,7 @@ def test_create_grow():
 def test_create_grow_from_json():
     start = datetime.now().utcnow() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
-    start = start.utcnow()
-    end = end.utcnow()
-    expected_start_datetime = datetime.fromtimestamp(
-        mktime(parse(start.isoformat()).utctimetuple())
-    )
-    expected_end_datetime = datetime.fromtimestamp(
-        mktime(parse(end.isoformat()).utctimetuple())
-    )
+
 
     grow = Grow.from_json(
         {
@@ -48,12 +39,41 @@ def test_create_grow_from_json():
     assert grow.shelf_id == 3
     assert grow.recipe_id == 4
     assert grow.recipe_phase_num == 5
-    assert grow.start_datetime == expected_start_datetime
-    assert grow.end_datetime == expected_end_datetime
+    # needs to round because calendar.timegm is converting to seconds losing microsecond precision
+    assert grow.start_datetime == start - timedelta(microseconds=start.microsecond)
+    assert grow.end_datetime == end - timedelta(microseconds=end.microsecond)
+
+
+def test_create_grow_from_json_string_format():
+    start = datetime.now().utcnow() + timedelta(0, 3)  # 3 seconds from now
+    end = start + timedelta(0, 2)  # 5 seconds from now
+
+
+    grow = Grow.from_json(
+        {
+            "room_id": 1,
+            "rack_id": 2,
+            "shelf_id": 3,
+            "recipe_id": 4,
+            "recipe_phase_num": 5,
+            "start_datetime": start.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "end_datetime": end.strftime("%Y-%m-%d %H:%M:%S.%f"),
+        }
+    )
+
+    assert grow.room_id == 1
+    assert grow.rack_id == 2
+    assert grow.shelf_id == 3
+    assert grow.recipe_id == 4
+    assert grow.recipe_phase_num == 5
+    # needs to round because calendar.timegm is converting to seconds losing microsecond precision
+    assert grow.start_datetime == start - timedelta(microseconds=start.microsecond)
+    assert grow.end_datetime == end - timedelta(microseconds=end.microsecond)
+
 
 
 def test_to_json():
-    start5 = datetime.now() + timedelta(0, 4)
+    start5 = datetime.utcnow() + timedelta(0, 4)
     end = start5 + timedelta(0, 2)
     grow_to_json = Grow(1, 2, 3, 4, 5, start5, end)
     assert grow_to_json.to_json() == {
@@ -62,10 +82,10 @@ def test_to_json():
         "shelf_id": 3,
         "recipe_id": grow_to_json.recipe_id,
         "recipe_phase_num": grow_to_json.recipe_phase_num,
-        "start_datetime": grow_to_json.start_datetime.astimezone()
+        "start_datetime": grow_to_json.start_datetime.astimezone(timezone.utc)
         .replace(microsecond=0)
         .isoformat(),
-        "end_datetime": grow_to_json.end_datetime.astimezone()
+        "end_datetime": grow_to_json.end_datetime.astimezone(timezone.utc)
         .replace(microsecond=0)
         .isoformat(),
     }

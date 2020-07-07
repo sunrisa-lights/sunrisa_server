@@ -4,7 +4,7 @@ import pymysql.cursors
 import logging
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from typing import List
 
@@ -22,9 +22,6 @@ from app.models.plant import Plant
 
 expected_processed_entities = None
 
-logging.basicConfig(filename="integration_error.log", level=logging.DEBUG)
-db_name = "sunrisa_test"
-db = DB(db_name, logging)
 
 
 def kill_server_on_assert_failure(sio, condition, assert_arg=""):
@@ -53,7 +50,7 @@ def _test_send_room(sio):
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
     sio.emit("message_sent", room_dict)
-    sio.sleep(1)
+    sio.sleep(10)
 
     flag = []
 
@@ -71,7 +68,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
+    wait_for_event(sio, flag, 1, 20, "test_send_room.create_room")
 
     print("first room found and returned")
 
@@ -81,7 +78,7 @@ def _test_send_room(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 2, 5, "test_send_room.update_room")
+    wait_for_event(sio, flag, 2, 20, "test_send_room.update_room")
 
     print("second room read and updated")
 
@@ -90,6 +87,7 @@ def _test_send_room(sio):
         "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80},
     }
     sio.emit("message_sent", room_dict2)
+    sio.sleep(10)
 
     # return both rooms
     rooms = []
@@ -107,7 +105,7 @@ def _test_send_room(sio):
         assert room_map[second_id] == Room.from_json(room_dict2["room"])
 
     sio.emit("read_all_rooms", {})
-    wait_for_event(sio, rooms, 2, 5, "test_send_room.read_rooms")
+    wait_for_event(sio, rooms, 2, 25, "test_send_room.read_rooms")
     print("read all rooms")
 
     return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2["room"])]
@@ -125,6 +123,7 @@ def _test_send_rack(sio, room):
         },
     }
     sio.emit("message_sent", rack_dict)
+    sio.sleep(10)
 
     flag = []
 
@@ -143,7 +142,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(sio, flag, 1, 5, "test_send_rack.read_all_racks_in_room.1")
+    wait_for_event(sio, flag, 1, 20, "test_send_rack.read_all_racks_in_room.1")
 
     print("first rack found and returned")
 
@@ -153,7 +152,7 @@ def _test_send_rack(sio, room):
     sio.emit(
         "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
     )
-    wait_for_event(sio, flag, 2, 5, "test_send_rack.read_all_racks_in_room.2")
+    wait_for_event(sio, flag, 2, 10, "test_send_rack.read_all_racks_in_room.2")
 
     print("second rack found and returned")
 
@@ -196,7 +195,7 @@ def _test_send_recipe(sio):
         flag.append(True)
 
     sio.emit("create_new_recipe", recipe_dict)
-    wait_for_event(sio, flag, 1, 5, "test_create_recipe_with_phases")
+    wait_for_event(sio, flag, 1, 20, "test_create_recipe_with_phases")
     print("Created new recipe with phases")
 
     recipe = Recipe.from_json(recipe_dict["recipe"])
@@ -211,18 +210,9 @@ def _test_send_shelf(sio, rack, recipe):
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
-    get_shelf_sql = "SELECT shelf_id, rack_id FROM shelves WHERE shelf_id={}".format(
-        shelf_dict["shelf"]["shelf_id"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_shelf_sql)
-        (shelf_id, rack_id,) = cursor.fetchone()
-        foundShelf = Shelf(shelf_id, rack_id,)
-        expected = Shelf.from_json(shelf_dict["shelf"])
-        print("foundShelf:", foundShelf, "expected:", expected)
-        assert foundShelf == expected
+    expected = Shelf.from_json(shelf_dict["shelf"])
 
-        return foundShelf
+    return expected
 
 
 def _test_send_plant(sio, shelf):
@@ -230,16 +220,8 @@ def _test_send_plant(sio, shelf):
     plant_dict = {"plant": {"olcc_number": 1}}
     sio.emit("message_sent", plant_dict)
     sio.sleep(1)
-    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
-        plant_dict["plant"]["olcc_number"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_plant_sql)
-        olcc_number, shelf_id = cursor.fetchone()
-        foundPlant = Plant(olcc_number, shelf_id)
-        expected = Plant.from_json(plant_dict["plant"])
-        print("foundPlant:", foundPlant, "expected:", expected)
-        assert foundPlant == expected
+
+
 
     # add shelf in and verify that it is updated properly
     plant_dict = {
@@ -247,18 +229,9 @@ def _test_send_plant(sio, shelf):
     }
     sio.emit("message_sent", plant_dict)
     sio.sleep(1)
-    get_plant_sql = "SELECT olcc_number, shelf_id FROM plants WHERE olcc_number={}".format(
-        plant_dict["plant"]["olcc_number"]
-    )
-    with db._new_connection(db_name) as cursor:
-        cursor.execute(get_plant_sql)
-        olcc_number, shelf_id = cursor.fetchone()
-        foundPlant = Plant(olcc_number, shelf_id)
-        expected = Plant.from_json(plant_dict["plant"])
-        print("foundPlant:", foundPlant, "expected:", expected)
-        assert foundPlant == expected
+    expected = Plant.from_json(plant_dict["plant"])
 
-        return foundPlant
+    return expected
 
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
@@ -267,9 +240,12 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     print("Sending shelf grow")
     start = datetime.now() + timedelta(0, 3)  # 3 seconds from now
     end = start + timedelta(0, 2)  # 5 seconds from now
-
-    start_time = start.strftime("%Y-%m-%d %H:%M:%S")
-    end_time = end.strftime("%Y-%m-%d %H:%M:%S")
+    print(start)
+    print(end)
+    start_time = start.strftime("%Y-%m-%d %H:%M:%S.%f")
+    end_time = end.strftime("%Y-%m-%d %H:%M:%S.%f")
+    print(start_time)
+    print(end_time)
 
     shelf_grows = []
     for rp in recipe_phases:
@@ -285,6 +261,8 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
                 "end_datetime": end_time,
             }
         )
+        print(shelf_grow.start_datetime)
+        print(shelf_grow.end_datetime)
         shelf_grows.append(shelf_grow)
 
     flag = []
@@ -304,10 +282,10 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         flag.append(True)
 
     sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows]})
-    wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
+    wait_for_event(sio, flag, 1, 20, "test_start_grows_for_shelves")
 
     for i in range(len(shelf_grows)):
-        wait_for_event(sio, flag, i + 2, 5, "test_set_lights_for_grow_job")
+        wait_for_event(sio, flag, i + 2, 20, "test_set_lights_for_grow_job")
 
     print("test send shelf grow passed")
     return shelf_grow
@@ -356,7 +334,7 @@ def _test_find_all_entities(
 
     sio.emit("read_all_entities", {})
     print("WAITING FOR IT!")
-    wait_for_event(sio, flag, 1, 10, "test_find_all_entities")
+    wait_for_event(sio, flag, 1, 20, "test_find_all_entities")
     print("all entities found")
 
 
@@ -369,6 +347,7 @@ def _test_create_entities(sio):
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
+    print("grow", grow)
     _test_find_all_entities(
         sio, rooms, [rack], [shelf], [grow], [recipe], recipe_phases
     )
@@ -387,7 +366,7 @@ def _test_room_not_found(sio):
 
     sio.emit("read_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 5, "test_room_not_found")
+    wait_for_event(sio, flag, 1, 10, "test_room_not_found")
 
     print("room not found test passed!")
 
@@ -405,7 +384,7 @@ def _test_racks_not_found_in_room(sio):
 
     sio.emit("read_all_racks_in_room", room_dict)
 
-    wait_for_event(sio, flag, 1, 5, "test_racks_not_found_in_room")
+    wait_for_event(sio, flag, 1, 10, "test_racks_not_found_in_room")
 
     print("racks not found in room test passed!")
 
@@ -420,7 +399,7 @@ def _test_entities_not_found(sio):
 def test_integration():
     def run_test_and_disconnect(test_func):
         sio = socketio.Client()
-        sio.connect("http://localhost:5000")
+        sio.connect("https://sunrisalights.com")
         test_func(sio)
         sio.disconnect()
 

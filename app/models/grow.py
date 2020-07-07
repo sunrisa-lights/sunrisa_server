@@ -1,8 +1,8 @@
-from datetime import datetime
-from time import mktime
+from datetime import datetime, timezone
 from dateutil.parser import parse
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import json
+import calendar
 
 
 class Grow:
@@ -47,11 +47,11 @@ class Grow:
         start_date_str = grow_json["start_datetime"]
         end_date_str = grow_json["end_datetime"]
 
-        start_datetime = datetime.fromtimestamp(
-            mktime(parse(start_date_str).utctimetuple())
+        start_datetime = datetime.utcfromtimestamp(
+            calendar.timegm(parse(start_date_str).utctimetuple())
         )
-        end_datetime = datetime.fromtimestamp(
-            mktime(parse(end_date_str).utctimetuple())
+        end_datetime = datetime.utcfromtimestamp(
+            calendar.timegm(parse(end_date_str).utctimetuple())
         )
         return cls(
             room_id,
@@ -70,10 +70,10 @@ class Grow:
             "shelf_id": self.shelf_id,
             "recipe_id": self.recipe_id,
             "recipe_phase_num": self.recipe_phase_num,
-            "start_datetime": self.start_datetime.astimezone()
+            "start_datetime": self.start_datetime.astimezone(timezone.utc)
             .replace(microsecond=0)
             .isoformat(),
-            "end_datetime": self.end_datetime.astimezone()
+            "end_datetime": self.end_datetime.astimezone(timezone.utc)
             .replace(microsecond=0)
             .isoformat(),
         }
