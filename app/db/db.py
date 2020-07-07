@@ -136,6 +136,9 @@ class DB:
         return current_grows
 
     def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
+        if not recipe_ids:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             recipes = read_recipes(db_conn, recipe_ids)
@@ -146,6 +149,9 @@ class DB:
     def read_recipe_phases(
         self, recipe_id_phase_num_pairs: List[Tuple[int, int]]
     ) -> List[RecipePhase]:
+        if not recipe_id_phase_num_pairs:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             recipe_phases = read_recipe_phases(db_conn, recipe_id_phase_num_pairs)
