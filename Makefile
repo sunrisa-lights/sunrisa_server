@@ -1,5 +1,6 @@
 .PHONY: lint virtual test_unit test_integration mypy install install_integration run
 
+
 lint:
 	venv/Scripts/black sunrisa.py
 
