@@ -387,17 +387,17 @@ def _test_entities_not_found(sio):
     print("entities_not_found_test passed!")
 
 
-def run_test_and_disconnect(test_func): #removed this function from test_integration while splitting test_integration
-    sio = socketio.Client()             #into two different methods
+def run_test_and_disconnect(test_func):
+    sio = socketio.Client()             
     sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
 
 
-def test_integration():
+def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Integration tests passed!")
 
-def test_integration2():
+def test_entities_not_found():
     run_test_and_disconnect(_test_entities_not_found)
     print("Integration tests 2 passed!")
