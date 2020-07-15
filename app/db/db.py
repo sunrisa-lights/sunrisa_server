@@ -4,6 +4,7 @@ from typing import List
 from typing import Optional, Tuple
 
 from app.models.grow import Grow
+from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
@@ -16,6 +17,11 @@ from app.db.grow import (
     create_grow_table,
     write_grow,
     write_grows,
+)
+from app.db.grow_phase import (
+    create_grow_phase_table,
+    read_grow_phases,
+    write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
@@ -78,6 +84,7 @@ class DB:
             create_plant_table(db_conn)
             create_recipe_phases_table(db_conn)
             create_grow_table(db_conn)
+            create_grow_phase_table(db_conn)
         except Exception as e:
             print("Error initializing tables", e)
             raise
@@ -135,6 +142,14 @@ class DB:
             db_conn.close()
         return current_grows
 
+    def read_grow_phases(self, grow_id: int) -> List[GrowPhase]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phases = read_grow_phases(db_conn)
+        finally:
+            db_conn.close()
+        return grow_phases
+
     def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
         if not recipe_ids:
             return []
@@ -190,6 +205,13 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_grows(db_conn, grows)
+        finally:
+            db_conn.close()
+
+    def write_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            write_grow_phases(db_conn, grow_phases)
         finally:
             db_conn.close()
 
