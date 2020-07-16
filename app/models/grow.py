@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from dateutil.parser import parse
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import json
 import calendar
 
@@ -27,8 +27,7 @@ class Grow:
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
         if not (
-            "grow_id" in grow_json
-            and "room_id" in grow_json
+            "room_id" in grow_json
             and "rack_id" in grow_json
             and "shelf_id" in grow_json
             and "recipe_id" in grow_json
@@ -37,7 +36,7 @@ class Grow:
         ):
             raise Exception("Invalid grow")
 
-        grow_id: int = int(grow_json["room_id"])
+        grow_id: Optional[int] = grow_json.get("grow_id")
         room_id: int = int(grow_json["room_id"])
         rack_id: int = int(grow_json["rack_id"])
         shelf_id: int = int(grow_json["shelf_id"])
@@ -54,6 +53,7 @@ class Grow:
             calendar.timegm(parse(estimated_end_date_str).utctimetuple())
         )
         return cls(
+            grow_id,
             room_id,
             rack_id,
             shelf_id,

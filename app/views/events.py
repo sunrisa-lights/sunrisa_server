@@ -100,15 +100,23 @@ def init_event_listeners(app_config, socketio):
     def start_grows_for_shelves(message) -> None:
         print("message:", message)
         logging.debug("message sent to post_room_schedule:", message)
-        if "grows" not in message:
+        if "grow" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "Grow not included"},
             )
+        elif "grow_phases" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "Grow phases not included"},
+            )
 
-        grows: List[Grow] = [Grow.from_json(g) for g in message["grows"]]
+        new_grow: Grow = Grow.from_json(message["grow"])
+        new_grow_phases: List[GrowPhase] = [GrowPhase.from_json(gp) for gp in message["grow_phases"]]
 
         for grow in grows:
             (

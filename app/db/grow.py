@@ -5,12 +5,11 @@ from app.models.grow import Grow
 
 
 def write_grow(conn, grow: Grow) -> None:
-    sql = "INSERT INTO `grows` VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO `grows` (room_id, rack_id, shelf_id, recipe_id, start_datetime, end_datetime) VALUES (%s, %s, %s, %s, %s, %s)"
     cursor = conn.cursor()
     cursor.execute(
         sql,
         (
-            grow.grow_id,
             grow.room_id,
             grow.rack_id,
             grow.shelf_id,
@@ -27,7 +26,6 @@ def write_grows(conn, grows: List[Grow]) -> None:
     value_list: List[str] = []
     for g in grows:
         grow_sql_args += (
-            g.grow_id,
             g.room_id,
             g.rack_id,
             g.shelf_id,
@@ -35,9 +33,9 @@ def write_grows(conn, grows: List[Grow]) -> None:
             g.start_datetime,
             g.end_datetime,
         )
-        value_list.append("(%s, %s, %s, %s, %s, %s, %s)")
+        value_list.append("(%s, %s, %s, %s, %s, %s)")
 
-    sql = "INSERT INTO `grows` VALUES {}".format(", ".join(value_list))
+    sql = "INSERT INTO `grows` (room_id, rack_id, shelf_id, recipe_id, start_datetime, end_datetime) VALUES {}".format(", ".join(value_list))
     cursor = conn.cursor()
     cursor.execute(sql, grow_sql_args)
     cursor.close()
@@ -79,7 +77,7 @@ def read_shelf_current_grows(conn, shelf_id) -> List[Grow]:
 
 def create_grow_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS grows(
-    grow_id INT NOT NULL,
+    grow_id INT NOT NULL AUTO_INCREMENT,
     room_id INT NOT NULL,
     rack_id INT NOT NULL,
     shelf_id INT NOT NULL,
