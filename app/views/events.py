@@ -6,6 +6,7 @@ from time import mktime
 from typing import List, Optional
 
 from app.models.grow import Grow
+from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
@@ -243,10 +244,13 @@ def init_event_listeners(app_config, socketio):
         }  # use a set comprehension since grows may have duplicate recipes
         all_current_recipes = app_config.db.read_recipes(list(recipe_ids))
 
+        all_grow_ids = [g.grow_id for g in all_current_grows]
+        all_grow_phases: List[GrowPhase] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+
         recipe_id_phase_num_pairs = [
-            (g.recipe_id, g.recipe_phase_num) for g in all_current_grows
+            (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
         ]
-        all_current_recipe_phases = app_config.db.read_recipe_phases(
+        all_recipe_phases = app_config.db.read_recipe_phases(
             recipe_id_phase_num_pairs
         )
 
@@ -255,8 +259,9 @@ def init_event_listeners(app_config, socketio):
             "racks": [rck.to_json() for rck in all_racks],
             "shelves": [s.to_json() for s in all_shelves],
             "grows": [g.to_json() for g in all_current_grows],
+            "grow_phases": [gp.to_json() for gp in all_grow_phases],
             "recipes": [r.to_json() for r in all_current_recipes],
-            "recipe_phases": [rp.to_json() for rp in all_current_recipe_phases],
+            "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
         }
 
         app_config.logger.debug("returning entities: {}".format(entities_dict))

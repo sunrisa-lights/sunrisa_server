@@ -53,6 +53,21 @@ def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
         cursor.close()
         return found_grow_phases
 
+def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[GrowPhase]:
+    format_strings = ["%s"] * len(grow_ids)
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime FROM grow_phases WHERE grow_id = ({})".format(', '.join(format_strings))
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (grow_ids))
+        all_grow_phases = cursor.fetchall()
+        found_grow_phases: List[GrowPhase] = [
+            GrowPhase(grow_id, rid, rpn, sd, ed)
+            for (grow_id, rid, rpn, sd, ed) in all_grow_phases
+        ]
+
+        cursor.close()
+        return found_grow_phases
+
 
 def create_grow_phase_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS grow_phases(
