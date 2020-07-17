@@ -11,9 +11,9 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
+from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     read_current_grows,
-    read_shelf_current_grows,
     create_grow_table,
     write_grow,
     write_grows,
@@ -40,6 +40,7 @@ from app.db.recipe_phase import (
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
+from app.db.shelf_grow import read_shelves_with_grow, write_shelf_grows
 
 
 class DB:
@@ -195,20 +196,22 @@ class DB:
             db_conn.close()
         return power_level, red_level, blue_level
 
-    def read_shelf_current_grows(self, shelf_id) -> List[Grow]:
+    def read_shelves_with_grow(self, grow_id: int) -> List[ShelfGrow]:
         db_conn = self._new_connection(self.db_name)
         try:
-            current_shelf_grows = read_shelf_current_grows(db_conn, shelf_id)
+            current_shelf_grows = read_shelves_with_grow(db_conn, grow_id)
         finally:
             db_conn.close()
         return current_shelf_grows
 
-    def write_grow(self, grow: Grow) -> None:
+    def write_grow(self, grow: Grow) -> Grow:
         db_conn = self._new_connection(self.db_name)
         try:
-            write_grow(db_conn, grow)
+            grow = write_grow(db_conn, grow)
         finally:
             db_conn.close()
+        
+        return grow
 
     def write_grows(self, grows: List[Grow]) -> None:
         db_conn = self._new_connection(self.db_name)
@@ -252,6 +255,13 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_shelf(db_conn, shelf)
+        finally:
+            db_conn.close()
+
+    def write_shelf_grows(self, shelf_grows: List[ShelfGrow]) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            write_shelf_grows(db_conn, shelf_grows)
         finally:
             db_conn.close()
 

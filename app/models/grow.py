@@ -9,16 +9,11 @@ class Grow:
     def __init__(
         self,
         grow_id: int,
-        rack_id: int,
-        shelf_id: int,
         recipe_id: int,
         start_datetime: datetime,
         estimated_end_datetime: datetime,
     ):
         self.grow_id = grow_id
-        self.room_id = room_id
-        self.rack_id = rack_id
-        self.shelf_id = shelf_id
         self.recipe_id = recipe_id
         self.start_datetime = start_datetime
         self.estimated_end_datetime = estimated_end_datetime
@@ -27,9 +22,7 @@ class Grow:
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
         if not (
-            "room_id" in grow_json
-            and "rack_id" in grow_json
-            and "shelf_id" in grow_json
+            "grow_id" in grow_json
             and "recipe_id" in grow_json
             and "start_datetime" in grow_json
             and "estimated_end_datetime" in grow_json
@@ -37,9 +30,6 @@ class Grow:
             raise Exception("Invalid grow")
 
         grow_id: Optional[int] = grow_json.get("grow_id")
-        room_id: int = int(grow_json["room_id"])
-        rack_id: int = int(grow_json["rack_id"])
-        shelf_id: int = int(grow_json["shelf_id"])
         recipe_id: int = int(grow_json["recipe_id"])
 
         # TODO: Write methods for converting datetime -> str and vice versa
@@ -54,9 +44,6 @@ class Grow:
         )
         return cls(
             grow_id,
-            room_id,
-            rack_id,
-            shelf_id,
             recipe_id,
             start_datetime,
             estimated_end_datetime,
@@ -65,9 +52,6 @@ class Grow:
     def to_json(self):
         return {
             "grow_id": self.grow_id,
-            "room_id": self.room_id,
-            "rack_id": self.rack_id,
-            "shelf_id": self.shelf_id,
             "recipe_id": self.recipe_id,
             "start_datetime": self.start_datetime.replace(microsecond=0).isoformat(),
             "estimated_end_datetime": self.estimated_end_datetime.replace(microsecond=0).isoformat(),
@@ -82,9 +66,6 @@ class Grow:
         return json.dumps(
             {
                 "grow_id": self.grow_id,
-                "room_id": self.room_id,
-                "rack_id": self.rack_id,
-                "shelf_id": self.shelf_id,
                 "recipe_id": self.recipe_id,
                 "start_datetime": self.start_datetime
                 .replace(microsecond=0)
@@ -105,9 +86,6 @@ class Grow:
 
         return (
             self.grow_id == other.grow_id
-            and self.room_id == other.room_id
-            and self.rack_id == other.rack_id
-            and self.shelf_id == other.shelf_id
             and self.recipe_id == other.recipe_id
             and self.start_datetime == other.start_datetime
             and self.estimated_end_datetime == other.estimated_end_datetime

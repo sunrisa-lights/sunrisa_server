@@ -114,30 +114,39 @@ def init_event_listeners(app_config, socketio):
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "Grow phases not included"},
             )
+        elif "shelves" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "Grow phases not included"},
+            )
 
-        new_grow: Grow = Grow.from_json(message["grow"])
+        # create the grow first so we can read the grow_id
+        grow_without_id: Grow = Grow.from_json(message["grow"])
+
+        grow: Grow = app_config.db.write_grow(grow_without_id)
+
         new_grow_phases: List[GrowPhase] = [GrowPhase.from_json(gp) for gp in message["grow_phases"]]
 
-        for grow in grows:
+        for grow_phase in new_grow_phases:
             (
                 power_level,
                 red_level,
                 blue_level,
             ) = app_config.db.read_lights_from_recipe_phase(
-                grow.recipe_id, grow.recipe_phase_num
+                grow_phase.recipe_id, grow_phase.recipe_phase_num
             )
 
             app_config.scheduler.add_job(
                 schedule_grow_for_shelf,
                 "interval",
-                start_date=grow.start_datetime,
-                end_date=grow.end_datetime,
-                args=[grow, power_level, red_level, blue_level],
-                id=grow.to_job_id(),
+                start_date=grow_phase.start_datetime,
+                end_date=grow_phase.end_datetime,
+                args=[new_grow, grow_phase.end_datetime, power_level, red_level, blue_level],
+                id=grow_phase.to_job_id(),
                 minutes=5,
             )
-
-        # TODO (lww515): What to do after harvest is finished?
 
         # write grows to db
         app_config.db.write_grows(grows)
