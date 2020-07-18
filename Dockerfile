@@ -2,7 +2,8 @@
 FROM python:3.6.5
 
 # Set the working directory.
-WORKDIR /Users/lucaswotton/Documents/personal/sunrisa/sunrisa_server
+WORKDIR /home/ubuntu/sunrisa_server
+
 # Copy the file from your host to your current location.
 COPY requirements.txt .
 
