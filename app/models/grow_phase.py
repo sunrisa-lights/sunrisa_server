@@ -87,7 +87,7 @@ class GrowPhase:
                 "phase_end_datetime": self.phase_end_datetime
                 .replace(microsecond=0)
                 .isoformat(),
-                "is_last_phase" self.is_last_phase,
+                "is_last_phase": self.is_last_phase,
             }
         )
 

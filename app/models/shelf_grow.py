@@ -26,7 +26,7 @@ class ShelfGrow:
         ):
             raise Exception("Invalid shelf grow")
 
-        grow_id: int = int(shelf_grow_json.["grow_id"])
+        grow_id: int = int(shelf_grow_json["grow_id"])
         room_id: int = int(shelf_grow_json["room_id"])
         rack_id: int = int(shelf_grow_json["rack_id"])
         shelf_id: int = int(shelf_grow_json["shelf_id"])
