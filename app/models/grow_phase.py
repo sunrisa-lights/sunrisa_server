@@ -13,12 +13,14 @@ class GrowPhase:
         recipe_phase_num: int,
         phase_start_datetime: datetime,
         phase_end_datetime: datetime,
+        is_last_phase: bool,
     ):
         self.grow_id = grow_id
         self.recipe_id = recipe_id
         self.recipe_phase_num = recipe_phase_num
         self.phase_start_datetime = phase_start_datetime
         self.phase_end_datetime = phase_end_datetime
+        self.is_last_phase = is_last_phase
         self.round_dates_to_seconds()
 
     @classmethod
@@ -26,15 +28,17 @@ class GrowPhase:
         if not (
             "grow_id" in grow_phase_json
             and "recipe_phase_num" in grow_phase_json
-            and "recipe_id" in grow_json
+            and "recipe_id" in grow_phase_json
             and "phase_start_datetime" in grow_phase_json
             and "phase_end_datetime" in grow_phase_json
+            and "is_last_phase" in grow_phase_json
         ):
             raise Exception("Invalid grow phase")
 
         grow_id: int = int(grow_phase_json["grow_id"])
         recipe_phase_num: int = int(grow_phase_json["recipe_phase_num"])
         recipe_id: int = int(grow_phase_json["recipe_id"])
+        is_last_phase: bool = bool(grow_phase_json["is_last_phase"])
 
         # TODO: Write methods for converting datetime -> str and vice versa
         start_date_str = grow_phase_json["phase_start_datetime"]
@@ -52,6 +56,7 @@ class GrowPhase:
             recipe_phase_num,
             phase_start_datetime,
             phase_end_datetime,
+            is_last_phase,
         )
 
     def to_json(self):
@@ -61,18 +66,8 @@ class GrowPhase:
             "recipe_phase_num": self.recipe_phase_num,
             "phase_start_datetime": self.phase_start_datetime.replace(microsecond=0).isoformat(),
             "phase_end_datetime": self.phase_end_datetime.replace(microsecond=0).isoformat(),
+            "is_last_phase": self.is_last_phase,
         }
-
-    def to_job_id(self) -> str:
-        date_format = "%b %d %Y %H:%M:%S"
-        job_id = "grow-{}-recipe-{}-phase-{}-start-{}-end-{}".format(
-            self.grow_id,
-            self.recipe_id,
-            self.recipe_phase_num,
-            self.phase_start_datetime.strftime(date_format),
-            self.phase_end_datetime.strftime(date_format),
-        )
-        return job_id
 
     # TODO: Put this in a utils file
     # Removes microseconds because they're lost in json conversions
@@ -92,6 +87,7 @@ class GrowPhase:
                 "phase_end_datetime": self.phase_end_datetime
                 .replace(microsecond=0)
                 .isoformat(),
+                "is_last_phase" self.is_last_phase,
             }
         )
 
@@ -109,4 +105,5 @@ class GrowPhase:
             and self.recipe_id == other.recipe_id
             and self.phase_start_datetime == other.phase_start_datetime
             and self.phase_end_datetime == other.phase_end_datetime
+            and self.is_last_phase == other.is_last_phase
         )

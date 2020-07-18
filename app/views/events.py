@@ -13,8 +13,12 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
+from app.models.shelf_grow import ShelfGrow
 
+from app.resources.schedule_jobs import get_job_id
 from app.resources.schedule_jobs import schedule_grow_for_shelf  # type: ignore
+
+import logging
 
 NAMESPACE = "namespace"
 
@@ -127,29 +131,52 @@ def init_event_listeners(app_config, socketio):
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
 
-        new_grow_phases: List[GrowPhase] = [GrowPhase.from_json(gp) for gp in message["grow_phases"]]
+        grow_phases: List[GrowPhase] = []
+        for gp in message["grow_phases"]:
+            gp["grow_id"] = grow.grow_id
+            grow_phase = GrowPhase.from_json(gp)
+            grow_phases.append(grow_phase)
 
-        for grow_phase in new_grow_phases:
-            (
-                power_level,
-                red_level,
-                blue_level,
-            ) = app_config.db.read_lights_from_recipe_phase(
-                grow_phase.recipe_id, grow_phase.recipe_phase_num
-            )
+        shelf_grows: List[ShelfGrow] = []
+        for shelf_data in message["shelves"]:
+            shelf_data["grow_id"] = grow.grow_id
+            shelf_grow = ShelfGrow.from_json(shelf_data)
+            shelf_grows.append(shelf_grow)
 
+        # only schedule 1st grow phase, but write all grow phases to DB
+        first_grow_phase: GrowPhase = grow_phases[0]
+        (
+            power_level,
+            red_level,
+            blue_level,
+        ) = app_config.db.read_lights_from_recipe_phase(
+            first_grow_phase.recipe_id, first_grow_phase.recipe_phase_num
+        )
+
+        if grow_phase.is_last_phase:
+            # schedule this phase without an end date
             app_config.scheduler.add_job(
                 schedule_grow_for_shelf,
                 "interval",
-                start_date=grow_phase.start_datetime,
-                end_date=grow_phase.end_datetime,
-                args=[new_grow, grow_phase.end_datetime, power_level, red_level, blue_level],
-                id=grow_phase.to_job_id(),
-                minutes=5,
+                start_date=first_grow_phase.phase_start_datetime,
+                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
+                id=get_job_id(shelf_grows, grow_phase),
+                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+            )
+        else:
+            app_config.scheduler.add_job(
+                schedule_grow_for_shelf,
+                "interval",
+                start_date=first_grow_phase.phase_start_datetime,
+                end_date=first_grow_phase.phase_end_datetime,
+                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
+                id=get_job_id(shelf_grows, grow_phase),
+                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
 
-        # write grows to db
-        app_config.db.write_grows(grows)
+        # write grow phases and shelf grows to db
+        app_config.db.write_grow_phases(grow_phases)
+        app_config.db.write_shelf_grows(shelf_grows)
 
         logging.debug("start_grow_for_shelf succeeded!")
         send_message_to_namespace_if_specified(

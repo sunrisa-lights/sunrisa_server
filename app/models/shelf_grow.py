@@ -23,8 +23,6 @@ class ShelfGrow:
             and "rack_id" in shelf_grow_json
             and "shelf_id" in shelf_grow_json
             and "recipe_id" in shelf_grow_json
-            and "start_datetime" in shelf_grow_json
-            and "estimated_end_datetime" in shelf_grow_json
         ):
             raise Exception("Invalid shelf grow")
 
@@ -47,6 +45,9 @@ class ShelfGrow:
             "rack_id": self.rack_id,
             "shelf_id": self.shelf_id,
         }
+
+    def to_job_entry(self) -> str:
+        return '(shelf-{}-rack-{}-room-{})'.format(self.shelf_id, self.rack_id, self.room_id)
 
     def __str__(self) -> str:
         return json.dumps(

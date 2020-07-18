@@ -20,6 +20,7 @@ from app.db.grow import (
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
+    read_grow_phase,
     read_grow_phases,
     read_grow_phases_from_multiple_grows,
     write_grow_phases,
@@ -144,10 +145,18 @@ class DB:
             db_conn.close()
         return current_grows
 
+    def read_grow_phase(self, grow_id: int, recipe_phase_num: int) -> GrowPhase:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phase = read_grow_phase(db_conn, grow_id, recipe_phase_num)
+        finally:
+            db_conn.close()
+        return grow_phase
+
     def read_grow_phases(self, grow_id: int) -> List[GrowPhase]:
         db_conn = self._new_connection(self.db_name)
         try:
-            grow_phases = read_grow_phases(db_conn, grow_ids)
+            grow_phases = read_grow_phases(db_conn, grow_id)
         finally:
             db_conn.close()
         return grow_phases
