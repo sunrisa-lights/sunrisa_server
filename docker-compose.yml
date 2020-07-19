@@ -7,6 +7,9 @@ services:
     build: .
     ports:
       - '5000:5000'
+    expose:
+      # Opens port 5000 on the container
+      - '5000'
     container_name: sunrisa-server-container
     image: sunrisa_server
   db:
