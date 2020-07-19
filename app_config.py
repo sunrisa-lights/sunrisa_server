@@ -34,7 +34,7 @@ class AppConfig(metaclass=Singleton):
 
         jobstores = {
             "default": SQLAlchemyJobStore(
-                url="mysql+pymysql://root:root@localhost/{}".format(self.DB_NAME)
+                url="mysql+pymysql://root:root@db/{}".format(self.DB_NAME) # TODO: Make network name (`db` in this case) configurable as env var
             )
         }
 

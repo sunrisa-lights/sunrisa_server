@@ -1,0 +1,16 @@
+# Use the official image as a parent image.
+FROM python:3.8.1-slim-buster
+
+# Set the working directory.
+WORKDIR /usr/src/sunrisa/sunrisa_server_integration
+
+# Copy the file from Dockerfile location to WORKDIR
+COPY tests/integration/requirements_integration.txt ./requirements.txt
+COPY app/models ./app/models
+COPY tests/integration/sunrisa_integration.py ./sunrisa_integration.py
+
+# Run the command inside your image filesystem.
+RUN pip install --upgrade -r requirements.txt
+
+# Run the specified command within the container.
+CMD [ "py.test", "-s", "sunrisa_integration.py" ] # -s disables stdout capturing

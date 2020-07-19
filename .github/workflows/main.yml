@@ -53,18 +53,10 @@ jobs:
       run: |
         ./integration_venv/bin/pytest tests/
 
-    # Setup MySQL for integration tests
-    - name: Setup MySQL
+    - name: Run integration tests with docker
       run: |
-        sudo systemctl start mysql
-
-    # Runs pytest on the tests/integration directory
-    - name: Run integration tests
-      run: |
-        nohup ./venv/bin/python sunrisa.py > integration_test.log &
-        echo "Sleeping 5 seconds before starting integration test"
-        sleep 5
-        ./integration_venv/bin/pytest tests/integration/sunrisa_integration.py
+        docker-compose -f docker-compose.test.yml up -d  # run the integration tests in detached state
+        docker wait sunrisa_integration  # wait for the exit code of sunrisa_integration container
 
     - name: Print integration test logs if job failed
       if: ${{ failure() }}
