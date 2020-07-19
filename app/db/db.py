@@ -41,14 +41,14 @@ class DB:
 
         self.db_name = db_name
         try:
-            conn = pymysql.connect(host="localhost", user="root", password="root")
+            conn = pymysql.connect(host="db", user="root", password="root") # uses default port 3306
             conn.autocommit(True)
             self.create_db(conn, db_name)
         finally:
             conn.close()
 
     def _new_connection(self, db_name):
-        conn = pymysql.connect(host="localhost", user="root", password="root")
+        conn = pymysql.connect(host="db", user="root", password="root")
         conn.autocommit(True)
 
         use_db_sql = "use {}".format(db_name)
@@ -57,7 +57,7 @@ class DB:
         return conn
 
     def create_db(self, conn, db_name: str) -> None:
-        conn = pymysql.connect(host="localhost", user="root", password="root")
+        conn = pymysql.connect(host="db", user="root", password="root")
         conn.autocommit(True)
 
         create_sql: str = "create database {}".format(db_name)

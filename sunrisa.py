@@ -32,4 +32,5 @@ if __name__ == "__main__":
     debug = True
     app = create_app(debug)
 
-    socketio.run(app)
+    host = "0.0.0.0"
+    socketio.run(app, host=host)

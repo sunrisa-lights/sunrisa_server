@@ -14,11 +14,10 @@ RUN apt-get update && apt-get install make
 RUN pip install --upgrade -r requirements.txt
 
 # Add metadata to the image to describe which port the container is listening on at runtime.
-EXPOSE 3000
+EXPOSE 5000
 
 # Run the specified command within the container.
 CMD [ "python", "sunrisa.py" ]
 
 # Copy the rest of your app's source code from your host to your image filesystem.
 COPY . .
-

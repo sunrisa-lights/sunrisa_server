@@ -388,7 +388,7 @@ def _test_entities_not_found(sio):
 
 
 def run_test_and_disconnect(test_func):
-    sio = socketio.Client()             
+    sio = socketio.Client()
     sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
