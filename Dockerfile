@@ -9,6 +9,7 @@ COPY requirements.txt .
 COPY app_config.py .
 COPY sunrisa.py .
 COPY app ./app
+COPY healthcheck.py .
 
 # install make
 RUN apt-get update && apt-get install make
@@ -21,3 +22,7 @@ EXPOSE 5000
 
 # Run the specified command within the container.
 CMD [ "python", "sunrisa.py" ]
+
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD python healthcheck.py
+

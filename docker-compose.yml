@@ -26,14 +26,18 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: root
+      # TODO(sunrisalights): Uncomment when nginx is ported over correctly
       #  nginx:
-      #    image: nginx:latest
-      #    container_name: production_nginx
-      #    volumes:
-      #      - ./nginx.conf:/etc/nginx/nginx.conf
+      #    container_name: nginx
+      #    hostname: nginx
+      #    image: nginx
       #    ports:
       #      - 80:80
       #      - 443:443
+      #    volumes:
+      #      - /etc/nginx/sites-enabled/sunrisa:/etc/nginx/sites-enabled/sunrisa
+      #      - /etc/letsencrypt:/etc/letsencrypt
+
 
 
 volumes:
