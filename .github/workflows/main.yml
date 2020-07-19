@@ -55,7 +55,8 @@ jobs:
 
     - name: Run integration tests with docker
       run: |
-        docker-compose up
+        docker-compose -f docker-compose.test.yml up -d  # run the integration tests in detached state
+        docker wait sunrisa_integration  # wait for the exit code of sunrisa_integration container
 
     - name: Print integration test logs if job failed
       if: ${{ failure() }}

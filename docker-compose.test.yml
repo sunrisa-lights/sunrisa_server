@@ -1,14 +1,14 @@
 version: "3.7"
 
 services:
-  sunrisa_server_integration:
+  sut:
     depends_on:
       - sunrisa_server
     build:
       context: "."
       dockerfile: "Dockerfile.integration"
-    container_name: sunrisa-server-integration-container
-    image: sunrisa_server_integration
+    container_name: sunrisa_integration
+    image: sunrisa_integration
   sunrisa_server:
     depends_on:
       - db
