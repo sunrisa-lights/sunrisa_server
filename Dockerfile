@@ -25,4 +25,3 @@ CMD [ "python", "-u", "sunrisa.py" ]
 
 HEALTHCHECK --interval=5m --timeout=3s \
   CMD python healthcheck.py
-
