@@ -5,7 +5,10 @@ FROM python:3.8.1-slim-buster
 WORKDIR /usr/src/sunrisa/sunrisa_server
 
 # Copy the file from Dockerfile location to WORKDIR
-COPY . .
+COPY requirements.txt .
+COPY app_config.py .
+COPY sunrisa.py .
+COPY app ./app
 
 # install make
 RUN apt-get update && apt-get install make
@@ -18,6 +21,3 @@ EXPOSE 5000
 
 # Run the specified command within the container.
 CMD [ "python", "sunrisa.py" ]
-
-# Copy the rest of your app's source code from your host to your image filesystem.
-COPY . .
