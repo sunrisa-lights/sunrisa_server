@@ -20,8 +20,8 @@ RUN pip install --upgrade -r requirements.txt
 # Add metadata to the image to describe which port the container is listening on at runtime.
 EXPOSE 5000
 
-# Run the specified command within the container.
-CMD [ "python", "sunrisa.py" ]
+# Run the specified command within the container. Use -u so that stdout is unbuffered.
+CMD [ "python", "-u", "sunrisa.py" ]
 
 HEALTHCHECK --interval=5m --timeout=3s \
   CMD python healthcheck.py
