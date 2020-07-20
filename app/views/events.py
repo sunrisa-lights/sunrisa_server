@@ -151,18 +151,15 @@ def init_event_listeners(app_config, socketio):
                 start_date: datetime = iso8601_string_to_datetime(
                     recipe_phase_json["start_date"]
                 )
-                if i == len(message["grow_phases"]) - 1:
-                    # this is the last phase, use `end_date` attribute
-                    end_date: datetime = iso8601_string_to_datetime(message["end_date"])
-                else:
-                    # use the start date of the next phase as the end date
-                    end_date: datetime = iso8601_string_to_datetime(
-                        recipe_phase_json["start_date"]
-                    )
+
+                # if this is the last phase, use `end_date` attribute
+                is_last_phase = i == len(message["grow_phases"]) - 1
+                end_date_str: str = message["end_date"] if is_last_phase else recipe_phase_json["start_date"]
+                end_date: datetime = iso8601_string_to_datetime(end_date_str)
 
                 date_diff: timedelta = end_date - start_date
                 # 60 seconds * 60 minutes = 3600 seconds in an hour
-                num_hours: int = date_diff.total_seconds() // 3600  # do integer division
+                num_hours: int = int(date_diff.total_seconds() / 3600)
                 recipe_phase_json["num_hours"] = num_hours
                 recipe_phase_json["recipe_phase_num"] = i
                 recipe_phase_json["recipe_id"] = recipe.recipe_id

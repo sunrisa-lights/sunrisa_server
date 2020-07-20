@@ -13,8 +13,8 @@ def write_grow_phase(conn, grow_phase: GrowPhase) -> None:
             grow_phase.grow_id,
             grow_phase.recipe_id,
             grow_phase.recipe_phase_num,
-            grow_phase.start_datetime,
-            grow_phase.end_datetime,
+            grow_phase.phase_start_datetime,
+            grow_phase.phase_end_datetime,
             grow_phase.is_last_phase,
         ),
     )
@@ -41,7 +41,7 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.close()
 
 
-def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> List[GrowPhase]:
+def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
     with conn.cursor() as cursor:

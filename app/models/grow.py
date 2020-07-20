@@ -9,7 +9,7 @@ class Grow:
     def __init__(
         self,
         grow_id: Optional[int],
-        recipe_id: int,
+        recipe_id: Optional[int],
         start_datetime: datetime,
         estimated_end_datetime: datetime,
     ):

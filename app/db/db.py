@@ -152,7 +152,7 @@ class DB:
             db_conn.close()
         return current_grows
 
-    def read_grow_phase(self, grow_id: int, recipe_phase_num: int) -> GrowPhase:
+    def read_grow_phase(self, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
         db_conn = self._new_connection(self.db_name)
         try:
             grow_phase = read_grow_phase(db_conn, grow_id, recipe_phase_num)
@@ -244,7 +244,7 @@ class DB:
 
     def write_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
         if not grow_phases:
-            return []
+            return
 
         db_conn = self._new_connection(self.db_name)
         try:
@@ -291,7 +291,7 @@ class DB:
 
     def write_shelf_grows(self, shelf_grows: List[ShelfGrow]) -> None:
         if not shelf_grows:
-            return []
+            return
 
         db_conn = self._new_connection(self.db_name)
         try:
