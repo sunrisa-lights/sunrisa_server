@@ -48,7 +48,7 @@ def read_recipe_phases(
     for recipe_id, recipe_phase_num in recipe_id_phase_num_pairs:
         values_list.append("({},{})".format(recipe_id, recipe_phase_num))
 
-    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id, recipe_phase_num) in ({})".format(
+    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id, recipe_phase_num) IN ({})".format(
         ",".join(values_list)
     )
 

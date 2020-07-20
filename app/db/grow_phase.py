@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.grow_phase import GrowPhase
 
@@ -44,19 +44,6 @@ def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> List[GrowPhase
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
     with conn.cursor() as cursor:
-        cursor.execute(sql, (room_id))
-        found_room_data = cursor.fetchone()
-        found_room: Optional[Room] = None
-        if (
-            found_room_data is not None
-        ):  # if found_room_data is None, room was not found
-            rid, is_on, is_veg, brightness = found_room_data
-            found_room = Room(rid, bool(is_on), bool(is_veg), brightness)
-
-        cursor.close()
-        return found_room
-
-    with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id, recipe_phase_num))
         next_grow_phase = cursor.fetchone()
         found_grow_phase: Optional[GrowPhase] = None
@@ -83,7 +70,7 @@ def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
 
 def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[GrowPhase]:
     format_strings = ["%s"] * len(grow_ids)
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = ({})".format(', '.join(format_strings))
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id IN ({})".format(', '.join(format_strings))
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_ids))

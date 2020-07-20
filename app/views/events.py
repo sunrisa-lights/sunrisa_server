@@ -337,15 +337,15 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("read_all_entities")
     def read_all_entities(message) -> None:
         print("read_all_entities event emitted")
-        all_rooms = app_config.db.read_all_rooms()
-        all_racks = app_config.db.read_all_racks()
-        all_shelves = app_config.db.read_all_shelves()
-        all_current_grows = app_config.db.read_current_grows()
+        all_rooms: List[Room] = app_config.db.read_all_rooms()
+        all_racks: List[Rack] = app_config.db.read_all_racks()
+        all_shelves: List[Shelf] = app_config.db.read_all_shelves()
+        all_current_grows: List[Grow] = app_config.db.read_current_grows()
 
         recipe_ids = {
             g.recipe_id for g in all_current_grows
         }  # use a set comprehension since grows may have duplicate recipes
-        all_current_recipes = app_config.db.read_recipes(list(recipe_ids))
+        all_current_recipes: List[Recipe] = app_config.db.read_recipes(list(recipe_ids))
 
         all_grow_ids = [g.grow_id for g in all_current_grows]
         all_grow_phases: List[GrowPhase] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
@@ -353,9 +353,11 @@ def init_event_listeners(app_config, socketio):
         recipe_id_phase_num_pairs = [
             (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
         ]
-        all_recipe_phases = app_config.db.read_recipe_phases(
+        all_recipe_phases: List[RecipePhase] = app_config.db.read_recipe_phases(
             recipe_id_phase_num_pairs
         )
+
+        all_current_shelf_grows: List[ShelfGrow] = app_config.db.read_shelves_with_grows(all_grow_ids)
 
         entities_dict = {
             "rooms": [rm.to_json() for rm in all_rooms],
@@ -365,6 +367,7 @@ def init_event_listeners(app_config, socketio):
             "grow_phases": [gp.to_json() for gp in all_grow_phases],
             "recipes": [r.to_json() for r in all_current_recipes],
             "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
+            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows]
         }
 
         app_config.logger.debug("returning entities: {}".format(entities_dict))

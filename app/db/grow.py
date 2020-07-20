@@ -32,8 +32,8 @@ def read_current_grows(conn) -> List[Grow]:
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_grows: List[Grow] = [
-            Grow(grow_id, room_id, rack_id, sid, rid, sd, ed)
-            for (grow_id, room_id, rack_id, sid, rid, sd, ed) in all_grows
+            Grow(grow_id, rid, sd, ed)
+            for (grow_id, rid, sd, ed) in all_grows
         ]
 
         cursor.close()

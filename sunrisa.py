@@ -29,7 +29,7 @@ def create_app(debug):
 
 
 if __name__ == "__main__":
-    debug = False
+    debug = True
     app = create_app(debug)
 
     host = "0.0.0.0"

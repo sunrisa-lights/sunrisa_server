@@ -40,7 +40,7 @@ from app.db.recipe_phase import (
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
-from app.db.shelf_grow import create_shelf_grow_table, read_shelves_with_grow, write_shelf_grows
+from app.db.shelf_grow import create_shelf_grow_table, read_shelves_with_grow, read_shelves_with_grows, write_shelf_grows
 
 
 class DB:
@@ -212,6 +212,14 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             current_shelf_grows = read_shelves_with_grow(db_conn, grow_id)
+        finally:
+            db_conn.close()
+        return current_shelf_grows
+
+    def read_shelves_with_grows(self, grow_ids: List[int]) -> List[ShelfGrow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            current_shelf_grows = read_shelves_with_grows(db_conn, grow_ids)
         finally:
             db_conn.close()
         return current_shelf_grows
