@@ -8,12 +8,7 @@ def write_grow(conn, grow: Grow) -> Grow:
     sql = "INSERT INTO `grows` (recipe_id, start_datetime, estimated_end_datetime) VALUES (%s, %s, %s)"
     cursor = conn.cursor()
     cursor.execute(
-        sql,
-        (
-            grow.recipe_id,
-            grow.start_datetime,
-            grow.estimated_end_datetime,
-        ),
+        sql, (grow.recipe_id, grow.start_datetime, grow.estimated_end_datetime,),
     )
     # return the id since it's created dynamically on insert by AUTO_INCREMENT
     grow_id = cursor.lastrowid
@@ -32,8 +27,7 @@ def read_current_grows(conn) -> List[Grow]:
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_grows: List[Grow] = [
-            Grow(grow_id, rid, sd, ed)
-            for (grow_id, rid, sd, ed) in all_grows
+            Grow(grow_id, rid, sd, ed) for (grow_id, rid, sd, ed) in all_grows
         ]
 
         cursor.close()

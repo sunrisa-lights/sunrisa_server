@@ -4,11 +4,7 @@ import json
 
 class ShelfGrow:
     def __init__(
-        self,
-        grow_id: int,
-        room_id: int,
-        rack_id: int,
-        shelf_id: int,
+        self, grow_id: int, room_id: int, rack_id: int, shelf_id: int,
     ):
         self.grow_id = grow_id
         self.room_id = room_id
@@ -30,12 +26,7 @@ class ShelfGrow:
         rack_id: int = int(shelf_grow_json["rack_id"])
         shelf_id: int = int(shelf_grow_json["shelf_id"])
 
-        return cls(
-            grow_id,
-            room_id,
-            rack_id,
-            shelf_id,
-        )
+        return cls(grow_id, room_id, rack_id, shelf_id,)
 
     def to_json(self):
         return {
@@ -46,7 +37,9 @@ class ShelfGrow:
         }
 
     def to_job_entry(self) -> str:
-        return '(shelf-{}-rack-{}-room-{})'.format(self.shelf_id, self.rack_id, self.room_id)
+        return "(shelf-{}-rack-{}-room-{})".format(
+            self.shelf_id, self.rack_id, self.room_id
+        )
 
     def __str__(self) -> str:
         return json.dumps(

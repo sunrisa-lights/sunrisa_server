@@ -40,7 +40,12 @@ from app.db.recipe_phase import (
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
-from app.db.shelf_grow import create_shelf_grow_table, read_shelves_with_grow, read_shelves_with_grows, write_shelf_grows
+from app.db.shelf_grow import (
+    create_shelf_grow_table,
+    read_shelves_with_grow,
+    read_shelves_with_grows,
+    write_shelf_grows,
+)
 
 
 class DB:
@@ -49,7 +54,9 @@ class DB:
 
         self.db_name = db_name
         try:
-            conn = pymysql.connect(host="db", user="root", password="root") # uses default port 3306
+            conn = pymysql.connect(
+                host="db", user="root", password="root"
+            )  # uses default port 3306
             conn.autocommit(True)
             self.create_db(conn, db_name)
         finally:
@@ -161,7 +168,9 @@ class DB:
             db_conn.close()
         return grow_phases
 
-    def read_grow_phases_from_multiple_grows(self, grow_ids: List[int]) -> List[GrowPhase]:
+    def read_grow_phases_from_multiple_grows(
+        self, grow_ids: List[int]
+    ) -> List[GrowPhase]:
         if not grow_ids:
             return []
 
@@ -263,7 +272,7 @@ class DB:
             recipe = write_recipe(db_conn, recipe)
         finally:
             db_conn.close()
-        
+
         return recipe
 
     def write_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:

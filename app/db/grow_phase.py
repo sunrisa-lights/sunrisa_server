@@ -40,6 +40,7 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.execute(sql, grow_phase_sql_args)
     cursor.close()
 
+
 def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> List[GrowPhase]:
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
@@ -47,12 +48,27 @@ def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> List[GrowPhase
         cursor.execute(sql, (grow_id, recipe_phase_num))
         next_grow_phase = cursor.fetchone()
         found_grow_phase: Optional[GrowPhase] = None
-        if (found_grow_phase is not None):
-            grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase = next_grow_phase
-            found_grow_phase = GrowPhase(grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase)
+        if found_grow_phase is not None:
+            (
+                grow_id,
+                recipe_id,
+                recipe_phase_num,
+                start_datetime,
+                end_datetime,
+                is_last_phase,
+            ) = next_grow_phase
+            found_grow_phase = GrowPhase(
+                grow_id,
+                recipe_id,
+                recipe_phase_num,
+                start_datetime,
+                end_datetime,
+                is_last_phase,
+            )
 
         cursor.close()
         return found_grow_phase
+
 
 def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s"
@@ -68,9 +84,12 @@ def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
         cursor.close()
         return found_grow_phases
 
+
 def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[GrowPhase]:
     format_strings = ["%s"] * len(grow_ids)
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id IN ({})".format(', '.join(format_strings))
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id IN ({})".format(
+        ", ".join(format_strings)
+    )
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_ids))

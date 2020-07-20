@@ -83,9 +83,7 @@ def test_to_json():
         "shelf_id": 3,
         "recipe_id": 4,
         "recipe_phase_num": 5,
-        "start_datetime": start5.replace(
-            microsecond=0
-        ).isoformat(),
+        "start_datetime": start5.replace(microsecond=0).isoformat(),
         "end_datetime": end.replace(microsecond=0).isoformat(),
     }
 

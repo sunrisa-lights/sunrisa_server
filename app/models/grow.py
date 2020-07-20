@@ -42,37 +42,36 @@ class Grow:
         estimated_end_datetime = datetime.utcfromtimestamp(
             calendar.timegm(parse(estimated_end_date_str).utctimetuple())
         )
-        return cls(
-            grow_id,
-            recipe_id,
-            start_datetime,
-            estimated_end_datetime,
-        )
+        return cls(grow_id, recipe_id, start_datetime, estimated_end_datetime,)
 
     def to_json(self):
         return {
             "grow_id": self.grow_id,
             "recipe_id": self.recipe_id,
             "start_datetime": self.start_datetime.replace(microsecond=0).isoformat(),
-            "estimated_end_datetime": self.estimated_end_datetime.replace(microsecond=0).isoformat(),
+            "estimated_end_datetime": self.estimated_end_datetime.replace(
+                microsecond=0
+            ).isoformat(),
         }
 
     # Removes microseconds because they're lost in json conversions
     def round_dates_to_seconds(self):
         self.start_datetime -= timedelta(microseconds=self.start_datetime.microsecond)
-        self.estimated_end_datetime -= timedelta(microseconds=self.estimated_end_datetime.microsecond)
+        self.estimated_end_datetime -= timedelta(
+            microseconds=self.estimated_end_datetime.microsecond
+        )
 
     def __str__(self) -> str:
         return json.dumps(
             {
                 "grow_id": self.grow_id,
                 "recipe_id": self.recipe_id,
-                "start_datetime": self.start_datetime
-                .replace(microsecond=0)
-                .isoformat(),
-                "estimated_end_datetime": self.estimated_end_datetime
-                .replace(microsecond=0)
-                .isoformat(),
+                "start_datetime": self.start_datetime.replace(
+                    microsecond=0
+                ).isoformat(),
+                "estimated_end_datetime": self.estimated_end_datetime.replace(
+                    microsecond=0
+                ).isoformat(),
             }
         )
 

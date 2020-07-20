@@ -31,14 +31,18 @@ def write_shelf_grows(conn, shelf_grows: List[ShelfGrow]) -> None:
         )
         value_list.append("(%s, %s, %s, %s)")
 
-    sql = "INSERT INTO `shelf_grows` (grow_id, room_id, rack_id, shelf_id) VALUES {}".format(", ".join(value_list))
+    sql = "INSERT INTO `shelf_grows` (grow_id, room_id, rack_id, shelf_id) VALUES {}".format(
+        ", ".join(value_list)
+    )
     cursor = conn.cursor()
     cursor.execute(sql, shelf_grow_sql_args)
     cursor.close()
 
 
 def read_shelves_with_grow(conn, grow_id: int) -> List[ShelfGrow]:
-    sql = "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id = %s"
+    sql = (
+        "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id = %s"
+    )
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -55,7 +59,9 @@ def read_shelves_with_grow(conn, grow_id: int) -> List[ShelfGrow]:
 
 def read_shelves_with_grows(conn, grow_ids: List[int]) -> List[ShelfGrow]:
     grow_ids_str = [str(gid) for gid in grow_ids]
-    sql = "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id IN ({})".format(", ".join(grow_ids_str))
+    sql = "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id IN ({})".format(
+        ", ".join(grow_ids_str)
+    )
     print("sql from read_shelves_with_grows:", sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)

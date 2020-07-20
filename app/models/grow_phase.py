@@ -64,16 +64,24 @@ class GrowPhase:
             "grow_id": self.grow_id,
             "recipe_id": self.recipe_id,
             "recipe_phase_num": self.recipe_phase_num,
-            "phase_start_datetime": self.phase_start_datetime.replace(microsecond=0).isoformat(),
-            "phase_end_datetime": self.phase_end_datetime.replace(microsecond=0).isoformat(),
+            "phase_start_datetime": self.phase_start_datetime.replace(
+                microsecond=0
+            ).isoformat(),
+            "phase_end_datetime": self.phase_end_datetime.replace(
+                microsecond=0
+            ).isoformat(),
             "is_last_phase": self.is_last_phase,
         }
 
     # TODO: Put this in a utils file
     # Removes microseconds because they're lost in json conversions
     def round_dates_to_seconds(self):
-        self.phase_start_datetime -= timedelta(microseconds=self.phase_start_datetime.microsecond)
-        self.phase_end_datetime -= timedelta(microseconds=self.phase_end_datetime.microsecond)
+        self.phase_start_datetime -= timedelta(
+            microseconds=self.phase_start_datetime.microsecond
+        )
+        self.phase_end_datetime -= timedelta(
+            microseconds=self.phase_end_datetime.microsecond
+        )
 
     def __str__(self) -> str:
         return json.dumps(
@@ -81,12 +89,12 @@ class GrowPhase:
                 "grow_id": self.grow_id,
                 "recipe_phase_num": self.recipe_phase_num,
                 "recipe_id": self.recipe_id,
-                "phase_start_datetime": self.phase_start_datetime
-                .replace(microsecond=0)
-                .isoformat(),
-                "phase_end_datetime": self.phase_end_datetime
-                .replace(microsecond=0)
-                .isoformat(),
+                "phase_start_datetime": self.phase_start_datetime.replace(
+                    microsecond=0
+                ).isoformat(),
+                "phase_end_datetime": self.phase_end_datetime.replace(
+                    microsecond=0
+                ).isoformat(),
                 "is_last_phase": self.is_last_phase,
             }
         )

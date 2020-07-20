@@ -123,7 +123,10 @@ def init_event_listeners(app_config, socketio):
                 socketio,
                 message,
                 "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "Not specified whether this is a new recipe"},
+                {
+                    "succeeded": False,
+                    "reason": "Not specified whether this is a new recipe",
+                },
             )
         elif "end_date" not in message:
             send_message_to_namespace_if_specified(
@@ -132,7 +135,6 @@ def init_event_listeners(app_config, socketio):
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "End date not specified"},
             )
-
 
         is_new_recipe: bool = bool(message["is_new_recipe"])
         print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
@@ -146,13 +148,17 @@ def init_event_listeners(app_config, socketio):
             recipe_phases: List[RecipePhase] = []
             for i in range(len(message["grow_phases"])):
                 recipe_phase_json = message["grow_phases"][i]
-                start_date: datetime = iso8601_string_to_datetime(recipe_phase_json["start_date"])
+                start_date: datetime = iso8601_string_to_datetime(
+                    recipe_phase_json["start_date"]
+                )
                 if i == len(message["grow_phases"]) - 1:
                     # this is the last phase, use `end_date` attribute
                     end_date: datetime = iso8601_string_to_datetime(message["end_date"])
                 else:
                     # use the start date of the next phase as the end date
-                    end_date: datetime = iso8601_string_to_datetime(recipe_phase_json["start_date"])
+                    end_date: datetime = iso8601_string_to_datetime(
+                        recipe_phase_json["start_date"]
+                    )
 
                 date_diff: timedelta = end_date - start_date
                 # 60 seconds * 60 minutes = 3600 seconds in an hour
@@ -163,16 +169,24 @@ def init_event_listeners(app_config, socketio):
 
                 recipe_phase: RecipePhase = RecipePhase.from_json(recipe_phase_json)
                 recipe_phases.append(recipe_phase)
-            
+
             print("recipe_phases:", recipe_phases)
             app_config.db.write_recipe_phases(recipe_phases)
         else:
-            raise Exception("Unsupported functionality of using an already existing recipe")
+            raise Exception(
+                "Unsupported functionality of using an already existing recipe"
+            )
 
         # create the grow first so we can read the grow_id
-        grow_start_date: datetime = iso8601_string_to_datetime(message["grow_phases"][0]["start_date"])
-        grow_estimated_end_date: datetime = iso8601_string_to_datetime(message["end_date"])
-        grow_without_id: Grow = Grow(None, recipe.recipe_id, grow_start_date, grow_estimated_end_date)
+        grow_start_date: datetime = iso8601_string_to_datetime(
+            message["grow_phases"][0]["start_date"]
+        )
+        grow_estimated_end_date: datetime = iso8601_string_to_datetime(
+            message["end_date"]
+        )
+        grow_without_id: Grow = Grow(
+            None, recipe.recipe_id, grow_start_date, grow_estimated_end_date
+        )
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
 
@@ -217,7 +231,7 @@ def init_event_listeners(app_config, socketio):
                 start_date=first_grow_phase.phase_start_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
                 id=get_job_id(shelf_grows, grow_phase),
-                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
         else:
             app_config.scheduler.add_job(
@@ -227,7 +241,7 @@ def init_event_listeners(app_config, socketio):
                 end_date=first_grow_phase.phase_end_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
                 id=get_job_id(shelf_grows, grow_phase),
-                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
 
         print("Added job to scheduler")
@@ -348,7 +362,9 @@ def init_event_listeners(app_config, socketio):
         all_current_recipes: List[Recipe] = app_config.db.read_recipes(list(recipe_ids))
 
         all_grow_ids = [g.grow_id for g in all_current_grows]
-        all_grow_phases: List[GrowPhase] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+        all_grow_phases: List[
+            GrowPhase
+        ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
 
         recipe_id_phase_num_pairs = [
             (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
@@ -357,7 +373,9 @@ def init_event_listeners(app_config, socketio):
             recipe_id_phase_num_pairs
         )
 
-        all_current_shelf_grows: List[ShelfGrow] = app_config.db.read_shelves_with_grows(all_grow_ids)
+        all_current_shelf_grows: List[
+            ShelfGrow
+        ] = app_config.db.read_shelves_with_grows(all_grow_ids)
 
         entities_dict = {
             "rooms": [rm.to_json() for rm in all_rooms],
@@ -367,7 +385,7 @@ def init_event_listeners(app_config, socketio):
             "grow_phases": [gp.to_json() for gp in all_grow_phases],
             "recipes": [r.to_json() for r in all_current_recipes],
             "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
-            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows]
+            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
         }
 
         app_config.logger.debug("returning entities: {}".format(entities_dict))
