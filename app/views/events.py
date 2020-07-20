@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 from time import mktime
 
@@ -18,7 +18,7 @@ from app.models.shelf_grow import ShelfGrow
 from app.resources.schedule_jobs import get_job_id
 from app.resources.schedule_jobs import schedule_grow_for_shelf  # type: ignore
 
-import logging
+from app.utils.time_utils import iso8601_string_to_datetime
 
 NAMESPACE = "namespace"
 
@@ -104,14 +104,7 @@ def init_event_listeners(app_config, socketio):
     def start_grows_for_shelves(message) -> None:
         print("message:", message)
         logging.debug("message sent to post_room_schedule:", message)
-        if "grow" not in message:
-            send_message_to_namespace_if_specified(
-                socketio,
-                message,
-                "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "Grow not included"},
-            )
-        elif "grow_phases" not in message:
+        if "grow_phases" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -123,17 +116,80 @@ def init_event_listeners(app_config, socketio):
                 socketio,
                 message,
                 "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "Grow phases not included"},
+                {"succeeded": False, "reason": "Shelves not included"},
+            )
+        elif "is_new_recipe" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "Not specified whether this is a new recipe"},
+            )
+        elif "end_date" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "start_grow_for_shelf_succeeded",
+                {"succeeded": False, "reason": "End date not specified"},
             )
 
+
+        is_new_recipe: bool = bool(message["is_new_recipe"])
+        print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
+
+        # TODO: Abstract this if/else statement into a method
+        if is_new_recipe:
+            # create the recipe and the recipe phases before creating the grow
+            recipe_no_id: Recipe = Recipe(None, None)
+            recipe: Recipe = app_config.db.write_recipe(recipe_no_id)
+
+            recipe_phases: List[RecipePhase] = []
+            for i in range(len(message["grow_phases"])):
+                recipe_phase_json = message["grow_phases"][i]
+                start_date: datetime = iso8601_string_to_datetime(recipe_phase_json["start_date"])
+                if i == len(message["grow_phases"]) - 1:
+                    # this is the last phase, use `end_date` attribute
+                    end_date: datetime = iso8601_string_to_datetime(message["end_date"])
+                else:
+                    # use the start date of the next phase as the end date
+                    end_date: datetime = iso8601_string_to_datetime(recipe_phase_json["start_date"])
+
+                date_diff: timedelta = end_date - start_date
+                # 60 seconds * 60 minutes = 3600 seconds in an hour
+                num_hours: int = date_diff.total_seconds() // 3600  # do integer division
+                recipe_phase_json["num_hours"] = num_hours
+                recipe_phase_json["recipe_phase_num"] = i
+                recipe_phase_json["recipe_id"] = recipe.recipe_id
+
+                recipe_phase: RecipePhase = RecipePhase.from_json(recipe_phase_json)
+                recipe_phases.append(recipe_phase)
+            
+            print("recipe_phases:", recipe_phases)
+            app_config.db.write_recipe_phases(recipe_phases)
+        else:
+            raise Exception("Unsupported functionality of using an already existing recipe")
+
         # create the grow first so we can read the grow_id
-        grow_without_id: Grow = Grow.from_json(message["grow"])
+        grow_start_date: datetime = iso8601_string_to_datetime(message["grow_phases"][0]["start_date"])
+        grow_estimated_end_date: datetime = iso8601_string_to_datetime(message["end_date"])
+        grow_without_id: Grow = Grow(None, recipe.recipe_id, grow_start_date, grow_estimated_end_date)
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
 
         grow_phases: List[GrowPhase] = []
-        for gp in message["grow_phases"]:
+        for i, gp in enumerate(message["grow_phases"]):
             gp["grow_id"] = grow.grow_id
+            gp["phase_start_datetime"] = gp["start_date"]
+            gp["recipe_id"] = recipe.recipe_id
+            gp["recipe_phase_num"] = i
+            if i == len(message["grow_phases"]) - 1:
+                # this is the last phase, use `end_date` attribute
+                gp["phase_end_datetime"] = message["end_date"]
+                gp["is_last_phase"] = True
+            else:
+                gp["phase_end_datetime"] = message["grow_phases"][i + 1]["start_date"]
+                gp["is_last_phase"] = False
+
             grow_phase = GrowPhase.from_json(gp)
             grow_phases.append(grow_phase)
 
@@ -173,6 +229,8 @@ def init_event_listeners(app_config, socketio):
                 id=get_job_id(shelf_grows, grow_phase),
                 minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
+
+        print("Added job to scheduler")
 
         # write grow phases and shelf grows to db
         app_config.db.write_grow_phases(grow_phases)
@@ -240,7 +298,8 @@ def init_event_listeners(app_config, socketio):
         app_config.logger.debug(recipe_phases)
 
         print("Saw recipe in message")
-        app_config.db.write_recipe_with_phases(recipe, recipe_phases)
+        app_config.db.write_recipe(recipe)
+        app_config.db.write_recipe_phases(recipe_phases)
         print("CREATED RECIPE WITH PHASES")
         send_message_to_namespace_if_specified(
             socketio, message, "create_new_recipe_response", {"succeeded": True}

@@ -33,7 +33,7 @@ def write_shelf_grows(conn, shelf_grows: List[ShelfGrow]) -> None:
 
     sql = "INSERT INTO `shelf_grows` (grow_id, room_id, rack_id, shelf_id) VALUES {}".format(", ".join(value_list))
     cursor = conn.cursor()
-    cursor.execute(sql, grow_sql_args)
+    cursor.execute(sql, shelf_grow_sql_args)
     cursor.close()
 
 
@@ -53,8 +53,8 @@ def read_shelves_with_grow(conn, grow_id: int) -> List[ShelfGrow]:
         return found_shelf_grows
 
 
-def create_grow_table(conn):
-    sql = """CREATE TABLE IF NOT EXISTS grows(
+def create_shelf_grow_table(conn):
+    sql = """CREATE TABLE IF NOT EXISTS shelf_grows(
     grow_id INT NOT NULL,
     room_id INT NOT NULL,
     rack_id INT NOT NULL,

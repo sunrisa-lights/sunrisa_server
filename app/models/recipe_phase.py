@@ -68,6 +68,9 @@ class RecipePhase:
             }
         )
 
+    def __repr__(self):
+        return str(self)
+
     def __eq__(self, other):
         if not isinstance(other, RecipePhase):
             # don't attempt to compare against unrelated types

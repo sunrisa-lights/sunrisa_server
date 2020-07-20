@@ -8,7 +8,7 @@ import calendar
 class Grow:
     def __init__(
         self,
-        grow_id: int,
+        grow_id: Optional[int],
         recipe_id: int,
         start_datetime: datetime,
         estimated_end_datetime: datetime,
@@ -22,13 +22,13 @@ class Grow:
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
         if not (
-            "grow_id" in grow_json
-            and "recipe_id" in grow_json
+            "recipe_id" in grow_json
             and "start_datetime" in grow_json
             and "estimated_end_datetime" in grow_json
         ):
             raise Exception("Invalid grow")
 
+        # grow_id optional since grow might not be created yet (grow_id assigned at creation)
         grow_id: Optional[int] = grow_json.get("grow_id")
         recipe_id: int = int(grow_json["recipe_id"])
 

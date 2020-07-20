@@ -25,12 +25,12 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     grow_phase_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []
     for g in grow_phases:
-        grow_sql_args += (
+        grow_phase_sql_args += (
             g.grow_id,
             g.recipe_id,
             g.recipe_phase_num,
-            g.start_datetime,
-            g.end_datetime,
+            g.phase_start_datetime,
+            g.phase_end_datetime,
             g.is_last_phase,
         )
         value_list.append("(%s, %s, %s, %s, %s, %s)")

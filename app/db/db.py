@@ -13,10 +13,9 @@ from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
-    read_current_grows,
     create_grow_table,
+    read_current_grows,
     write_grow,
-    write_grows,
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
@@ -41,7 +40,7 @@ from app.db.recipe_phase import (
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
-from app.db.shelf_grow import read_shelves_with_grow, write_shelf_grows
+from app.db.shelf_grow import create_shelf_grow_table, read_shelves_with_grow, write_shelf_grows
 
 
 class DB:
@@ -88,6 +87,7 @@ class DB:
             create_recipe_phases_table(db_conn)
             create_grow_table(db_conn)
             create_grow_phase_table(db_conn)
+            create_shelf_grow_table(db_conn)
         except Exception as e:
             print("Error initializing tables", e)
             raise
@@ -162,6 +162,9 @@ class DB:
         return grow_phases
 
     def read_grow_phases_from_multiple_grows(self, grow_ids: List[int]) -> List[GrowPhase]:
+        if not grow_ids:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             grow_phases = read_grow_phases_from_multiple_grows(db_conn, grow_ids)
@@ -219,17 +222,13 @@ class DB:
             grow = write_grow(db_conn, grow)
         finally:
             db_conn.close()
-        
+
         return grow
 
-    def write_grows(self, grows: List[Grow]) -> None:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            write_grows(db_conn, grows)
-        finally:
-            db_conn.close()
-
     def write_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+        if not grow_phases:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             write_grow_phases(db_conn, grow_phases)
@@ -250,12 +249,18 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_recipe_with_phases(
-        self, recipe: Recipe, recipe_phases: List[RecipePhase]
-    ) -> None:
+    def write_recipe(self, recipe: Recipe) -> Recipe:
         db_conn = self._new_connection(self.db_name)
         try:
-            write_recipe(db_conn, recipe)
+            recipe = write_recipe(db_conn, recipe)
+        finally:
+            db_conn.close()
+        
+        return recipe
+
+    def write_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
             write_recipe_phases(db_conn, recipe_phases)
         finally:
             db_conn.close()
@@ -268,6 +273,9 @@ class DB:
             db_conn.close()
 
     def write_shelf_grows(self, shelf_grows: List[ShelfGrow]) -> None:
+        if not shelf_grows:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             write_shelf_grows(db_conn, shelf_grows)

@@ -9,6 +9,7 @@ from app_config import AppConfig
 def schedule_grow_for_shelf(
     shelf_grows: List[ShelfGrow], grow_phase: GrowPhase, power_level: int, red_level: int, blue_level: int
 ) -> None:
+    print("In schedule_grow_for_shelf")
     config = AppConfig()  # no arguments needed because it's a singleton instance
 
     shelf_grow_dict = {
@@ -22,7 +23,8 @@ def schedule_grow_for_shelf(
     print("Event emitted from socketio obj")
 
     # check if this is the last run and we need to schedule the next phase
-    schedule_next_phase_if_needed(onfig, shelf_grows, grow_phase)
+    schedule_next_phase_if_needed(config, shelf_grows, grow_phase)
+    print("Succeeded!")
 
 
 def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
@@ -30,6 +32,8 @@ def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
     shelf_grows_string: str = '({})'.format(','.join(shelf_grow_job_entries))
 
     job_id: str = 'grow-{}-phase-{}-shelves-{}'.format(grow_phase.grow_id, grow_phase.recipe_phase_num, shelf_grows_string)
+    if grow_phase.is_last_phase:
+        job_id += '-last-phase'
     return job_id
 
 def schedule_next_phase_if_needed(app_config: AppConfig, shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> None:
@@ -64,8 +68,8 @@ def schedule_next_phase_if_needed(app_config: AppConfig, shelf_grows: List[Shelf
                 "interval",
                 start_date=next_grow_phase.phase_start_datetime,
                 args=[shelf_grows, next_grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase) + '-last-phase',
-                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+                id=get_job_id(shelf_grows, grow_phase),
+                minutes=1, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
         else:
             app_config.scheduler.add_job(
@@ -75,5 +79,5 @@ def schedule_next_phase_if_needed(app_config: AppConfig, shelf_grows: List[Shelf
                 end_date=next_grow_phase.phase_end_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
                 id=get_job_id(shelf_grows, grow_phase),
-                minutes=5, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+                minutes=1, # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )

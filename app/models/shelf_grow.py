@@ -22,7 +22,6 @@ class ShelfGrow:
             and "room_id" in shelf_grow_json
             and "rack_id" in shelf_grow_json
             and "shelf_id" in shelf_grow_json
-            and "recipe_id" in shelf_grow_json
         ):
             raise Exception("Invalid shelf grow")
 
