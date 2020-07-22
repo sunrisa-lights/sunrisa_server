@@ -41,6 +41,47 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.close()
 
 
+def read_last_grow_phase(conn, grow_id: int) -> Optional[GrowPhase]:
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND is_last_phase = true"
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (grow_id))
+        last_grow_phase = cursor.fetchone()
+        found_grow_phase: Optional[GrowPhase] = None
+        if last_grow_phase is not None:
+            (
+                grow_id,
+                recipe_id,
+                recipe_phase_num,
+                start_datetime,
+                end_datetime,
+                is_last_phase,
+            ) = last_grow_phase
+            found_grow_phase = GrowPhase(
+                grow_id,
+                recipe_id,
+                recipe_phase_num,
+                start_datetime,
+                end_datetime,
+                is_last_phase,
+            )
+
+        cursor.close()
+        return found_grow_phase
+
+def end_last_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+    sql = "UPDATE `grow_phases` SET phase_end_datetime = %s WHERE grow_id = %s AND recipe_phase_num = %s"
+    cursor = conn.cursor()
+    cursor.execute(
+        sql,
+        (
+            harvest_time,
+            grow_phase.grow_id,
+            grow_phase.recipe_phase_num,
+        ),
+    )
+    cursor.close()
+
 def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
@@ -48,7 +89,7 @@ def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowP
         cursor.execute(sql, (grow_id, recipe_phase_num))
         next_grow_phase = cursor.fetchone()
         found_grow_phase: Optional[GrowPhase] = None
-        if found_grow_phase is not None:
+        if next_grow_phase is not None:
             (
                 grow_id,
                 recipe_id,

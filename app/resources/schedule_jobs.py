@@ -31,12 +31,9 @@ def schedule_grow_for_shelf(
     print("Succeeded!")
 
 
-def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
-    shelf_grow_job_entries: List[str] = [sg.to_job_entry() for sg in shelf_grows]
-    shelf_grows_string: str = "({})".format(",".join(shelf_grow_job_entries))
-
-    job_id: str = "grow-{}-phase-{}-shelves-{}".format(
-        grow_phase.grow_id, grow_phase.recipe_phase_num, shelf_grows_string
+def get_job_id(grow_phase: GrowPhase) -> str:
+    job_id: str = "grow-{}-phase-{}".format(
+        grow_phase.grow_id, grow_phase.recipe_phase_num
     )
     if grow_phase.is_last_phase:
         job_id += "-last-phase"
@@ -79,7 +76,7 @@ def schedule_next_phase_if_needed(
                 "interval",
                 start_date=next_grow_phase.phase_start_datetime,
                 args=[shelf_grows, next_grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
+                id=get_job_id(grow_phase),
                 minutes=1,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
         else:
@@ -89,6 +86,6 @@ def schedule_next_phase_if_needed(
                 start_date=next_grow_phase.phase_start_datetime,
                 end_date=next_grow_phase.phase_end_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
+                id=get_job_id(grow_phase),
                 minutes=1,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )

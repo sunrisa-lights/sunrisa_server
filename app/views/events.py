@@ -100,6 +100,45 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "message_received", {"processed": entities_processed}
         )
 
+    @socketio.on("harvest_grow")
+    def harvest_grow(message) -> None:
+        if 'grow' not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "harvest_grow_response",
+                {"succeeded": False, "reason": "Grow not included"},
+            )
+        
+        grow_json = message["grow"]
+        # harvest the grow by marking it as complete
+        harvest_time: datetime = datetime.utcnow()
+        grow_json["estimated_end_datetime"] = harvest_time
+        grow_json["is_finished"] = True
+
+        grow: Grow = Grow.from_json(grow_json)
+        
+        app_config.db.harvest_grow(grow)
+
+        # read last grow phase
+        last_grow_phase: Optional[GrowPhase] = app_config.db.read_last_grow_phase(grow.grow_id)
+        if not last_grow_phase:
+            raise Exception("Last grow phase not found")
+        
+        # remove ongoing job so that it stops running
+        last_grow_job_id: str = get_job_id(last_grow_phase)
+        app_config.scheduler.remove_job(last_grow_job_id) # this line will throw exception if job not found
+
+        # update last recipe phase to have proper end date
+        app_config.db.end_last_grow_phase(last_grow_phase, harvest_time)
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "harvest_grow_response",
+            {"succeeded": True},
+        )
+
+
     @socketio.on("start_grows_for_shelves")
     def start_grows_for_shelves(message) -> None:
         print("message:", message)
@@ -182,7 +221,7 @@ def init_event_listeners(app_config, socketio):
             message["end_date"]
         )
         grow_without_id: Grow = Grow(
-            None, recipe.recipe_id, grow_start_date, grow_estimated_end_date
+            None, recipe.recipe_id, grow_start_date, grow_estimated_end_date, False, False, None,
         )
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
@@ -227,7 +266,7 @@ def init_event_listeners(app_config, socketio):
                 "interval",
                 start_date=first_grow_phase.phase_start_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
+                id=get_job_id(grow_phase),
                 minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
         else:
@@ -237,7 +276,7 @@ def init_event_listeners(app_config, socketio):
                 start_date=first_grow_phase.phase_start_datetime,
                 end_date=first_grow_phase.phase_end_datetime,
                 args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
+                id=get_job_id(grow_phase),
                 minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
 
