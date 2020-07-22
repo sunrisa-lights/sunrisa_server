@@ -108,7 +108,7 @@ class DB:
     def end_last_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            end_last_grow_phase(db_conn, grow)
+            end_last_grow_phase(db_conn, grow_phase, harvest_time)
         finally:
             db_conn.close()
 
