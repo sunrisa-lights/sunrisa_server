@@ -49,8 +49,8 @@ def create_grow_table(conn):
     recipe_id INT,
     start_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estimated_end_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_finished NOT NULL BOOLEAN,
-    all_fields_complete NOT NULL BOOLEAN,
+    is_finished BOOLEAN NOT NULL,
+    all_fields_complete BOOLEAN NOT NULL,
     olcc_number INT,
     PRIMARY KEY (grow_id),
     FOREIGN KEY (recipe_id)

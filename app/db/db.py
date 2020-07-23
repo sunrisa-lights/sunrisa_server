@@ -253,6 +253,9 @@ class DB:
         return current_shelf_grows
 
     def read_shelves_with_grows(self, grow_ids: List[int]) -> List[ShelfGrow]:
+        if not grow_ids:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             current_shelf_grows = read_shelves_with_grows(db_conn, grow_ids)
