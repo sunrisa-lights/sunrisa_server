@@ -1,4 +1,16 @@
-.PHONY: lint virtual test_unit test_integration mypy install install_integration run
+.PHONY: build-up clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
+
+build-up: 
+	docker-compose up --build
+
+
+clean:
+	docker system prune -f\
+
+
+clean_volume:
+	docker volume prune -f
+
 
 lint:
 	venv/bin/black sunrisa.py
@@ -31,3 +43,19 @@ install_integration:
 
 run:
 	venv/bin/python sunrisa.py
+
+
+test:
+	docker-compose -f docker-compose.test.yml up
+
+
+up: 
+	docker-compose up
+
+
+
+
+
+
+
+
