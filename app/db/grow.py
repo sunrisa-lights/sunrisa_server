@@ -20,6 +20,7 @@ def write_grow(conn, grow: Grow) -> Grow:
 def harvest_grow(conn, grow: Grow) -> Grow:
     sql = "INSERT INTO `grows` (estimated_end_datetime, is_finished, all_fields_complete, olcc_number) VALUES (%s, %s, %s, %s)"
     cursor = conn.cursor()
+    print("grow to harvest in db layer:", grow)
     cursor.execute(
         sql, (grow.estimated_end_datetime, grow.is_finished, grow.all_fields_complete, grow.olcc_number),
     )

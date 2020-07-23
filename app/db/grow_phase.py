@@ -42,7 +42,7 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
 
 
 def read_last_grow_phase(conn, grow_id: int) -> Optional[GrowPhase]:
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND is_last_phase = true"
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND is_last_phase = true"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -53,16 +53,16 @@ def read_last_grow_phase(conn, grow_id: int) -> Optional[GrowPhase]:
                 grow_id,
                 recipe_id,
                 recipe_phase_num,
-                start_datetime,
-                end_datetime,
+                phase_start_datetime,
+                phase_end_datetime,
                 is_last_phase,
             ) = last_grow_phase
             found_grow_phase = GrowPhase(
                 grow_id,
                 recipe_id,
                 recipe_phase_num,
-                start_datetime,
-                end_datetime,
+                phase_start_datetime,
+                phase_end_datetime,
                 is_last_phase,
             )
 
@@ -83,7 +83,7 @@ def end_last_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> 
     cursor.close()
 
 def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id, recipe_phase_num))
@@ -94,16 +94,16 @@ def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowP
                 grow_id,
                 recipe_id,
                 recipe_phase_num,
-                start_datetime,
-                end_datetime,
+                phase_start_datetime,
+                phase_end_datetime,
                 is_last_phase,
             ) = next_grow_phase
             found_grow_phase = GrowPhase(
                 grow_id,
                 recipe_id,
                 recipe_phase_num,
-                start_datetime,
-                end_datetime,
+                phase_start_datetime,
+                phase_end_datetime,
                 is_last_phase,
             )
 
@@ -112,7 +112,7 @@ def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowP
 
 
 def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s"
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -128,7 +128,7 @@ def read_grow_phases(conn, grow_id: int) -> List[GrowPhase]:
 
 def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[GrowPhase]:
     format_strings = ["%s"] * len(grow_ids)
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, start_datetime, end_datetime, is_last_phase FROM grow_phases WHERE grow_id IN ({})".format(
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id IN ({})".format(
         ", ".join(format_strings)
     )
 
@@ -149,8 +149,8 @@ def create_grow_phase_table(conn):
     grow_id INT NOT NULL,
     recipe_id INT NOT NULL,
     recipe_phase_num INT NOT NULL,
-    start_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    phase_start_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    phase_end_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_last_phase BOOLEAN NOT NULL,
     PRIMARY KEY (grow_id, recipe_phase_num),
     FOREIGN KEY (grow_id)

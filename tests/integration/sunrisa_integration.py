@@ -388,7 +388,8 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    sio.connect("http://sunrisa_server:5000")
+    #sio.connect("http://sunrisa_server:5000")
+    sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
 
@@ -398,11 +399,9 @@ def run_test_and_disconnect(test_func):
 ############################################################
 
 # TODO(hkim): Fix this integration test so it can be uncommented!
-"""
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
-"""
 
 
 def test_entities_not_found():

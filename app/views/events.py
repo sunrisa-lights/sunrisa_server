@@ -102,6 +102,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("harvest_grow")
     def harvest_grow(message) -> None:
+        print("message:", message)
         if 'grow' not in message:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -112,12 +113,15 @@ def init_event_listeners(app_config, socketio):
         
         grow_json = message["grow"]
         # harvest the grow by marking it as complete
-        harvest_time: datetime = datetime.utcnow()
+        harvest_datetime: datetime = datetime.utcnow()
+        harvest_time: str = harvest_datetime.strftime("%Y-%m-%d %H:%M:%S")
         grow_json["estimated_end_datetime"] = harvest_time
         grow_json["is_finished"] = True
 
         grow: Grow = Grow.from_json(grow_json)
         
+        print("grow_json to harvest:", grow_json, flush=True)
+        # end grow
         app_config.db.harvest_grow(grow)
 
         # read last grow phase
@@ -130,7 +134,7 @@ def init_event_listeners(app_config, socketio):
         app_config.scheduler.remove_job(last_grow_job_id) # this line will throw exception if job not found
 
         # update last recipe phase to have proper end date
-        app_config.db.end_last_grow_phase(last_grow_phase, harvest_time)
+        app_config.db.end_last_grow_phase(last_grow_phase, harvest_datetime)
         send_message_to_namespace_if_specified(
             socketio,
             message,

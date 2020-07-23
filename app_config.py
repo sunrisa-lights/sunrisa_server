@@ -24,13 +24,13 @@ class AppConfig(metaclass=Singleton):
         self.sio = sio
 
         if env == "development":
-            logging.basicConfig(filename="error.log", level=logging.DEBUG)
+            logging.basicConfig(level=logging.DEBUG)
             self.logger = logging
 
             self.db = DB(self.DB_NAME, self.logger)
             self.db.initialize_tables()
         else:
-            raise Error("Unimplemented environment {}".format(env))
+            raise Exception("Unimplemented environment {}".format(env))
 
         jobstores = {
             "default": SQLAlchemyJobStore(
