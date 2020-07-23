@@ -17,7 +17,6 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
 
 expected_processed_entities = None
 
@@ -84,6 +83,18 @@ def _test_send_room(sio):
     room_dict2 = {
         "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80},
     }
+     @sio.on("message_received")
+    def find_room_listener(message) -> None:
+        print("got message:", message)
+        assert "room" in message
+        assert message["room"] is not None
+        returned_room = Room.from_json(message["room"])
+        expected_room = Room.from_json(room_dict["room"])
+
+        print("returned_room:", returned_room, "expected_room:", expected_room)
+        assert returned_room == expected_room
+        flag.append(True)
+
     sio.emit("message_sent", room_dict2)
     sio.sleep(1)
 
@@ -213,22 +224,6 @@ def _test_send_shelf(sio, rack, recipe):
     return expected
 
 
-def _test_send_plant(sio, shelf):
-    # initially leave shelf_id nil to test out nil shelf
-    plant_dict = {"plant": {"olcc_number": 1}}
-    sio.emit("message_sent", plant_dict)
-    sio.sleep(1)
-
-    # add shelf in and verify that it is updated properly
-    plant_dict = {
-        "plant": {"olcc_number": 1, "shelf_id": shelf.shelf_id},
-    }
-    sio.emit("message_sent", plant_dict)
-    sio.sleep(1)
-    expected = Plant.from_json(plant_dict["plant"])
-
-    return expected
-
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
     assert len(recipe_phases) == 1  # only support 1 phase for now
@@ -334,7 +329,6 @@ def _test_create_entities(sio):
     rack = _test_send_rack(sio, rooms[0])
     recipe, recipe_phases = _test_send_recipe(sio)
     shelf = _test_send_shelf(sio, rack, recipe)
-    _test_send_plant(sio, shelf)
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
@@ -379,6 +373,7 @@ def _test_racks_not_found_in_room(sio):
     print("racks not found in room test passed!")
 
 
+
 def _test_entities_not_found(sio):
     sio.sleep(1)
     _test_room_not_found(sio)
@@ -397,12 +392,13 @@ def run_test_and_disconnect(test_func):
 #################### PYTEST DEFINITIONS ####################
 ############################################################
 
+racks room shelves creat new grow
 # TODO(hkim): Fix this integration test so it can be uncommented!
-"""
+
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
-"""
+
 
 
 def test_entities_not_found():
