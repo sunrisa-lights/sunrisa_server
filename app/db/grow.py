@@ -18,11 +18,11 @@ def write_grow(conn, grow: Grow) -> Grow:
     return grow
 
 def harvest_grow(conn, grow: Grow) -> Grow:
-    sql = "INSERT INTO `grows` (estimated_end_datetime, is_finished, all_fields_complete, olcc_number) VALUES (%s, %s, %s, %s)"
+    sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s WHERE grow_id = %s"
     cursor = conn.cursor()
     print("grow to harvest in db layer:", grow)
     cursor.execute(
-        sql, (grow.estimated_end_datetime, grow.is_finished, grow.all_fields_complete, grow.olcc_number),
+        sql, (grow.estimated_end_datetime, grow.is_finished, grow.all_fields_complete, grow.olcc_number, grow.grow_id),
     )
     cursor.close()
 
