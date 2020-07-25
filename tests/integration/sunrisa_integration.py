@@ -204,7 +204,7 @@ def _test_send_recipe(sio):
 
 def _test_send_shelf(sio, rack, recipe):
     shelf_dict = {
-        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id,},
+        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id},
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)

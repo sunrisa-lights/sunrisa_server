@@ -294,7 +294,7 @@ def init_event_listeners(app_config, socketio):
 
         logging.debug("start_grow_for_shelf succeeded!")
         send_message_to_namespace_if_specified(
-            socketio, message, "start_grows_for_shelves_succeeded", {"succeeded": True}
+                socketio, message, "start_grows_for_shelves_succeeded", {"succeeded": True, "grow": grow.to_json()}
         )
         print("Grow started successfully, event emitted")
 
