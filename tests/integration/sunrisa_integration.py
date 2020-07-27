@@ -202,7 +202,7 @@ def _test_send_recipe(sio):
     return recipe, recipe_phases
 
 
-def _test_send_shelf(sio, rack, recipe):
+def _test_send_shelf(sio, rack):
     shelf_dict = {
         "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id},
     }
@@ -332,8 +332,7 @@ def _test_find_all_entities(
 def _test_create_entities(sio):
     rooms = _test_send_room(sio)
     rack = _test_send_rack(sio, rooms[0])
-    recipe, recipe_phases = _test_send_recipe(sio)
-    shelf = _test_send_shelf(sio, rack, recipe)
+    shelf = _test_send_shelf(sio, rack)
     _test_send_plant(sio, shelf)
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases

@@ -84,7 +84,7 @@ def init_event_listeners(app_config, socketio):
             shelf_json = message["shelf"]
             shelf = Shelf.from_json(shelf_json)
             app_config.logger.debug(shelf)
-            print("Saw shelf in message")
+            print("Saw shelf in message", shelf)
             app_config.db.write_shelf(shelf)
 
         if "plant" in message:

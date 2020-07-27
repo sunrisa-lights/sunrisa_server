@@ -9,7 +9,7 @@ def write_shelf(conn, shelf: Shelf):
 
     set_values = (shelf_id, room_id, rack_id, room_id, rack_id)
 
-    sql = "INSERT INTO `shelves` VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE room_id = %s, rack_id=%s"
+    sql = "INSERT INTO `shelves` VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE room_id=%s, rack_id=%s"
     cursor = conn.cursor()
     cursor.execute(sql, set_values)
     cursor.close()
