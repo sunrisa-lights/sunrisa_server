@@ -17,6 +17,7 @@ from app.db.grow import (
     create_grow_table,
     harvest_grow,
     read_current_grows,
+    read_grow,
     write_grow,
 )
 from app.db.grow_phase import (
@@ -146,6 +147,14 @@ class DB:
             db_conn.close()
 
         return shelves
+
+    def read_grow(self, grow_id: int) -> Optional[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow = read_grow(db_conn, grow_id)
+        finally:
+            db_conn.close()
+        return grow
 
     def read_room(self, room_id: int) -> Optional[Room]:
         db_conn = self._new_connection(self.db_name)

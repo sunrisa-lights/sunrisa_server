@@ -100,6 +100,38 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "message_received", {"processed": entities_processed}
         )
 
+    @socketio.on("read_grow")
+    def read_grow(message) -> None:
+        print("called read_grow")
+        if "grow" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "read_grow_response",
+                {"succeeded": False, "reason": "Grow not included"},
+            )
+            return
+
+        grow_json = message["grow"]
+        grow_id: int = int(grow_json["grow_id"])
+        grow: Optional[Grow] = app_config.db.read_grow(grow_id)
+        if not grow:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "read_grow_response",
+                {"succeeded": False, "reason": "Grow not found"},
+            )
+            return
+        
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "read_grow_response",
+            {"succeeded": True, "grow": grow.to_json()},
+        )
+            
+
     @socketio.on("harvest_grow")
     def harvest_grow(message) -> None:
         print("message:", message)
@@ -110,6 +142,7 @@ def init_event_listeners(app_config, socketio):
                 "harvest_grow_response",
                 {"succeeded": False, "reason": "Grow not included"},
             )
+            return
         
         grow_json = message["grow"]
         # harvest the grow by marking it as complete
@@ -156,6 +189,7 @@ def init_event_listeners(app_config, socketio):
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "Grow phases not included"},
             )
+            return
         elif "shelves" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -163,6 +197,7 @@ def init_event_listeners(app_config, socketio):
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "Shelves not included"},
             )
+            return
         elif "is_new_recipe" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -173,6 +208,7 @@ def init_event_listeners(app_config, socketio):
                     "reason": "Not specified whether this is a new recipe",
                 },
             )
+            return
         elif "end_date" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -180,6 +216,7 @@ def init_event_listeners(app_config, socketio):
                 "start_grow_for_shelf_succeeded",
                 {"succeeded": False, "reason": "End date not specified"},
             )
+            return
 
         is_new_recipe: bool = bool(message["is_new_recipe"])
         print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
@@ -308,6 +345,7 @@ def init_event_listeners(app_config, socketio):
                 "get_current_shelf_schedules_response",
                 {"succeeded": False, "reason": "Shelf ID missing",},
             )
+            return
         print("Returned get_current_shelf_schedules_succeeded")
 
         shelf_dict = message["shelf"]
@@ -332,6 +370,7 @@ def init_event_listeners(app_config, socketio):
                 "create_new_recipe_response",
                 {"succeeded": False, "reason": "no recipe"},
             )
+            return
         elif "recipe_phases" not in message["recipe"]:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -339,6 +378,7 @@ def init_event_listeners(app_config, socketio):
                 "create_new_recipe_response",
                 {"succeeded": False, "reason": "no recipe phases"},
             )
+            return
 
         recipe_json = message["recipe"]
         recipe = Recipe.from_json(recipe_json)

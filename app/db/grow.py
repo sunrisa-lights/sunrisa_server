@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.grow import Grow
 
@@ -28,6 +28,35 @@ def harvest_grow(conn, grow: Grow) -> Grow:
 
     return grow
 
+def read_grow(conn, grow_id: int) -> Optional[Grow]:
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number FROM grows WHERE grow_id = %s"
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (grow_id))
+        found_grow = cursor.fetchone()
+        grow: Optional[Grow] = None
+        if found_grow is not None:
+            (
+                grow_id,
+                recipe_id,
+                start_datetime,
+                estimated_end_datetime,
+                is_finished,
+                all_fields_complete,
+                olcc_number,
+            ) = found_grow
+            grow = Grow(
+                grow_id,
+                recipe_id,
+                start_datetime,
+                estimated_end_datetime,
+                is_finished,
+                all_fields_complete,
+                olcc_number,
+            )
+
+        cursor.close()
+        return grow
 
 def read_current_grows(conn) -> List[Grow]:
     sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number FROM grows WHERE is_finished = false"
