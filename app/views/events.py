@@ -87,14 +87,14 @@ def init_event_listeners(app_config, socketio):
             print("Saw shelf in message")
             app_config.db.write_shelf(shelf)
 
-        if "plant" in message:
-            # a plant is contained in this update
-            entities_processed.append("plant")
-            plant_json = message["plant"]
-            plant = Plant.from_json(plant_json)
-            app_config.logger.debug(plant)
-            print("Saw plant in message")
-            app_config.db.write_plant(plant)
+        # if "plant" in message:
+        #     # a plant is contained in this update
+        #     entities_processed.append("plant")
+        #     plant_json = message["plant"]
+        #     plant = Plant.from_json(plant_json)
+        #     app_config.logger.debug(plant)
+        #     print("Saw plant in message")
+        #     app_config.db.write_plant(plant)
 
         send_message_to_namespace_if_specified(
             socketio, message, "message_received", {"processed": entities_processed}
@@ -220,26 +220,26 @@ def init_event_listeners(app_config, socketio):
             first_grow_phase.recipe_id, first_grow_phase.recipe_phase_num
         )
 
-        if grow_phase.is_last_phase:
-            # schedule this phase without an end date
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=first_grow_phase.phase_start_datetime,
-                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
-            )
-        else:
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=first_grow_phase.phase_start_datetime,
-                end_date=first_grow_phase.phase_end_datetime,
-                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
-            )
+        # if grow_phase.is_last_phase:
+        #     # schedule this phase without an end date
+        #     app_config.scheduler.add_job(
+        #         schedule_grow_for_shelf,
+        #         "interval",
+        #         start_date=first_grow_phase.phase_start_datetime,
+        #         args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
+        #         id=get_job_id(shelf_grows, grow_phase),
+        #         minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+        #     )
+        # else:
+        #     app_config.scheduler.add_job(
+        #         schedule_grow_for_shelf,
+        #         "interval",
+        #         start_date=first_grow_phase.phase_start_datetime,
+        #         end_date=first_grow_phase.phase_end_datetime,
+        #         args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
+        #         id=get_job_id(shelf_grows, grow_phase),
+        #         minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+        #     )
 
         print("Added job to scheduler")
 
