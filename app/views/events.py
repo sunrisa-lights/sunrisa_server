@@ -87,15 +87,6 @@ def init_event_listeners(app_config, socketio):
             print("Saw shelf in message")
             app_config.db.write_shelf(shelf)
 
-        # if "plant" in message:
-        #     # a plant is contained in this update
-        #     entities_processed.append("plant")
-        #     plant_json = message["plant"]
-        #     plant = Plant.from_json(plant_json)
-        #     app_config.logger.debug(plant)
-        #     print("Saw plant in message")
-        #     app_config.db.write_plant(plant)
-
         send_message_to_namespace_if_specified(
             socketio, message, "message_received", {"processed": entities_processed}
         )
