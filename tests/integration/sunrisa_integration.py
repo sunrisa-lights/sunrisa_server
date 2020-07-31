@@ -158,50 +158,6 @@ def _test_send_rack(sio, room):
     return Rack.from_json(rack_dict["rack"])
 
 
-# def _test_send_recipe(sio):
-#     start = datetime.utcnow() + timedelta(0, 3)
-#     recipe_dict = {
-#         "recipe": {
-#             "recipe_id": 1,
-#             "recipe_name": "purp",
-#             "recipe_phases": [
-#                 {
-#                     "start_date": start_time = start.strftime("%Y-%m-%d %H:%M:%S")
-#                     "power_level": 9,
-#                     "red_level": 8,
-#                     "blue_level": 7,
-#                 },
-#                 {
-#                     "recipe_id": 1,
-#                     "recipe_phase_num": 2,
-#                     "num_hours": 69,
-#                     "power_level": 69,
-#                     "red_level": 68,
-#                     "blue_level": 67,
-#                 },
-#             ],
-#         },
-#     }
-
-#     flag = []
-
-#     @sio.on("create_new_recipe_response")
-#     def create_new_recipe_response(message) -> None:
-#         assert "succeeded" in message
-#         assert message["succeeded"]
-
-#         flag.append(True)
-
-#     sio.emit("create_new_recipe", recipe_dict)
-#     wait_for_event(sio, flag, 1, 5, "test_create_recipe_with_phases")
-#     print("Created new recipe with phases")
-
-#     recipe = Recipe.from_json(recipe_dict["recipe"])
-#     recipe_phases = [RecipePhase.from_json(recipe_dict["recipe"]["recipe_phases"][0])]
-
-#     return recipe, recipe_phases
-
-
 def _test_send_shelf(sio, rack):
     shelf_dict = {
         "shelf": {"shelf_id": 1, "rack_id": rack.rack_id,},
@@ -241,7 +197,6 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
 
     @sio.on("start_grows_for_shelves_succeeded")
     def start_grows_for_shelves_succeeded(message) -> None:
-        print("hellllllo")
         assert "succeeded" in message
         assert message["succeeded"]
         flag.append(True)
@@ -307,7 +262,7 @@ def _test_find_all_entities(
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
-        if len(collections.Counter(found_grows)) == 1:
+        if len(found_grows) == 1:
             assert found_grows[0].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
             assert found_grows[0].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
         assert found_grow_phases[0].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
@@ -404,7 +359,6 @@ def run_test_and_disconnect(test_func):
 #################### PYTEST DEFINITIONS ####################
 ############################################################
 
-# TODO(hkim): Fix this integration test so it can be uncommented!
 
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
