@@ -21,6 +21,8 @@ from app.models.plant import Plant
 
 expected_processed_entities = None
 
+TEST_NAMESPACE = '/test'
+
 
 def kill_server_on_assert_failure(sio, condition, assert_arg=""):
     if not condition:
@@ -47,12 +49,13 @@ def _test_send_room(sio):
     room_dict = {
         "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
     }
+    room_dict["namespace"] = TEST_NAMESPACE
     sio.emit("message_sent", room_dict)
     sio.sleep(1)
 
     flag = []
 
-    @sio.on("return_room")
+    @sio.on("return_room", namespace=TEST_NAMESPACE)
     def find_room_listener(message) -> None:
         print("got message:", message)
         assert "room" in message
@@ -74,7 +77,7 @@ def _test_send_room(sio):
     room_dict["room"]["is_on"] = not room_dict["room"]["is_on"]
     sio.emit("message_sent", room_dict)
 
-    sio.emit("read_room", room_dict)
+    sio.emit("read_room", room_dict, namespace=TEST_NAMESPACE)
 
     wait_for_event(sio, flag, 2, 5, "test_send_room.update_room")
 
@@ -84,13 +87,15 @@ def _test_send_room(sio):
     room_dict2 = {
         "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80},
     }
+
+    room_dict2["namespace"] = TEST_NAMESPACE
     sio.emit("message_sent", room_dict2)
     sio.sleep(1)
 
     # return both rooms
     rooms = []
 
-    @sio.on("return_rooms")
+    @sio.on("return_rooms", namespace=TEST_NAMESPACE)
     def find_all_rooms_listener(message) -> None:
         found_rooms = message["rooms"]
         for fr in found_rooms:
@@ -102,7 +107,7 @@ def _test_send_room(sio):
         assert room_map[first_id] == Room.from_json(room_dict["room"])
         assert room_map[second_id] == Room.from_json(room_dict2["room"])
 
-    sio.emit("read_all_rooms", {})
+    sio.emit("read_all_rooms", {"namespace": TEST_NAMESPACE})
     wait_for_event(sio, rooms, 2, 5, "test_send_room.read_rooms")
     print("read all rooms")
 
@@ -120,12 +125,13 @@ def _test_send_rack(sio, room):
             "is_connected": True,
         },
     }
+    rack_dict["namespace"] = TEST_NAMESPACE
     sio.emit("message_sent", rack_dict)
     sio.sleep(1)
 
     flag = []
 
-    @sio.on("return_racks_in_room")
+    @sio.on("return_racks_in_room", namespace=TEST_NAMESPACE)
     def return_racks_in_room_listener(message) -> None:
         found_racks = message["racks"]
         room_id = message["room_id"]
@@ -138,7 +144,7 @@ def _test_send_rack(sio, room):
         flag.append(True)
 
     sio.emit(
-        "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
+            "read_all_racks_in_room", {"room": {"room_id": room.room_id}, "namespace": TEST_NAMESPACE},
     )
     wait_for_event(sio, flag, 1, 10, "test_send_rack.read_all_racks_in_room.1")
 
@@ -148,7 +154,7 @@ def _test_send_rack(sio, room):
     rack_dict["rack"]["is_on"] = not rack_dict["rack"]["is_on"]
     sio.emit("message_sent", rack_dict)
     sio.emit(
-        "read_all_racks_in_room", {"room": {"room_id": room.room_id}},
+            "read_all_racks_in_room", {"room": {"room_id": room.room_id}, "namespace": TEST_NAMESPACE},
     )
     wait_for_event(sio, flag, 2, 10, "test_send_rack.read_all_racks_in_room.2")
 
@@ -185,13 +191,14 @@ def _test_send_recipe(sio):
 
     flag = []
 
-    @sio.on("create_new_recipe_response")
+    @sio.on("create_new_recipe_response", namespace=TEST_NAMESPACE)
     def create_new_recipe_response(message) -> None:
         assert "succeeded" in message
         assert message["succeeded"]
 
         flag.append(True)
 
+    recipe_dict["namespace"] = TEST_NAMESPACE
     sio.emit("create_new_recipe", recipe_dict)
     wait_for_event(sio, flag, 1, 5, "test_create_recipe_with_phases")
     print("Created new recipe with phases")
@@ -206,28 +213,13 @@ def _test_send_shelf(sio, rack):
     shelf_dict = {
         "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id},
     }
+    shelf_dict["namespace"] = TEST_NAMESPACE
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
     expected = Shelf.from_json(shelf_dict["shelf"])
 
     return expected
 
-
-def _test_send_plant(sio, shelf):
-    # initially leave shelf_id nil to test out nil shelf
-    plant_dict = {"plant": {"olcc_number": 1}}
-    sio.emit("message_sent", plant_dict)
-    sio.sleep(1)
-
-    # add shelf in and verify that it is updated properly
-    plant_dict = {
-        "plant": {"olcc_number": 1, "shelf_id": shelf.shelf_id},
-    }
-    sio.emit("message_sent", plant_dict)
-    sio.sleep(1)
-    expected = Plant.from_json(plant_dict["plant"])
-
-    return expected
 
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
@@ -258,13 +250,13 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
 
     flag = []
 
-    @sio.on("start_grows_for_shelves_succeeded")
+    @sio.on("start_grows_for_shelves_succeeded", namespace=TEST_NAMESPACE)
     def start_grows_for_shelves_succeeded(message) -> None:
         assert "succeeded" in message
         assert message["succeeded"]
         flag.append(True)
 
-    @sio.on("set_lights_for_grow")
+    @sio.on("set_lights_for_grow", namespace=TEST_NAMESPACE)
     def set_lights_for_grow(message) -> None:
         assert "grow" in message
         assert "power_level" in message
@@ -272,7 +264,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id, recipe_phases):
         assert "blue_level" in message
         flag.append(True)
 
-    sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows]})
+    sio.emit("start_grows_for_shelves", {"grows": [s.to_json() for s in shelf_grows], "namespace": TEST_NAMESPACE})
     wait_for_event(sio, flag, 1, 5, "test_start_grows_for_shelves")
 
     for i in range(len(shelf_grows)):
@@ -293,7 +285,7 @@ def _test_find_all_entities(
 ):
     flag = []
 
-    @sio.on("return_all_entities")
+    @sio.on("return_all_entities", namespace=TEST_NAMESPACE)
     def return_all_entities_listener(message) -> None:
         print("Received message in entities_listener:", message)
         assert "rooms" in message
@@ -323,7 +315,7 @@ def _test_find_all_entities(
 
         flag.append(True)
 
-    sio.emit("read_all_entities", {})
+    sio.emit("read_all_entities", {"namespace": TEST_NAMESPACE})
     print("WAITING FOR IT!")
     wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
@@ -333,7 +325,6 @@ def _test_create_entities(sio):
     rooms = _test_send_room(sio)
     rack = _test_send_rack(sio, rooms[0])
     shelf = _test_send_shelf(sio, rack)
-    _test_send_plant(sio, shelf)
     grow = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id, recipe_phases
     )
@@ -348,11 +339,12 @@ def _test_room_not_found(sio):
 
     room_dict = {"room": {"room_id": 5000, "is_on": True}}
 
-    @sio.on("return_room")
+    @sio.on("return_room", namespace=TEST_NAMESPACE)
     def find_room_listener(message) -> None:
         assert message["room"] is None, "Found a nonexistent room"
         flag.append(True)
 
+    room_dict["namespace"] = TEST_NAMESPACE
     sio.emit("read_room", room_dict)
 
     wait_for_event(sio, flag, 1, 10, "test_room_not_found")
@@ -365,12 +357,13 @@ def _test_racks_not_found_in_room(sio):
 
     room_dict = {"room": {"room_id": 5000}}
 
-    @sio.on("return_racks_in_room")
+    @sio.on("return_racks_in_room", namespace=TEST_NAMESPACE)
     def return_racks_in_room_listener(message) -> None:
         assert message["racks"] == [], "Found nonexistent racks"
         assert message["room_id"] == room_dict["room"]["room_id"]
         flag.append(True)
 
+    room_dict["namespace"] = TEST_NAMESPACE
     sio.emit("read_all_racks_in_room", room_dict)
 
     wait_for_event(sio, flag, 1, 10, "test_racks_not_found_in_room")
@@ -388,7 +381,7 @@ def _test_entities_not_found(sio):
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
     #sio.connect("http://sunrisa_server:5000")
-    sio.connect("http://localhost:5000")
+    sio.connect("http://localhost:5000", namespaces=[TEST_NAMESPACE])
     test_func(sio)
     sio.disconnect()
 

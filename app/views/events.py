@@ -131,6 +131,28 @@ def init_event_listeners(app_config, socketio):
             {"succeeded": True, "grow": grow.to_json()},
         )
             
+    @socketio.on("search_recipes")
+    def search_recipes(message) -> None:
+        print("search_recipes message:", message)
+        if 'search_name' not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "search_recipes_response",
+                {"succeeded": False, "reason": "Search name not included"},
+            )
+            return
+        
+        search_name: str = message['search_name']
+        matching_recipes: List[Recipe] = app_config.db.read_recipes_with_name(search_name)
+        recipes_json = [r.to_json() for r in matching_recipes]
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "search_recipes_response",
+            {"succeeded": True, "recipes": recipes_json},
+        )
+        
 
     @socketio.on("harvest_grow")
     def harvest_grow(message) -> None:

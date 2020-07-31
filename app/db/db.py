@@ -37,7 +37,7 @@ from app.db.rack import (
     read_all_racks,
     read_racks_in_room,
 )
-from app.db.recipe import create_recipe_table, read_recipes, write_recipe
+from app.db.recipe import create_recipe_table, read_recipes, read_recipes_with_name, write_recipe
 from app.db.recipe_phase import (
     create_recipe_phases_table,
     read_lights_from_recipe_phase,
@@ -156,6 +156,7 @@ class DB:
             db_conn.close()
         return grow
 
+
     def read_room(self, room_id: int) -> Optional[Room]:
         db_conn = self._new_connection(self.db_name)
         try:
@@ -224,6 +225,14 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             recipes = read_recipes(db_conn, recipe_ids)
+        finally:
+            db_conn.close()
+        return recipes
+
+    def read_recipes_with_name(self, search_name: str) -> List[Recipe]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            recipes = read_recipes_with_name(db_conn, search_name)
         finally:
             db_conn.close()
         return recipes
