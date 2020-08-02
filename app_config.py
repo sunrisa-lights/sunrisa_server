@@ -1,9 +1,12 @@
 import pymysql.cursors
 import logging
+import os
 
 from app.db.db import DB
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+load_dotenv()
 
 
 # Based off of this stack overflow answer: https://stackoverflow.com/a/6798042/13297130
@@ -18,7 +21,7 @@ class Singleton(type):
 
 
 class AppConfig(metaclass=Singleton):
-    DB_NAME = "sunrisa_test"
+    DB_NAME = os.environ.get("db-name")
 
     def __init__(self, sio, env):
         self.sio = sio
@@ -34,7 +37,7 @@ class AppConfig(metaclass=Singleton):
 
         jobstores = {
             "default": SQLAlchemyJobStore(
-                url="mysql+pymysql://root:root@db/{}".format(self.DB_NAME) # TODO: Make network name (`db` in this case) configurable as env var
+                url="mysql+pymysql://root:root@db/{}".format(self.DB_NAME) 
             )
         }
 
