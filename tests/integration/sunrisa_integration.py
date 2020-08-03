@@ -18,7 +18,6 @@ from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
-from app.models.plant import Plant
 
 expected_processed_entities = None
 
@@ -217,9 +216,6 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
     wait_for_event(sio, flag, 1, 10, "test_start_grows_for_shelves")
 
-    # for i in range(len(shelf_grows)):
-    #     wait_for_event(sio, flag, i + 2, 5, "test_set_lights_for_grow_job")
-
     print("test send shelf grow passed")
     return(start_time, end_time, recipe_phases)
 
@@ -231,7 +227,6 @@ def _test_find_all_entities(
     shelves: List[Shelf],
     start,
     end,
-    recipe_phases,
     p_level,
     r_level,
     b_level
@@ -267,7 +262,7 @@ def _test_find_all_entities(
             assert found_grows[0].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
         assert found_grow_phases[0].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
         assert found_grow_phases[0].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
-        assert len(collections.Counter(found_recipes)) > 0 
+        assert len(found_recipes) == 1 
         assert found_recipe_phases[0].power_level == p_level
         assert found_recipe_phases[0].red_level == r_level
         assert found_recipe_phases[0].blue_level == b_level     
@@ -301,7 +296,7 @@ def _test_create_entities(sio):
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
     )
     _test_find_all_entities(
-        sio, rooms, [rack], [shelf], start_time, end_time, recipe_phases, p_level, r_level, b_level
+        sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
     )
     print("create_entities_test passed!")
 
@@ -350,7 +345,7 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    sio.connect("http://localhost:5000")
+    sio.connect("http://sunrisa_server:5000")
     test_func(sio)
     sio.disconnect()
 
