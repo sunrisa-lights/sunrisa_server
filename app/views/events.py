@@ -5,6 +5,12 @@ from time import mktime
 
 from typing import List, Optional
 
+import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
+
+from app.job_scheduler import helloworld_pb2
+from app.job_scheduler import helloworld_pb2_grpc
+
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
@@ -145,7 +151,9 @@ def init_event_listeners(app_config, socketio):
 
                 # if this is the last phase, use `end_date` attribute
                 is_last_phase = i == len(message["grow_phases"]) - 1
-                end_date_str: str = message["end_date"] if is_last_phase else recipe_phase_json["start_date"]
+                end_date_str: str = message[
+                    "end_date"
+                ] if is_last_phase else recipe_phase_json["start_date"]
                 end_date: datetime = iso8601_string_to_datetime(end_date_str)
 
                 date_diff: timedelta = end_date - start_date
@@ -211,9 +219,9 @@ def init_event_listeners(app_config, socketio):
             first_grow_phase.recipe_id, first_grow_phase.recipe_phase_num
         )
 
-        """
         if grow_phase.is_last_phase:
             # schedule this phase without an end date
+            """
             app_config.scheduler.add_job(
                 schedule_grow_for_shelf,
                 "interval",
@@ -222,7 +230,45 @@ def init_event_listeners(app_config, socketio):
                 id=get_job_id(shelf_grows, grow_phase),
                 minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
+            """
+            with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
+                stub = helloworld_pb2_grpc.GreeterStub(channel)
+                shelf_grow_protos = [
+                    helloworld_pb2.ShelfGrow(
+                        grow_id=sg.grow_id,
+                        room_id=sg.room_id,
+                        rack_id=sg.rack_id,
+                        shelf_id=sg.shelf_id,
+                    )
+                    for sg in shelf_grows
+                ]
+
+                phase_start_timestamp = Timestamp()
+                phase_start_timestamp.FromDatetime(grow_phase.phase_start_datetime)
+
+                phase_end_timestamp = Timestamp()
+                phase_end_timestamp.FromDatetime(grow_phase.phase_end_datetime)
+
+                grow_phase_proto = helloworld_pb2.GrowPhase(
+                    grow_id=grow_phase.grow_id,
+                    recipe_phase_num=grow_phase.recipe_phase_num,
+                    recipe_id=grow_phase.recipe_id,
+                    phase_start_datetime=phase_start_timestamp,
+                    phase_end_datetime=phase_end_timestamp,
+                    is_last_phase=grow_phase.is_last_phase,
+                )
+                proto = helloworld_pb2.HelloRequest(
+                    name="LucasTest",
+                    shelf_grows=shelf_grow_protos,
+                    grow_phase=grow_phase_proto,
+                    power_level=power_level,
+                    red_level=red_level,
+                    blue_level=blue_level,
+                )
+                response = stub.SayHello(proto)
+            print("Greeter client received: " + response.message)
         else:
+            """
             app_config.scheduler.add_job(
                 schedule_grow_for_shelf,
                 "interval",
@@ -232,7 +278,11 @@ def init_event_listeners(app_config, socketio):
                 id=get_job_id(shelf_grows, grow_phase),
                 minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
             )
-        """
+            """
+            with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
+                stub = helloworld_pb2_grpc.GreeterStub(channel)
+                response = stub.SayHello(helloworld_pb2.HelloRequest(name="wrong bitch"))
+            print("Greeter client received: " + response.message)
 
         print("Didn't add job to scheduler")
 
