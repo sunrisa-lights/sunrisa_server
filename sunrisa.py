@@ -5,6 +5,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from flask import Flask
+from flask_crontab import Crontab
 from flask_socketio import SocketIO
 from app.views.events import init_event_listeners
 from app_config import AppConfig
@@ -12,7 +13,7 @@ from app_config import AppConfig
 socketio = SocketIO(cors_allowed_origins="*")
 
 app = Flask(__name__)
-
+crontab = Crontab()
 
 def create_app(debug):
     """Create an application."""
@@ -25,6 +26,7 @@ def create_app(debug):
 
     socketio.init_app(app)
     init_event_listeners(app_config, socketio)
+    crontab.init_app(app)
     return app
 
 
