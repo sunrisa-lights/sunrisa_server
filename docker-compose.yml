@@ -4,21 +4,40 @@ services:
   sunrisa_server:
     depends_on:
       - db
-    build: .
+    build:
+      context: "."
+      dockerfile: "Dockerfile.sunrisa_server"
     ports:
+      # forwards localhost:5000 to port 5000 on this container
       - '5000:5000'
     expose:
       # Opens port 5000 on the container
       - '5000'
-    container_name: sunrisa-server-container
+    container_name: sunrisa-server
     image: sunrisa_server
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_APP=sunrisa.py
+      - FLASK_ENV=development
+      - FLASK_RUN_FROM_CLI=false
+  sunrisa_job_scheduler:
+    depends_on:
+      - sunrisa_server
+    build:
+      context: "."
+      dockerfile: "Dockerfile.job_scheduler"
+    ports:
+      # forwards localhost:50051 to port 50051 on this container
+      - '50051:50051'
+    expose:
+      # Opens port 50051 on the container
+      - '50051'
+    container_name: sunrisa-job-scheduler
+    image: sunrisa_job_scheduler
     environment:
       - PYTHONUNBUFFERED=1
   db:
     image: mysql:5.7
-    ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - '3306:3306'
     expose:
       # Opens port 3306 on the container
       - '3306'

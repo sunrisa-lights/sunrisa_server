@@ -49,9 +49,7 @@ from app.db.shelf_grow import (
 
 
 class DB:
-    def __init__(self, db_name, logger):
-        self.logger = logger
-
+    def __init__(self, db_name):
         self.db_name = db_name
         try:
             conn = pymysql.connect(
@@ -79,7 +77,7 @@ class DB:
         try:
             conn.cursor().execute(create_sql)
         except pymysql.err.ProgrammingError:
-            self.logger.debug("db already exists")
+            print("db already exists:", db_name)
         finally:
             conn.close()
 
