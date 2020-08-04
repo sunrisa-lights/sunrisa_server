@@ -7,6 +7,7 @@ from app_config import AppConfig
 
 
 def schedule_grow_for_shelf(
+    app_config,
     shelf_grows: List[ShelfGrow],
     grow_phase: GrowPhase,
     power_level: int,

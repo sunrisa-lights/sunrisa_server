@@ -7,6 +7,7 @@ from app_config import AppConfig
 
 
 def schedule_grow_for_shelf(
+    app_config,
     shelf_grows: List[ShelfGrow],
     grow_phase: GrowPhase,
     power_level: int,
@@ -14,8 +15,6 @@ def schedule_grow_for_shelf(
     blue_level: int,
 ) -> None:
     print("In schedule_grow_for_shelf")
-    """
-    config = AppConfig()  # no arguments needed because it's a singleton instance
 
     shelf_grow_dict = {
         "shelves": [sg.to_json() for sg in shelf_grows],
@@ -24,13 +23,12 @@ def schedule_grow_for_shelf(
         "blue_level": blue_level,
     }
 
-    config.sio.emit("set_lights_for_grow", shelf_grow_dict)
+    app_config.sio.emit("set_lights_for_grow", shelf_grow_dict)
     print("Event emitted from socketio obj")
 
     # check if this is the last run and we need to schedule the next phase
-    schedule_next_phase_if_needed(config, shelf_grows, grow_phase)
+    schedule_next_phase_if_needed(app_config, shelf_grows, grow_phase)
     print("Succeeded!")
-    """
 
 
 def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
