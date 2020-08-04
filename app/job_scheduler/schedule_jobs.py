@@ -29,7 +29,7 @@ def schedule_grow_for_shelf(
     }
 
     app_config.sio.emit("set_lights_for_grow", shelf_grow_dict)
-    print("Event emitted from socketio obj")
+    print("Set_lights_for_grow event emitted")
 
     # check if this is the last run and we need to schedule the next phase
     schedule_next_phase_if_needed(app_config, shelf_grows, grow_phase)

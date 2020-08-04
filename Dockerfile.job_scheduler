@@ -2,7 +2,7 @@
 FROM python:3.8.1-slim-buster
 
 # Set the working directory.
-WORKDIR /usr/src/sunrisa/sunrisa_job_scheduler
+WORKDIR /usr/src/sunrisa
 
 # Copy the whole directory to WORKDIR
 COPY . .

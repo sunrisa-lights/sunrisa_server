@@ -20,6 +20,8 @@ services:
       - FLASK_APP=sunrisa.py
       - FLASK_ENV=development
       - FLASK_RUN_FROM_CLI=false
+    volumes: ['.:/usr/src/sunrisa']
+
   sunrisa_job_scheduler:
     depends_on:
       - sunrisa_server
@@ -36,6 +38,7 @@ services:
     image: sunrisa_job_scheduler
     environment:
       - PYTHONUNBUFFERED=1
+    volumes: ['.:/usr/src/sunrisa']
   db:
     image: mysql:5.7
     expose:

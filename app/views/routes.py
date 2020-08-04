@@ -1,4 +1,5 @@
 from flask import request
+from flask import jsonify
 
 from typing import List
 
@@ -14,7 +15,6 @@ def init_endpoint_listeners(app_config, app):
         params = request.get_json()
         shelf_grows: List[ShelfGrow] = []
         for shelf_grow_json in params["shelf_grows"]:
-            print("shelf_grow_json:", shelf_grow_json)
             shelf_grow: ShelfGrow = ShelfGrow.from_json(shelf_grow_json)
             shelf_grows.append(shelf_grow)
 
@@ -24,4 +24,4 @@ def init_endpoint_listeners(app_config, app):
         blue_level: int = params["blue_level"]
         schedule_grow_for_shelf(app_config, shelf_grows, grow_phase, power_level, red_level, blue_level)
 
-        return {"success": True}
+        return jsonify({"success": True})
