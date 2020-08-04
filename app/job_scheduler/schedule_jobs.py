@@ -5,6 +5,11 @@ from app.models.grow_phase import GrowPhase
 from app.models.shelf_grow import ShelfGrow
 from app_config import AppConfig
 
+import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
+
+from app.job_scheduler import job_scheduler_pb2
+from app.job_scheduler import job_scheduler_pb2_grpc
 
 def schedule_grow_for_shelf(
     app_config,
@@ -28,7 +33,7 @@ def schedule_grow_for_shelf(
 
     # check if this is the last run and we need to schedule the next phase
     schedule_next_phase_if_needed(app_config, shelf_grows, grow_phase)
-    print("Succeeded!")
+    print("Successfully scheduled grow for shelf!")
 
 
 def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
@@ -73,22 +78,42 @@ def schedule_next_phase_if_needed(
             next_grow_phase.recipe_id, next_grow_phase.recipe_phase_num
         )
 
-        if next_grow_phase.is_last_phase:
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=next_grow_phase.phase_start_datetime,
-                args=[shelf_grows, next_grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=1,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
+        client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
+
+def client_schedule_job(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase, power_level: int, red_level: int, blue_level: int):
+    with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
+        stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
+        shelf_grow_protos = [
+            job_scheduler_pb2.ShelfGrow(
+                grow_id=sg.grow_id,
+                room_id=sg.room_id,
+                rack_id=sg.rack_id,
+                shelf_id=sg.shelf_id,
             )
-        else:
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=next_grow_phase.phase_start_datetime,
-                end_date=next_grow_phase.phase_end_datetime,
-                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=1,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
-            )
+            for sg in shelf_grows
+        ]
+
+        phase_start_timestamp = Timestamp()
+        phase_start_timestamp.FromDatetime(grow_phase.phase_start_datetime)
+
+        phase_end_timestamp = Timestamp()
+        phase_end_timestamp.FromDatetime(grow_phase.phase_end_datetime)
+
+        grow_phase_proto = job_scheduler_pb2.GrowPhase(
+            grow_id=grow_phase.grow_id,
+            recipe_phase_num=grow_phase.recipe_phase_num,
+            recipe_id=grow_phase.recipe_id,
+            phase_start_datetime=phase_start_timestamp,
+            phase_end_datetime=phase_end_timestamp,
+            is_last_phase=grow_phase.is_last_phase,
+        )
+        proto = job_scheduler_pb2.ScheduleJobRequest(
+            shelf_grows=shelf_grow_protos,
+            grow_phase=grow_phase_proto,
+            power_level=power_level,
+            red_level=red_level,
+            blue_level=blue_level,
+        )
+
+        response = stub.ScheduleJob(proto) # TODO: Add retries?
+    print("Job scheduler client received response from ScheduleJob: {}".format(response.succeeded))
