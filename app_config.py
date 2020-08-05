@@ -27,18 +27,7 @@ class AppConfig(metaclass=Singleton):
             logging.basicConfig(filename="error.log", level=logging.DEBUG)
             self.logger = logging
 
-            self.db = DB(self.DB_NAME, self.logger)
+            self.db = DB(self.DB_NAME)
             self.db.initialize_tables()
         else:
-            raise Error("Unimplemented environment {}".format(env))
-
-        jobstores = {
-            "default": SQLAlchemyJobStore(
-                url="mysql+pymysql://root:root@db/{}".format(
-                    self.DB_NAME
-                )  # TODO: Make network name (`db` in this case) configurable as env var
-            )
-        }
-
-        self.scheduler = BackgroundScheduler(jobstores=jobstores)
-        self.scheduler.start()
+            raise Exception("Unimplemented environment {}".format(env))

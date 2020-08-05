@@ -5,6 +5,10 @@ from time import mktime
 
 from typing import List, Optional
 
+from app.job_scheduler import job_scheduler_pb2
+from app.job_scheduler import job_scheduler_pb2_grpc
+from app.job_scheduler.schedule_jobs import client_schedule_job
+
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
@@ -14,9 +18,6 @@ from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
-
-from app.resources.schedule_jobs import get_job_id
-from app.resources.schedule_jobs import schedule_grow_for_shelf  # type: ignore
 
 from app.utils.time_utils import iso8601_string_to_datetime
 
@@ -87,15 +88,6 @@ def init_event_listeners(app_config, socketio):
             print("Saw shelf in message")
             app_config.db.write_shelf(shelf)
 
-        if "plant" in message:
-            # a plant is contained in this update
-            entities_processed.append("plant")
-            plant_json = message["plant"]
-            plant = Plant.from_json(plant_json)
-            app_config.logger.debug(plant)
-            print("Saw plant in message")
-            app_config.db.write_plant(plant)
-
         send_message_to_namespace_if_specified(
             socketio, message, "message_received", {"processed": entities_processed}
         )
@@ -154,7 +146,9 @@ def init_event_listeners(app_config, socketio):
 
                 # if this is the last phase, use `end_date` attribute
                 is_last_phase = i == len(message["grow_phases"]) - 1
-                end_date_str: str = message["end_date"] if is_last_phase else recipe_phase_json["start_date"]
+                end_date_str: str = message[
+                    "end_date"
+                ] if is_last_phase else recipe_phase_json["start_date"]
                 end_date: datetime = iso8601_string_to_datetime(end_date_str)
 
                 date_diff: timedelta = end_date - start_date
@@ -220,28 +214,8 @@ def init_event_listeners(app_config, socketio):
             first_grow_phase.recipe_id, first_grow_phase.recipe_phase_num
         )
 
-        if grow_phase.is_last_phase:
-            # schedule this phase without an end date
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=first_grow_phase.phase_start_datetime,
-                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
-            )
-        else:
-            app_config.scheduler.add_job(
-                schedule_grow_for_shelf,
-                "interval",
-                start_date=first_grow_phase.phase_start_datetime,
-                end_date=first_grow_phase.phase_end_datetime,
-                args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-                id=get_job_id(shelf_grows, grow_phase),
-                minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
-            )
-
-        print("Added job to scheduler")
+        # enqueue the job to the job scheduler
+        client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
 
         # write grow phases and shelf grows to db
         app_config.db.write_grow_phases(grow_phases)
