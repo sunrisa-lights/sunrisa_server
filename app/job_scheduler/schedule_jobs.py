@@ -5,7 +5,7 @@ from app.models.grow_phase import GrowPhase
 from app.models.shelf_grow import ShelfGrow
 from app_config import AppConfig
 
-import grpc
+import grpc  # type: ignore
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from app.job_scheduler import job_scheduler_pb2
