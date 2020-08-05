@@ -200,7 +200,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         assert message["succeeded"]
         flag.append(True)
 
-    @sio.on("set_lights_for_grow")#make sure you test for everything that's printed out in response is present ("power, blue, red, shelves")
+    @sio.on("set_lights_for_grow")
     def set_lights_for_grow(message) -> None:
         assert "power_level" in message
         assert "red_level" in message
@@ -209,9 +209,9 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         assert message["power_level"] == 9
         assert message["blue_level"] == 7
         assert message["red_level"] == 8
-        assert message["shelves"][0]["room_id"] == 1
-        assert message["shelves"][0]["rack_id"] == 2
-        assert message["shelves"][0]["shelf_id"] == 1
+        assert message["shelves"][0]["room_id"] == room_id
+        assert message["shelves"][0]["rack_id"] == rack_id
+        assert message["shelves"][0]["shelf_id"] == shelf_id
       
 
 
@@ -227,7 +227,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     wait_for_event(sio, flag, 2, 10, "test_set_lights_for_grow")
 
     print("test send shelf grow passed")
-    return(start_time, end_time, recipe_phases)
+    return (start_time, end_time, recipe_phases)
 
 
 def _test_find_all_entities(
