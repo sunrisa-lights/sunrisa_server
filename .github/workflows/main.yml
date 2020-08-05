@@ -29,6 +29,7 @@ jobs:
         sudo apt-get install python3-venv
         python3 -m venv venv
         . venv/bin/activate
+        pip install --upgrade pip  # upgrade pip first since grpc install requires pip > 19.0
         pip install -r requirements.txt
 
     # runs mypy for type annotation checking
