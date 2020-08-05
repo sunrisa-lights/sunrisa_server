@@ -39,7 +39,7 @@ jobs:
     # lints code with black
     - name: Run black
       run: |
-        ./venv/bin/black app/ tests/ sunrisa.py app_config.py
+        ./venv/bin/black app/ tests/ sunrisa.py job_scheduler.py app_config.py
 
     # setup integration virtual env and install dependencies
     - name: Setup integration test virtual environment
