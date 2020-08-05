@@ -1,0 +1,18 @@
+# Use the official image as a parent image.
+FROM python:3.8.1-slim-buster
+
+# Set the working directory.
+WORKDIR /usr/src/sunrisa
+
+# Copy the whole directory to WORKDIR
+COPY . .
+
+# Run the command inside your image filesystem.
+RUN apt-get update && pip install --upgrade -r requirements_job_scheduler.txt
+
+# Add metadata to the image to describe which port the container is listening on at runtime.
+# This will not forward the port from localhost (need PUBLISH to do that).
+EXPOSE 50051
+
+# Run the specified command within the container. Use -u so that stdout is unbuffered.
+CMD [ "python", "-u", "job_scheduler.py" ]

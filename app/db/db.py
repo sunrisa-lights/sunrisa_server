@@ -4,18 +4,25 @@ from typing import List
 from typing import Optional, Tuple
 
 from app.models.grow import Grow
+from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
+from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
-    read_current_grows,
-    read_shelf_current_grows,
     create_grow_table,
+    read_current_grows,
     write_grow,
-    write_grows,
+)
+from app.db.grow_phase import (
+    create_grow_phase_table,
+    read_grow_phase,
+    read_grow_phases,
+    read_grow_phases_from_multiple_grows,
+    write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
 from app.db.room import create_room_table, read_all_rooms, read_room, write_room
@@ -33,15 +40,21 @@ from app.db.recipe_phase import (
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
+from app.db.shelf_grow import (
+    create_shelf_grow_table,
+    read_shelves_with_grow,
+    read_shelves_with_grows,
+    write_shelf_grows,
+)
 
 
 class DB:
-    def __init__(self, db_name, logger):
-        self.logger = logger
-
+    def __init__(self, db_name):
         self.db_name = db_name
         try:
-            conn = pymysql.connect(host="db", user="root", password="root") # uses default port 3306
+            conn = pymysql.connect(
+                host="db", user="root", password="root"
+            )  # uses default port 3306
             conn.autocommit(True)
             self.create_db(conn, db_name)
         finally:
@@ -64,7 +77,7 @@ class DB:
         try:
             conn.cursor().execute(create_sql)
         except pymysql.err.ProgrammingError:
-            self.logger.debug("db already exists")
+            print("db already exists:", db_name)
         finally:
             conn.close()
 
@@ -78,6 +91,8 @@ class DB:
             create_plant_table(db_conn)
             create_recipe_phases_table(db_conn)
             create_grow_table(db_conn)
+            create_grow_phase_table(db_conn)
+            create_shelf_grow_table(db_conn)
         except Exception as e:
             print("Error initializing tables", e)
             raise
@@ -135,6 +150,37 @@ class DB:
             db_conn.close()
         return current_grows
 
+    def read_grow_phase(
+        self, grow_id: int, recipe_phase_num: int
+    ) -> Optional[GrowPhase]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phase = read_grow_phase(db_conn, grow_id, recipe_phase_num)
+        finally:
+            db_conn.close()
+        return grow_phase
+
+    def read_grow_phases(self, grow_id: int) -> List[GrowPhase]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phases = read_grow_phases(db_conn, grow_id)
+        finally:
+            db_conn.close()
+        return grow_phases
+
+    def read_grow_phases_from_multiple_grows(
+        self, grow_ids: List[int]
+    ) -> List[GrowPhase]:
+        if not grow_ids:
+            return []
+
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phases = read_grow_phases_from_multiple_grows(db_conn, grow_ids)
+        finally:
+            db_conn.close()
+        return grow_phases
+
     def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
         if not recipe_ids:
             return []
@@ -171,25 +217,38 @@ class DB:
             db_conn.close()
         return power_level, red_level, blue_level
 
-    def read_shelf_current_grows(self, shelf_id) -> List[Grow]:
+    def read_shelves_with_grow(self, grow_id: int) -> List[ShelfGrow]:
         db_conn = self._new_connection(self.db_name)
         try:
-            current_shelf_grows = read_shelf_current_grows(db_conn, shelf_id)
+            current_shelf_grows = read_shelves_with_grow(db_conn, grow_id)
         finally:
             db_conn.close()
         return current_shelf_grows
 
-    def write_grow(self, grow: Grow) -> None:
+    def read_shelves_with_grows(self, grow_ids: List[int]) -> List[ShelfGrow]:
         db_conn = self._new_connection(self.db_name)
         try:
-            write_grow(db_conn, grow)
+            current_shelf_grows = read_shelves_with_grows(db_conn, grow_ids)
+        finally:
+            db_conn.close()
+        return current_shelf_grows
+
+    def write_grow(self, grow: Grow) -> Grow:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow = write_grow(db_conn, grow)
         finally:
             db_conn.close()
 
-    def write_grows(self, grows: List[Grow]) -> None:
+        return grow
+
+    def write_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+        if not grow_phases:
+            return
+
         db_conn = self._new_connection(self.db_name)
         try:
-            write_grows(db_conn, grows)
+            write_grow_phases(db_conn, grow_phases)
         finally:
             db_conn.close()
 
@@ -207,12 +266,18 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_recipe_with_phases(
-        self, recipe: Recipe, recipe_phases: List[RecipePhase]
-    ) -> None:
+    def write_recipe(self, recipe: Recipe) -> Recipe:
         db_conn = self._new_connection(self.db_name)
         try:
-            write_recipe(db_conn, recipe)
+            recipe = write_recipe(db_conn, recipe)
+        finally:
+            db_conn.close()
+
+        return recipe
+
+    def write_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
             write_recipe_phases(db_conn, recipe_phases)
         finally:
             db_conn.close()
@@ -221,6 +286,16 @@ class DB:
         db_conn = self._new_connection(self.db_name)
         try:
             write_shelf(db_conn, shelf)
+        finally:
+            db_conn.close()
+
+    def write_shelf_grows(self, shelf_grows: List[ShelfGrow]) -> None:
+        if not shelf_grows:
+            return
+
+        db_conn = self._new_connection(self.db_name)
+        try:
+            write_shelf_grows(db_conn, shelf_grows)
         finally:
             db_conn.close()
 

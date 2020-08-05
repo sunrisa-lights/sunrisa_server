@@ -3,17 +3,22 @@ from typing import List
 from app.models.recipe import Recipe
 
 
-def write_recipe(conn, recipe: Recipe):
-    recipe_id = recipe.recipe_id
+def write_recipe(conn, recipe: Recipe) -> Recipe:
     recipe_name = recipe.recipe_name
 
-    sql = "INSERT INTO `recipes` VALUES (%s, %s) ON DUPLICATE KEY UPDATE recipe_name=%s"
+    sql = "INSERT INTO `recipes` (recipe_name) VALUES (%s) ON DUPLICATE KEY UPDATE recipe_name=%s"
     cursor = conn.cursor()
     cursor.execute(
-        sql, (recipe_id, recipe_name, recipe_name,),
+        sql, (recipe_name, recipe_name,),
     )
+
+    # return the id since it's created dynamically on insert by AUTO_INCREMENT
+    recipe_id = cursor.lastrowid
+    recipe.recipe_id = recipe_id
     cursor.close()
+
     print("WROTE RECIPE", recipe)
+    return recipe
 
 
 def read_recipes(conn, recipe_ids: List[int]) -> List[Recipe]:
