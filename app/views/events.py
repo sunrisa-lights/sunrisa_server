@@ -19,7 +19,7 @@ from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 
-from app.utils.time_utils import iso8601_string_to_datetime
+from app.utils.time_utils import iso8601_string_to_datetime  # type: ignore
 
 NAMESPACE = "namespace"
 
