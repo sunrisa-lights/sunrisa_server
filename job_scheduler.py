@@ -33,9 +33,8 @@ def send_message_to_socketio_server(shelf_grows: List[ShelfGrow], grow_phase: Gr
     r = requests.post(url=API_ENDPOINT, json=data) 
     print("Received a response from socketio server")
     
-    # extracting response text  
-    pastebin_url = r.text 
-    print("The pastebin URL is:%s"%pastebin_url) 
+    # raises exception if non-2xx code is returned
+    r.raise_for_status()
 
 def schedule_grow_job(scheduler, shelf_grows: List[ShelfGrow], grow_phase: GrowPhase, power_level: int, red_level: int, blue_level: int):
     if grow_phase.is_last_phase:
