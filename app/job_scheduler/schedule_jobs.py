@@ -11,6 +11,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from app.job_scheduler import job_scheduler_pb2
 from app.job_scheduler import job_scheduler_pb2_grpc
 
+
 def schedule_grow_for_shelf(
     app_config,
     shelf_grows: List[ShelfGrow],
@@ -80,7 +81,14 @@ def schedule_next_phase_if_needed(
 
         client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
 
-def client_schedule_job(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase, power_level: int, red_level: int, blue_level: int):
+
+def client_schedule_job(
+    shelf_grows: List[ShelfGrow],
+    grow_phase: GrowPhase,
+    power_level: int,
+    red_level: int,
+    blue_level: int,
+):
     with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
         stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
         shelf_grow_protos = [
@@ -115,5 +123,9 @@ def client_schedule_job(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase, pow
             blue_level=blue_level,
         )
 
-        response = stub.ScheduleJob(proto) # TODO: Add retries?
-    print("Job scheduler client received response from ScheduleJob: {}".format(response.succeeded))
+        response = stub.ScheduleJob(proto)  # TODO: Add retries?
+    print(
+        "Job scheduler client received response from ScheduleJob: {}".format(
+            response.succeeded
+        )
+    )

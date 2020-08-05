@@ -8,8 +8,8 @@ from app.models.grow_phase import GrowPhase
 
 from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf
 
-def init_endpoint_listeners(app_config, app):
 
+def init_endpoint_listeners(app_config, app):
     @app.route("/add-job", methods=["POST"])
     def index():
         params = request.get_json()
@@ -22,6 +22,8 @@ def init_endpoint_listeners(app_config, app):
         power_level: int = params["power_level"]
         red_level: int = params["red_level"]
         blue_level: int = params["blue_level"]
-        schedule_grow_for_shelf(app_config, shelf_grows, grow_phase, power_level, red_level, blue_level)
+        schedule_grow_for_shelf(
+            app_config, shelf_grows, grow_phase, power_level, red_level, blue_level
+        )
 
         return jsonify({"success": True})

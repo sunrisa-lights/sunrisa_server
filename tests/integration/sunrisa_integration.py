@@ -168,7 +168,6 @@ def _test_send_shelf(sio, rack):
     return expected
 
 
-
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     print("Sending shelf grow")
     start = datetime.utcnow() + timedelta(0, 3)  # 3 seconds from now
@@ -177,19 +176,15 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grows = [{
-                "room_id": room_id,
-                "rack_id": rack_id,
-                "shelf_id": shelf_id,
-            }]
+    shelf_grows = [{"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id,}]
     recipe_phases = [
-            {
-                "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
-                "power_level": 9,
-                "red_level": 8,
-                "blue_level": 7,
-            }
-        ]
+        {
+            "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
+            "power_level": 9,
+            "red_level": 8,
+            "blue_level": 7,
+        }
+    ]
 
     is_new_recipe = True
     flag = []
@@ -207,17 +202,18 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         assert "red_level" in message
         assert "blue_level" in message
         flag.append(True)
+
     start_grows_for_shelves_dict = {
-        "shelves": shelf_grows, 
+        "shelves": shelf_grows,
         "grow_phases": recipe_phases,
         "is_new_recipe": is_new_recipe,
-        "end_date": end_time
+        "end_date": end_time,
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
     wait_for_event(sio, flag, 1, 10, "test_start_grows_for_shelves")
 
     print("test send shelf grow passed")
-    return(start_time, end_time, recipe_phases)
+    return (start_time, end_time, recipe_phases)
 
 
 def _test_find_all_entities(
@@ -229,8 +225,7 @@ def _test_find_all_entities(
     end,
     p_level,
     r_level,
-    b_level
-
+    b_level,
 ):
     flag = []
 
@@ -259,13 +254,21 @@ def _test_find_all_entities(
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
         if len(found_grows) == 1:
             assert found_grows[0].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
-            assert found_grows[0].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
-        assert found_grow_phases[0].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
-        assert found_grow_phases[0].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
-        assert len(found_recipes) == 1 
+            assert (
+                found_grows[0].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                == end
+            )
+        assert (
+            found_grow_phases[0].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == start
+        )
+        assert (
+            found_grow_phases[0].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
+        )
+        assert len(found_recipes) == 1
         assert found_recipe_phases[0].power_level == p_level
         assert found_recipe_phases[0].red_level == r_level
-        assert found_recipe_phases[0].blue_level == b_level     
+        assert found_recipe_phases[0].blue_level == b_level
 
         flag.append(True)
 
@@ -284,13 +287,13 @@ def _test_create_entities(sio):
     r_level = 8
     b_level = 7
     recipe_phases = [
-                {
-                    "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
-                    "power_level": p_level,
-                    "red_level": r_level,
-                    "blue_level": b_level,
-                }
-            ]
+        {
+            "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
+            "power_level": p_level,
+            "red_level": r_level,
+            "blue_level": b_level,
+        }
+    ]
 
     start_time, end_time, recipe_phases = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id

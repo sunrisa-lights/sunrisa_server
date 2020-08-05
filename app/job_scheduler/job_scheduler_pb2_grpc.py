@@ -16,10 +16,10 @@ class JobSchedulerStub(object):
             channel: A grpc.Channel.
         """
         self.ScheduleJob = channel.unary_unary(
-                '/JobScheduler/ScheduleJob',
-                request_serializer=job__scheduler__pb2.ScheduleJobRequest.SerializeToString,
-                response_deserializer=job__scheduler__pb2.ScheduleJobReply.FromString,
-                )
+            "/JobScheduler/ScheduleJob",
+            request_serializer=job__scheduler__pb2.ScheduleJobRequest.SerializeToString,
+            response_deserializer=job__scheduler__pb2.ScheduleJobReply.FromString,
+        )
 
 
 class JobSchedulerServicer(object):
@@ -30,40 +30,52 @@ class JobSchedulerServicer(object):
         """Schedules a job on the job scheduler
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_JobSchedulerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'ScheduleJob': grpc.unary_unary_rpc_method_handler(
-                    servicer.ScheduleJob,
-                    request_deserializer=job__scheduler__pb2.ScheduleJobRequest.FromString,
-                    response_serializer=job__scheduler__pb2.ScheduleJobReply.SerializeToString,
-            ),
+        "ScheduleJob": grpc.unary_unary_rpc_method_handler(
+            servicer.ScheduleJob,
+            request_deserializer=job__scheduler__pb2.ScheduleJobRequest.FromString,
+            response_serializer=job__scheduler__pb2.ScheduleJobReply.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'JobScheduler', rpc_method_handlers)
+        "JobScheduler", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class JobScheduler(object):
     """The JobScheduler service definition.
     """
 
     @staticmethod
-    def ScheduleJob(request,
+    def ScheduleJob(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/JobScheduler/ScheduleJob',
+            "/JobScheduler/ScheduleJob",
             job__scheduler__pb2.ScheduleJobRequest.SerializeToString,
             job__scheduler__pb2.ScheduleJobReply.FromString,
-            options, channel_credentials,
-            call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
