@@ -367,7 +367,6 @@ def run_test_and_disconnect(test_func):
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
-"""
 
 def test_entities_not_found():
     run_test_and_disconnect(_test_entities_not_found)
