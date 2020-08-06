@@ -253,7 +253,7 @@ def init_event_listeners(app_config, socketio):
             message["end_date"]
         )
         grow_without_id: Grow = Grow(
-            None, recipe.recipe_id, grow_start_date, grow_estimated_end_date
+            None, recipe.recipe_id, grow_start_date, grow_estimated_end_date, False, False, None
         )
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
