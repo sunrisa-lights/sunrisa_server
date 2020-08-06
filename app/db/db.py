@@ -278,7 +278,6 @@ class DB:
             grow = write_grow(db_conn, grow)
         finally:
             db_conn.close()
-        return current_shelf_grows
 
         return grow
 

@@ -37,12 +37,9 @@ def schedule_grow_for_shelf(
     print("Successfully scheduled grow for shelf!")
 
 
-def get_job_id(shelf_grows: List[ShelfGrow], grow_phase: GrowPhase) -> str:
-    shelf_grow_job_entries: List[str] = [sg.to_job_entry() for sg in shelf_grows]
-    shelf_grows_string: str = "({})".format(",".join(shelf_grow_job_entries))
-
-    job_id: str = "grow-{}-phase-{}-shelves-{}".format(
-        grow_phase.grow_id, grow_phase.recipe_phase_num, shelf_grows_string
+def get_job_id(grow_phase: GrowPhase) -> str:
+    job_id: str = "grow-{}-phase-{}".format(
+        grow_phase.grow_id, grow_phase.recipe_phase_num
     )
     if grow_phase.is_last_phase:
         job_id += "-last-phase"
@@ -124,6 +121,37 @@ def client_schedule_job(
         )
 
         response = stub.ScheduleJob(proto)  # TODO: Add retries?
+    print(
+        "Job scheduler client received response from ScheduleJob: {}".format(
+            response.succeeded
+        )
+    )
+
+def client_remove_job(
+    grow_phase: GrowPhase,
+):
+    with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
+        stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
+
+        phase_start_timestamp = Timestamp()
+        phase_start_timestamp.FromDatetime(grow_phase.phase_start_datetime)
+
+        phase_end_timestamp = Timestamp()
+        phase_end_timestamp.FromDatetime(grow_phase.phase_end_datetime)
+
+        grow_phase_proto = job_scheduler_pb2.GrowPhase(
+            grow_id=grow_phase.grow_id,
+            recipe_phase_num=grow_phase.recipe_phase_num,
+            recipe_id=grow_phase.recipe_id,
+            phase_start_datetime=phase_start_timestamp,
+            phase_end_datetime=phase_end_timestamp,
+            is_last_phase=grow_phase.is_last_phase,
+        )
+        proto = job_scheduler_pb2.RemoveJobRequest(
+            grow_phase=grow_phase_proto,
+        )
+
+        response = stub.RemoveJob(proto)  # TODO: Add retries?
     print(
         "Job scheduler client received response from ScheduleJob: {}".format(
             response.succeeded

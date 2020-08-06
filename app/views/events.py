@@ -5,9 +5,7 @@ from time import mktime
 
 from typing import List, Optional
 
-from app.job_scheduler import job_scheduler_pb2
-from app.job_scheduler import job_scheduler_pb2_grpc
-from app.job_scheduler.schedule_jobs import client_schedule_job
+from app.job_scheduler.schedule_jobs import client_remove_job, client_schedule_job
 
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
@@ -158,8 +156,7 @@ def init_event_listeners(app_config, socketio):
             raise Exception("Last grow phase not found")
         
         # remove ongoing job so that it stops running
-        last_grow_job_id: str = get_job_id(last_grow_phase)
-        app_config.scheduler.remove_job(last_grow_job_id) # this line will throw exception if job not found
+        client_remove_job(last_grow_phase)
 
         # update last recipe phase to have proper end date
         print("Searching for grow_phase:", last_grow_phase)

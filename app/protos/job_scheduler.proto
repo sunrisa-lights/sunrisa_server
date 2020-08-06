@@ -6,6 +6,9 @@ import "google/protobuf/timestamp.proto";
 service JobScheduler {
   // Schedules a job on the job scheduler
   rpc ScheduleJob (ScheduleJobRequest) returns (ScheduleJobReply) {}
+
+  // Removes a job from the job scheduler
+  rpc RemoveJob (RemoveJobRequest) returns (RemoveJobReply) {}
 }
 
 // Request message to schedule a new job
@@ -40,4 +43,15 @@ message GrowPhase {
   google.protobuf.Timestamp phase_start_datetime = 4;
   google.protobuf.Timestamp phase_end_datetime = 5;
   bool is_last_phase = 6;
+}
+
+// Request message to remove a grow job from the job scheduler
+message RemoveJobRequest {
+  GrowPhase grow_phase = 2;
+}
+
+message RemoveJobReply {
+  bool succeeded = 1;
+  // if succeeded is False, reason will be populated with reason for failure
+  string reason = 2;
 }
