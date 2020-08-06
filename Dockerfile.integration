@@ -13,4 +13,5 @@ COPY tests/integration/sunrisa_integration.py ./sunrisa_integration.py
 RUN pip install --upgrade -r requirements.txt
 
 # Run the specified command within the container.
-CMD [ "py.test", "-s", "sunrisa_integration.py" ] # -s disables stdout capturing
+ # -s disables stdout capturing
+CMD [ "py.test", "-s", "sunrisa_integration.py" ]

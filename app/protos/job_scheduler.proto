@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+// The JobScheduler service definition.
+service JobScheduler {
+  // Schedules a job on the job scheduler
+  rpc ScheduleJob (ScheduleJobRequest) returns (ScheduleJobReply) {}
+}
+
+// Request message to schedule a new job
+message ScheduleJobRequest {
+  repeated ShelfGrow shelf_grows = 1;
+  GrowPhase grow_phase = 2;
+  int32 power_level = 3;
+  int32 red_level = 4;
+  int32 blue_level = 5;
+}
+
+// The response message confirming whether the job was scheduled successfully
+message ScheduleJobReply {
+  bool succeeded = 1;
+  // if succeeded is False, reason will be populated with reason for failure
+  string reason = 2;
+}
+
+// Proto representation of ShelfGrow model
+message ShelfGrow {
+  int32 grow_id = 1;
+  int32 room_id = 2;
+  int32 rack_id = 3;
+  int32 shelf_id = 4;
+}
+
+// Proto representation of GrowPhase model
+message GrowPhase {
+  int32 grow_id = 1;
+  int32 recipe_phase_num = 2;
+  int32 recipe_id = 3;
+  google.protobuf.Timestamp phase_start_datetime = 4;
+  google.protobuf.Timestamp phase_end_datetime = 5;
+  bool is_last_phase = 6;
+}
