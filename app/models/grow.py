@@ -27,7 +27,6 @@ class Grow:
 
     @classmethod
     def from_json(cls, grow_json: Dict[Any, Any]):
-        print(grow_json, flush=True)
         if not (
             "recipe_id" in grow_json
             and "start_datetime" in grow_json
