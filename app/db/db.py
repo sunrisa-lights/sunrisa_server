@@ -54,9 +54,7 @@ from app.db.shelf_grow import (
 
 
 class DB:
-    def __init__(self, db_name, logger):
-        self.logger = logger
-
+    def __init__(self, db_name):
         self.db_name = db_name
         try:
             conn = pymysql.connect(
@@ -84,7 +82,7 @@ class DB:
         try:
             conn.cursor().execute(create_sql)
         except pymysql.err.ProgrammingError:
-            self.logger.debug("db already exists")
+            print("db already exists:", db_name)
         finally:
             conn.close()
 
@@ -181,7 +179,9 @@ class DB:
             db_conn.close()
         return current_grows
 
-    def read_grow_phase(self, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
+    def read_grow_phase(
+        self, grow_id: int, recipe_phase_num: int
+    ) -> Optional[GrowPhase]:
         db_conn = self._new_connection(self.db_name)
         try:
             grow_phase = read_grow_phase(db_conn, grow_id, recipe_phase_num)
