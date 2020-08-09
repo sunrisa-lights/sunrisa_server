@@ -156,7 +156,7 @@ def client_remove_job(
 
         response = stub.RemoveJob(proto)  # TODO: Add retries?
     print(
-        "Job scheduler client received response from ScheduleJob: {}".format(
+        "Job scheduler client received response from RemoveJob: {}".format(
             response.succeeded
         )
     )
