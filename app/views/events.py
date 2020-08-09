@@ -165,21 +165,36 @@ def init_event_listeners(app_config, socketio):
             return
         
         grow_json = message["grow"]
+        grow_id: int = int(grow_json["grow_id"])
+        grow: Optional[Grow] = app_config.db.read_grow(grow_id)
+        if not grow:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "harvest_grow_response",
+                {"succeeded": False, "reason": "Grow not found"},
+            )
+            return
+
+        found_grow_json = grow.to_json()
+        # read all data sent in by user, and mark it on grow
+        for key in grow_json:
+            found_grow_json[key] = grow_json[key]
+
+        updated_grow: Grow = Grow.from_json(found_grow_json)
+
         # harvest the grow by marking it as complete
         harvest_datetime: datetime = datetime.utcnow()
-        harvest_time: str = harvest_datetime.strftime("%Y-%m-%d %H:%M:%S")
-        grow_json["estimated_end_datetime"] = harvest_time
-        grow_json["is_finished"] = True
-
-        grow: Grow = Grow.from_json(grow_json)
+        updated_grow.estimated_end_datetime = harvest_datetime
+        updated_grow.is_finished = True
         
         print("grow_json to harvest:", grow_json, flush=True)
         # end grow
-        app_config.db.harvest_grow(grow)
+        app_config.db.harvest_grow(updated_grow)
 
         # read last grow phase
-        print("searching for grow_id:", grow.grow_id)
-        last_grow_phase: Optional[GrowPhase] = app_config.db.read_last_grow_phase(grow.grow_id)
+        print("searching for grow_id:", updated_grow.grow_id)
+        last_grow_phase: Optional[GrowPhase] = app_config.db.read_last_grow_phase(updated_grow.grow_id)
         if not last_grow_phase:
             raise Exception("Last grow phase not found")
         
