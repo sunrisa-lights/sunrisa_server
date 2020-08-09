@@ -23,11 +23,11 @@ from app.db.grow import (
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
-    end_last_grow_phase,
+    end_grow_phase,
     read_grow_phase,
     read_grow_phases,
     read_grow_phases_from_multiple_grows,
-    read_last_grow_phase,
+    read_current_grow_phase,
     write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
@@ -106,10 +106,10 @@ class DB:
         finally:
             db_conn.close()
 
-    def end_last_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+    def end_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            end_last_grow_phase(db_conn, grow_phase, harvest_time)
+            end_grow_phase(db_conn, grow_phase, harvest_time)
         finally:
             db_conn.close()
 
@@ -218,10 +218,10 @@ class DB:
             db_conn.close()
         return grow_phases
 
-    def read_last_grow_phase(self, grow_id: int) -> Optional[GrowPhase]:
+    def read_current_grow_phase(self, grow_id: int) -> Optional[GrowPhase]:
         db_conn = self._new_connection(self.db_name)
         try:
-            grow_phase: Optional[GrowPhase] = read_last_grow_phase(db_conn, grow_id)
+            grow_phase: Optional[GrowPhase] = read_current_grow_phase(db_conn, grow_id)
         finally:
             db_conn.close()
         return grow_phase

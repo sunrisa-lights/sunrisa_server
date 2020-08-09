@@ -192,18 +192,24 @@ def init_event_listeners(app_config, socketio):
         # end grow
         app_config.db.harvest_grow(updated_grow)
 
-        # read last grow phase
-        print("searching for grow_id:", updated_grow.grow_id)
-        last_grow_phase: Optional[GrowPhase] = app_config.db.read_last_grow_phase(updated_grow.grow_id)
-        if not last_grow_phase:
-            raise Exception("Last grow phase not found")
+        # read current grow phase
+        current_phase: int = updated_grow.current_phase
+        current_grow_phase: Optional[GrowPhase] = app_config.db.read_grow_phase(updated_grow.grow_id, current_phase)
+        if not current_grow_phase:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "harvest_grow_response",
+                {"succeeded": False, "reason": "Current grow phase {} not found".format(current_phase)},
+            )
+            return
         
         # remove ongoing job so that it stops running
-        client_remove_job(last_grow_phase)
+        client_remove_job(current_grow_phase)
 
         # update last recipe phase to have proper end date
-        print("Searching for grow_phase:", last_grow_phase)
-        app_config.db.end_last_grow_phase(last_grow_phase, harvest_datetime)
+        print("Updating grow_phase:", current_grow_phase)
+        app_config.db.end_last_grow_phase(current_grow_phase, harvest_datetime)
         send_message_to_namespace_if_specified(
             socketio,
             message,

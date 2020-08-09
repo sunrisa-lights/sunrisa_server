@@ -41,11 +41,11 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.close()
 
 
-def read_last_grow_phase(conn, grow_id: int) -> Optional[GrowPhase]:
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND is_last_phase = true"
+def read_current_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
+    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
 
     with conn.cursor() as cursor:
-        cursor.execute(sql, (grow_id))
+        cursor.execute(sql, (grow_id, recipe_phase_num))
         last_grow_phase = cursor.fetchone()
         found_grow_phase: Optional[GrowPhase] = None
         if last_grow_phase is not None:
@@ -69,7 +69,7 @@ def read_last_grow_phase(conn, grow_id: int) -> Optional[GrowPhase]:
         cursor.close()
         return found_grow_phase
 
-def end_last_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+def end_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> None:
     sql = "UPDATE `grow_phases` SET phase_end_datetime = %s WHERE grow_id = %s AND recipe_phase_num = %s"
     cursor = conn.cursor()
     cursor.execute(
