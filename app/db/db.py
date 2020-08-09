@@ -16,6 +16,7 @@ from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     create_grow_table,
     harvest_grow,
+    move_grow_to_next_phase,
     read_current_grows,
     read_grow,
     write_grow,
@@ -119,6 +120,12 @@ class DB:
         finally:
             db_conn.close()
 
+    def move_grow_to_next_phase(self, grow_id: int, current_phase: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            move_grow_to_next_phase(db_conn, grow_id, current_phase)
+        finally:
+            db_conn.close()
 
     def read_all_racks(self) -> List[Rack]:
         db_conn = self._new_connection(self.db_name)

@@ -78,6 +78,9 @@ def schedule_next_phase_if_needed(
 
         client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
 
+        # update `current_phase` attribute of Grow object now that we've moved to the next phase
+        app_config.db.move_grow_to_next_phase(next_grow_phase.grow_id, next_grow_phase.recipe_phase_num)
+
 
 def client_schedule_job(
     shelf_grows: List[ShelfGrow],
