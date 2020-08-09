@@ -41,6 +41,7 @@ from app.db.recipe import create_recipe_table, read_recipes, read_recipes_with_n
 from app.db.recipe_phase import (
     create_recipe_phases_table,
     read_lights_from_recipe_phase,
+    read_phases_from_recipes,
     read_recipe_phases,
     write_recipe_phases,
 )
@@ -236,6 +237,19 @@ class DB:
         finally:
             db_conn.close()
         return recipes
+
+    def read_phases_from_recipes(
+        self, recipe_ids: List[int]
+    ) -> List[RecipePhase]:
+        if not recipe_ids:
+            return []
+
+        db_conn = self._new_connection(self.db_name)
+        try:
+            recipe_phases = read_phases_from_recipes(db_conn, recipe_ids)
+        finally:
+            db_conn.close()
+        return recipe_phases
 
     def read_recipe_phases(
         self, recipe_id_phase_num_pairs: List[Tuple[int, int]]
