@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from app.models.recipe import Recipe
 
@@ -21,6 +21,20 @@ def write_recipe(conn, recipe: Recipe) -> Recipe:
     return recipe
 
 
+def read_recipe(conn, recipe_id: int) -> Optional[Recipe]:
+    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_id = %s"
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (recipe_id))
+        found_recipe = cursor.fetchone()
+        recipe: Optional[Recipe] = None
+        if found_recipe is not None:
+            (recipe_id, recipe_name,) = found_recipe
+            recipe = Recipe(recipe_id, recipe_name,)
+
+        cursor.close()
+        return recipe
+
+
 def read_recipes(conn, recipe_ids: List[int]) -> List[Recipe]:
     recipe_id_str = ",".join([str(rid) for rid in recipe_ids])
     sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_id in ({})".format(
@@ -33,9 +47,12 @@ def read_recipes(conn, recipe_ids: List[int]) -> List[Recipe]:
         cursor.close()
         return recipes
 
+
 def read_recipes_with_name(conn, search_name: str) -> List[Recipe]:
     # have to use .format() because pymysql won't let you escape the %
-    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_name LIKE '%{}%'".format(search_name)
+    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_name LIKE '%{}%'".format(
+        search_name
+    )
     print("sql:", sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)

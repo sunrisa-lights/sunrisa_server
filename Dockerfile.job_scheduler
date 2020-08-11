@@ -7,6 +7,9 @@ WORKDIR /usr/src/sunrisa
 # Copy the whole directory to WORKDIR
 COPY . .
 
+# make `wait-for-it.sh` executable (used for waiting on mysql container startup)
+RUN chmod 777 ./wait-for-it.sh
+
 # Run the command inside your image filesystem.
 RUN apt-get update && pip install --upgrade -r requirements_job_scheduler.txt
 
@@ -14,5 +17,6 @@ RUN apt-get update && pip install --upgrade -r requirements_job_scheduler.txt
 # This will not forward the port from localhost (need PUBLISH to do that).
 EXPOSE 50051
 
-# Run the specified command within the container. Use -u so that stdout is unbuffered.
-CMD [ "python", "-u", "job_scheduler.py" ]
+# Start python application after waiting for mysql startup. Use -u so that stdout is unbuffered.
+# Times out after 10 seconds. Will fail if mysql has not properly started.
+CMD ["./wait-for-it.sh", "mysql:3306", "--", "python",  "-u", "job_scheduler.py"]

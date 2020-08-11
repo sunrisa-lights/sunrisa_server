@@ -10,7 +10,6 @@ from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf
 
 
 def init_endpoint_listeners(app_config, app):
-
     @app.route("/add-job", methods=["POST"])
     def index():
         params = request.get_json()

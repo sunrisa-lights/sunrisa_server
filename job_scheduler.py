@@ -73,9 +73,11 @@ def schedule_grow_job(
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
 
+
 def remove_grow_job(scheduler, grow_phase: GrowPhase) -> None:
     grow_id: str = get_job_id(grow_phase)
     scheduler.remove_job(grow_id)  # this will throw exception if job not found
+
 
 class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
     def __init__(self):
@@ -150,6 +152,7 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
         )
         remove_grow_job(self.job_scheduler, grow_phase)
         return job_scheduler_pb2.RemoveJobReply(succeeded=True)
+
 
 def serve():
     print("Serving the application")

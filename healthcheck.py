@@ -1,6 +1,7 @@
 import sys
 import socketio
 
+
 def healthcheck():
     healthcheck_failed = False
     try:
@@ -15,7 +16,7 @@ def healthcheck():
     exit_code = 1 if healthcheck_failed else 0
     return exit_code
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exit_code = healthcheck()
     sys.exit(exit_code)
-

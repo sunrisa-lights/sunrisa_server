@@ -41,46 +41,55 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.close()
 
 
-def read_current_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
-    sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"
-
-    with conn.cursor() as cursor:
-        cursor.execute(sql, (grow_id, recipe_phase_num))
-        last_grow_phase = cursor.fetchone()
-        found_grow_phase: Optional[GrowPhase] = None
-        if last_grow_phase is not None:
-            (
-                grow_id,
-                recipe_id,
-                recipe_phase_num,
-                phase_start_datetime,
-                phase_end_datetime,
-                is_last_phase,
-            ) = last_grow_phase
-            found_grow_phase = GrowPhase(
-                grow_id,
-                recipe_id,
-                recipe_phase_num,
-                phase_start_datetime,
-                phase_end_datetime,
-                is_last_phase,
-            )
-
-        cursor.close()
-        return found_grow_phase
-
 def end_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> None:
     sql = "UPDATE `grow_phases` SET phase_end_datetime = %s WHERE grow_id = %s AND recipe_phase_num = %s"
     cursor = conn.cursor()
     cursor.execute(
-        sql,
-        (
-            harvest_time,
-            grow_phase.grow_id,
-            grow_phase.recipe_phase_num,
-        ),
+        sql, (harvest_time, grow_phase.grow_id, grow_phase.recipe_phase_num,),
     )
     cursor.close()
+
+
+# this method is only used for updating grow phases, easiest way to update multiple
+# grow phases is with ON DUPLICATE KEY UPDATE
+def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
+    grow_phase_sql_args: Tuple[int, ...] = ()
+    create_value_list: List[str] = []
+    for g in grow_phases:
+        grow_phase_sql_args += (
+            g.grow_id,
+            g.recipe_id,
+            g.recipe_phase_num,
+            g.phase_start_datetime,
+            g.phase_end_datetime,
+            g.is_last_phase,
+        )
+        create_value_list.append("(%s, %s, %s, %s, %s, %s)")
+
+    sql = "INSERT INTO `grow_phases` VALUES {} ON DUPLICATE KEY UPDATE recipe_id = VALUES(recipe_id), recipe_phase_num = VALUES(recipe_phase_num), phase_start_datetime = VALUES(phase_start_datetime), phase_end_datetime = VALUES(phase_end_datetime), is_last_phase = VALUES(is_last_phase)".format(
+        ", ".join(create_value_list)
+    )
+    cursor = conn.cursor()
+    cursor.execute(
+        sql, grow_phase_sql_args,
+    )
+    cursor.close()
+
+
+def delete_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
+    values_list: str = []
+    for grow_phase in grow_phases:
+        values_list.append(
+            "({},{})".format(grow_phase.grow_id, grow_phase.recipe_phase_num)
+        )
+
+    sql = "DELETE FROM `grow_phases` WHERE (grow_id, recipe_phase_num) IN ({})".format(
+        ",".join(values_list)
+    )
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()
+
 
 def read_grow_phase(conn, grow_id: int, recipe_phase_num: int) -> Optional[GrowPhase]:
     sql = "SELECT grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase FROM grow_phases WHERE grow_id = %s AND recipe_phase_num = %s"

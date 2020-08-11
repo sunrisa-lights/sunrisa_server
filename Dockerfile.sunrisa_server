@@ -7,14 +7,18 @@ WORKDIR /usr/src/sunrisa
 # Copy the whole directory to WORKDIR
 COPY . .
 
+# make `wait-for-it.sh` executable (used for waiting on mysql container startup)
+RUN chmod 777 ./wait-for-it.sh
+
 # Run the command inside your image filesystem.
 RUN apt-get update && pip install --upgrade -r requirements.txt
 
 # Add metadata to the image to describe which port the container is listening on at runtime.
 EXPOSE 5000
 
-# Run the specified command within the container. Use -u so that stdout is unbuffered.
-CMD [ "python",  "-u", "sunrisa.py"]
+# Start python application after waiting for mysql startup. Use -u so that stdout is unbuffered.
+# Times out after 10 seconds. Will fail if mysql has not properly started.
+CMD ["./wait-for-it.sh", "mysql:3306", "--", "python",  "-u", "sunrisa.py"]
 
 HEALTHCHECK --interval=5m --timeout=3s \
   CMD python healthcheck.py

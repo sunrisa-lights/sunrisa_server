@@ -35,7 +35,7 @@ class Grow:
             and "estimated_end_datetime" in grow_json
             and "is_finished" in grow_json
             and "all_fields_complete" in grow_json
-            and 'current_phase' in grow_json
+            and "current_phase" in grow_json
         ):
             raise Exception("Invalid grow")
 
@@ -58,7 +58,16 @@ class Grow:
             calendar.timegm(parse(estimated_end_date_str).utctimetuple())
         )
 
-        return cls(grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase)
+        return cls(
+            grow_id,
+            recipe_id,
+            start_datetime,
+            estimated_end_datetime,
+            is_finished,
+            all_fields_complete,
+            olcc_number,
+            current_phase,
+        )
 
     def to_json(self):
         return {
