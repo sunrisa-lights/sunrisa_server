@@ -19,16 +19,18 @@ from app.db.grow import (
     move_grow_to_next_phase,
     read_current_grows,
     read_grow,
+    update_grow_recipe,
     write_grow,
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
-    delete_grow_phases,
+    delete_grow_phases_from_grow,
     end_grow_phase,
     read_grow_phase,
     read_grow_phases,
     read_grow_phases_from_multiple_grows,
-    update_grow_phase,
+    update_grow_phases,
+    update_grow_dates,
     write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
@@ -48,6 +50,7 @@ from app.db.recipe import (
 )
 from app.db.recipe_phase import (
     create_recipe_phases_table,
+    delete_recipe_phases_from_recipe,
     read_lights_from_recipe_phase,
     read_phases_from_recipe,
     read_phases_from_recipes,
@@ -114,13 +117,17 @@ class DB:
         finally:
             db_conn.close()
 
-    def delete_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
-        if not grow_phases:
-            return []
-
+    def delete_recipe_phases_from_recipe(self, recipe_id: int) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            delete_grow_phases(db_conn, grow_phases)
+            delete_recipe_phases_from_recipe(db_conn, recipe_id)
+        finally:
+            db_conn.close()
+
+    def delete_grow_phases_from_grow(self, grow_id: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            delete_grow_phases_from_grow(db_conn, grow_id)
         finally:
             db_conn.close()
 
@@ -323,9 +330,26 @@ class DB:
         return current_shelf_grows
 
     def update_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+        if not grow_phases:
+            return
+
         db_conn = self._new_connection(self.db_name)
         try:
-            update_grow_phase(db_conn, grow_phases)
+            update_grow_phases(db_conn, grow_phases)
+        finally:
+            db_conn.close()
+
+    def update_grow_recipe(self, grow_id: int, recipe_id: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_recipe(db_conn, grow_id, recipe_id)
+        finally:
+            db_conn.close()
+
+    def update_grow_dates(self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_dates(db_conn, grow_id, start_datetime, estimated_end_datetime)
         finally:
             db_conn.close()
 

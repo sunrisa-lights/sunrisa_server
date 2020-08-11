@@ -5,7 +5,7 @@ from app.models.grow import Grow
 
 
 def write_grow(conn, grow: Grow) -> Grow:
-    sql = "INSERT INTO `grows` (recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, current_phase) VALUES (%s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO `grows` (recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, current_phase, is_new_recipe) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     cursor = conn.cursor()
     cursor.execute(
         sql,
@@ -16,6 +16,7 @@ def write_grow(conn, grow: Grow) -> Grow:
             grow.is_finished,
             grow.all_fields_complete,
             grow.current_phase,
+            grow.is_new_recipe,
         ),
     )
     # return the id since it's created dynamically on insert by AUTO_INCREMENT
@@ -53,7 +54,7 @@ def move_grow_to_next_phase(conn, grow_id: int, current_phase: int) -> None:
 
 
 def read_grow(conn, grow_id: int) -> Optional[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase FROM grows WHERE grow_id = %s"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe FROM grows WHERE grow_id = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -69,6 +70,7 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 all_fields_complete,
                 olcc_number,
                 current_phase,
+                is_new_recipe,
             ) = found_grow
             grow = Grow(
                 grow_id,
@@ -79,6 +81,7 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 all_fields_complete,
                 olcc_number,
                 current_phase,
+                is_new_recipe,
             )
 
         cursor.close()
@@ -86,19 +89,35 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
 
 
 def read_current_grows(conn) -> List[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase FROM grows WHERE is_finished = false"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe FROM grows WHERE is_finished = false"
 
     with conn.cursor() as cursor:
         cursor.execute(sql)
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_grows: List[Grow] = [
-            Grow(grow_id, rid, sd, ed, fin, comp, olcc, cp)
-            for (grow_id, rid, sd, ed, fin, comp, olcc, cp) in all_grows
+            Grow(grow_id, rid, sd, ed, fin, comp, olcc, cp, inr)
+            for (grow_id, rid, sd, ed, fin, comp, olcc, cp, inr) in all_grows
         ]
 
         cursor.close()
         return found_grows
+
+def update_grow_recipe(conn, grow_id: int, recipe_id: int) -> None:
+    sql = "UPDATE `grow` SET recipe_id = %s WHERE grow_id = %s"
+    cursor = conn.cursor()
+    cursor.execute(
+        sql, (recipe_id, grow_id),
+    )
+    cursor.close()
+
+def update_grow_dates(conn, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime) -> None:
+    sql = "UPDATE `grow` SET start_datetime = %s, estimated_end_datetime = %s WHERE grow_id = %s"
+    cursor = conn.cursor()
+    cursor.execute(
+        sql, (start_datetime, estimated_end_datetime, grow_id),
+    )
+    cursor.close()
 
 
 def create_grow_table(conn):
@@ -111,6 +130,7 @@ def create_grow_table(conn):
     all_fields_complete BOOLEAN NOT NULL,
     olcc_number INT,
     current_phase INT NOT NULL,
+    is_new_recipe BOOLEAN NOT NULL,
     PRIMARY KEY (grow_id),
     FOREIGN KEY (recipe_id)
         REFERENCES recipes(recipe_id)

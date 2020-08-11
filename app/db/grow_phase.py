@@ -66,9 +66,16 @@ def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
         )
         create_value_list.append("(%s, %s, %s, %s, %s, %s)")
 
-    sql = "INSERT INTO `grow_phases` VALUES {} ON DUPLICATE KEY UPDATE recipe_id = VALUES(recipe_id), recipe_phase_num = VALUES(recipe_phase_num), phase_start_datetime = VALUES(phase_start_datetime), phase_end_datetime = VALUES(phase_end_datetime), is_last_phase = VALUES(is_last_phase)".format(
-        ", ".join(create_value_list)
-    )
+    sql = ("INSERT INTO `grow_phases` "
+           "(grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase) "
+           "VALUES {} ON DUPLICATE KEY UPDATE "
+           "recipe_id=VALUES(recipe_id), recipe_phase_num=VALUES(recipe_phase_num), "
+           "phase_start_datetime=VALUES(phase_start_datetime), phase_end_datetime=VALUES(phase_end_datetime), "
+           "is_last_phase=VALUES(is_last_phase)"
+           )
+    sql = sql.format(", ".join(create_value_list))
+
+    print("sql:", sql, "args:", grow_phase_sql_args)
     cursor = conn.cursor()
     cursor.execute(
         sql, grow_phase_sql_args,
@@ -76,18 +83,10 @@ def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     cursor.close()
 
 
-def delete_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
-    values_list: str = []
-    for grow_phase in grow_phases:
-        values_list.append(
-            "({},{})".format(grow_phase.grow_id, grow_phase.recipe_phase_num)
-        )
-
-    sql = "DELETE FROM `grow_phases` WHERE (grow_id, recipe_phase_num) IN ({})".format(
-        ",".join(values_list)
-    )
+def delete_grow_phases_from_grow(conn, grow_id: int) -> None:
+    sql = "DELETE FROM `grow_phases` WHERE grow_id = %s"
     cursor = conn.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, (grow_id))
     cursor.close()
 
 

@@ -173,9 +173,9 @@ def client_reschedule_job(app_config: AppConfig, grow_phase: GrowPhase) -> None:
         raise Exception("No shelf grows found for grow:", grow_phase.grow_id)
     
     (
-        power_level: int,
-        red_level: int,
-        blue_level: int,
+        power_level,
+        red_level,
+        blue_level,
     ) = app_config.db.read_lights_from_recipe_phase(
         grow_phase.recipe_id, grow_phase.recipe_phase_num
     )

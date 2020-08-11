@@ -16,6 +16,7 @@ class Grow:
         all_fields_complete: bool,
         olcc_number: Optional[int],
         current_phase: int,
+        is_new_recipe: bool,
     ):
         self.grow_id = grow_id
         self.recipe_id = recipe_id
@@ -25,6 +26,7 @@ class Grow:
         self.all_fields_complete = all_fields_complete
         self.olcc_number = olcc_number
         self.current_phase = current_phase
+        self.is_new_recipe = is_new_recipe
         self.round_dates_to_seconds()
 
     @classmethod
@@ -36,6 +38,7 @@ class Grow:
             and "is_finished" in grow_json
             and "all_fields_complete" in grow_json
             and "current_phase" in grow_json
+            and "is_new_recipe" in grow_json
         ):
             raise Exception("Invalid grow")
 
@@ -46,6 +49,7 @@ class Grow:
         all_fields_complete: bool = bool(grow_json["all_fields_complete"])
         olcc_number: int = int(grow_json["olcc_number"])
         current_phase: int = int(grow_json["current_phase"])
+        is_new_recipe: bool = bool(grow_json["is_new_recipe"])
 
         # TODO: Write methods for converting datetime -> str and vice versa
         start_date_str = grow_json["start_datetime"]
@@ -67,6 +71,7 @@ class Grow:
             all_fields_complete,
             olcc_number,
             current_phase,
+            is_new_recipe,
         )
 
     def to_json(self):
@@ -81,6 +86,7 @@ class Grow:
             "all_fields_complete": self.all_fields_complete,
             "olcc_number": self.olcc_number,
             "current_phase": self.current_phase,
+            "is_new_recipe": self.is_new_recipe,
         }
 
     # Removes microseconds because they're lost in json conversionsj
@@ -105,6 +111,7 @@ class Grow:
                 "all_fields_complete": self.all_fields_complete,
                 "olcc_number": self.olcc_number,
                 "current_phase": self.current_phase,
+                "is_new_recipe": self.is_new_recipe,
             }
         )
 
@@ -125,4 +132,5 @@ class Grow:
             and self.all_fields_complete == other.all_fields_complete
             and self.olcc_number == other.olcc_number
             and self.current_phase == other.current_phase
+            and self.is_new_recipe == other.is_new_recipe
         )

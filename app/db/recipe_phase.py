@@ -3,6 +3,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.recipe_phase import RecipePhase
 
+def delete_recipe_phases_from_recipe(conn, recipe_id: int) -> None:
+    sql = "DELETE FROM `recipe_phases` WHERE recipe_id = %s"
+    cursor = conn.cursor()
+    cursor.execute(sql, (recipe_id))
+    cursor.close()
 
 def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     recipe_phase_sql_args: Tuple[int, ...] = ()
