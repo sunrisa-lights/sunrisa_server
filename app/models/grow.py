@@ -41,7 +41,7 @@ class Grow:
         recipe_id: int = int(grow_json["recipe_id"])
         is_finished: bool = bool(grow_json["is_finished"])
         all_fields_complete: bool = bool(grow_json["all_fields_complete"])
-        olcc_number: int = grow_json.get("olcc_number")
+        olcc_number: Optional[int] = grow_json.get("olcc_number")
 
         # TODO: Write methods for converting datetime -> str and vice versa
         start_date_str = grow_json["start_datetime"]
