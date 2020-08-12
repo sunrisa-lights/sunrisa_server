@@ -149,6 +149,16 @@ def init_event_listeners(app_config, socketio):
             )
             return
 
+        recipe: Optional[Recipe] = app_config.db.read_recipe(grow.recipe_id)
+        if not recipe:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "modify_grow_response",
+                {"succeeded": False, "reason": "Recipe not found"},
+            )
+            return
+
         old_recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipe(grow.recipe_id)
         if not old_recipe_phases:
             send_message_to_namespace_if_specified(
@@ -191,9 +201,11 @@ def init_event_listeners(app_config, socketio):
             # if this is a new recipe, we can update the recipe phases. Else, we need to create a new recipe
             # and associate it with the grow.
             if grow.is_new_recipe:
-                # this is a new recipe, update the recipe phases by deleting and re-creating.
-                app_config.db.delete_recipe_phases_from_recipe(grow.recipe_id)
-                app_config.db.write_recipe_phases(new_recipe_phases)
+                # this is a new recipe, update the recipe phases. We can't delete and re-create the recipe
+                # phases since the grow phases have foreign key relations on them.
+                app_config.db.delete_recipe_phases(recipe_phases_removed)
+                app_config.db.update_recipe_phases(recipe_phases_modified)
+                app_config.db.write_recipe_phases(recipe_phases_added)
             else:
                 # this is not a new recipe, we don't want to change the template recipe. Create a new recipe that has
                 # the edits.
@@ -201,7 +213,7 @@ def init_event_listeners(app_config, socketio):
                 new_recipe_no_id: Recipe = Recipe(None, new_recipe_name)
                 new_recipe: Recipe = app_config.db.write_recipe(new_recipe_no_id)
 
-                # update recipe phases and grow to have the new recipe_id
+                # update recipe phases, grow and grow phases to have the new recipe_id
                 recipe_phases: List[RecipePhase] = []
                 for recipe_phase in new_recipe_phases:
                     recipe_phase.recipe_id = new_recipe.recipe_id
@@ -209,7 +221,15 @@ def init_event_listeners(app_config, socketio):
                 
                 app_config.db.write_recipe_phases(recipe_phases)
                 app_config.db.update_grow_recipe(grow.grow_id, new_recipe.recipe_id)
-            
+                app_config.db.update_grow_phases_recipe_from_grow(grow.grow_id, new_recipe.recipe_id)
+
+        was_new_recipe_created: bool = (recipe_phases_added or recipe_phases_removed or recipe_phases_modified) and not grow.is_new_recipe
+        recipe_name: str = message["recipe_name"]
+        if recipe_name != recipe.recipe_name and not was_new_recipe_created:
+            # if the recipe_name is different and a new recipe wasn't created with the recipe_name, then
+            # update the current recipe
+            recipe.recipe_name = recipe_name
+            app_config.db.update_recipe_name(recipe)
 
         # you can't modify current running phase in job scheduler, but you could change the start time
         # of the phase directly afterwards. Check if the phase after the current phase was modified or deleted,

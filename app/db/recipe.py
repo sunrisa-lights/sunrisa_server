@@ -6,7 +6,7 @@ from app.models.recipe import Recipe
 def write_recipe(conn, recipe: Recipe) -> Recipe:
     recipe_name = recipe.recipe_name
 
-    sql = "INSERT INTO `recipes` (recipe_name) VALUES (%s) ON DUPLICATE KEY UPDATE recipe_name=%s"
+    sql = "INSERT INTO `recipes` (recipe_name) VALUES (%s)"
     cursor = conn.cursor()
     cursor.execute(
         sql, (recipe_name, recipe_name,),
@@ -20,6 +20,14 @@ def write_recipe(conn, recipe: Recipe) -> Recipe:
     print("WROTE RECIPE", recipe)
     return recipe
 
+def update_recipe_name(conn, recipe: Recipe) -> None:
+    sql = "UPDATE `recipes` SET recipe_name = %s WHERE recipe_id = %s"
+    cursor = conn.cursor()
+    cursor.execute(
+        sql, (recipe.recipe_name, recipe.recipe_id),
+    )
+
+    cursor.close()
 
 def read_recipe(conn, recipe_id: int) -> Optional[Recipe]:
     sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_id = %s"

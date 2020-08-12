@@ -82,6 +82,15 @@ def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     )
     cursor.close()
 
+def update_grow_phases_recipe_from_grow(conn, grow_id: int, recipe_id: int) -> None:
+    sql = "UPDATE `grow_phases` SET recipe_id = %s WHERE grow_id = %s"
+
+    cursor = conn.cursor()
+    cursor.execute(
+        sql, (recipe_id, grow_id),
+    )
+    cursor.close()
+
 
 def delete_grow_phases_from_grow(conn, grow_id: int) -> None:
     sql = "DELETE FROM `grow_phases` WHERE grow_id = %s"
@@ -150,6 +159,7 @@ def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[Grow
 
         cursor.close()
         return found_grow_phases
+
 
 
 def create_grow_phase_table(conn):

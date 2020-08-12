@@ -104,7 +104,7 @@ def read_current_grows(conn) -> List[Grow]:
         return found_grows
 
 def update_grow_recipe(conn, grow_id: int, recipe_id: int) -> None:
-    sql = "UPDATE `grow` SET recipe_id = %s WHERE grow_id = %s"
+    sql = "UPDATE `grows` SET recipe_id = %s WHERE grow_id = %s"
     cursor = conn.cursor()
     cursor.execute(
         sql, (recipe_id, grow_id),
@@ -112,7 +112,7 @@ def update_grow_recipe(conn, grow_id: int, recipe_id: int) -> None:
     cursor.close()
 
 def update_grow_dates(conn, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime) -> None:
-    sql = "UPDATE `grow` SET start_datetime = %s, estimated_end_datetime = %s WHERE grow_id = %s"
+    sql = "UPDATE `grows` SET start_datetime = %s, estimated_end_datetime = %s WHERE grow_id = %s"
     cursor = conn.cursor()
     cursor.execute(
         sql, (start_datetime, estimated_end_datetime, grow_id),
