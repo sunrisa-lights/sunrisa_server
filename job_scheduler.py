@@ -148,7 +148,8 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
             end,
             gpp.is_last_phase,
         )
-        remove_grow_job(grow_phase)
+        remove_grow_job(self.job_scheduler, grow_phase)
+        return job_scheduler_pb2.RemoveJobReply(succeeded=True)
 
 def serve():
     print("Serving the application")
