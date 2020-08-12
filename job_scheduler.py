@@ -6,8 +6,8 @@ from typing import List
 import grpc
 import requests
 
-from app.job_scheduler import job_scheduler_pb2
-from app.job_scheduler import job_scheduler_pb2_grpc
+from app.generated.python import job_scheduler_pb2
+from app.generated.grpc_python import job_scheduler_pb2_grpc
 from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf, get_job_id
 from app.models.shelf_grow import ShelfGrow
 from app.models.grow_phase import GrowPhase
@@ -59,7 +59,7 @@ def schedule_grow_job(
             "interval",
             start_date=grow_phase.phase_start_datetime,
             args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-            id=get_job_id(shelf_grows, grow_phase),
+            id=get_job_id(grow_phase),
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
     else:
@@ -69,10 +69,13 @@ def schedule_grow_job(
             start_date=grow_phase.phase_start_datetime,
             end_date=grow_phase.phase_end_datetime,
             args=[shelf_grows, grow_phase, power_level, red_level, blue_level],
-            id=get_job_id(shelf_grows, grow_phase),
+            id=get_job_id(grow_phase),
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
 
+def remove_grow_job(scheduler, grow_phase: GrowPhase) -> None:
+    grow_id: str = get_job_id(grow_phase)
+    scheduler.remove_job(grow_id)  # this will throw exception if job not found
 
 class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
     def __init__(self):
@@ -133,6 +136,20 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
 
         return job_scheduler_pb2.ScheduleJobReply(succeeded=True)
 
+    def RemoveJob(self, request, context):
+        gpp = request.grow_phase
+        start: datetime = gpp.phase_start_datetime.ToDatetime()
+        end: datetime = gpp.phase_end_datetime.ToDatetime()
+        grow_phase: GrowPhase = GrowPhase(
+            gpp.grow_id,
+            gpp.recipe_id,
+            gpp.recipe_phase_num,
+            start,
+            end,
+            gpp.is_last_phase,
+        )
+        remove_grow_job(self.job_scheduler, grow_phase)
+        return job_scheduler_pb2.RemoveJobReply(succeeded=True)
 
 def serve():
     print("Serving the application")

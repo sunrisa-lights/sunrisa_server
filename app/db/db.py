@@ -1,5 +1,6 @@
 import pymysql
 
+from datetime import datetime
 from typing import List
 from typing import Optional, Tuple
 
@@ -14,14 +15,18 @@ from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     create_grow_table,
+    harvest_grow,
     read_current_grows,
+    read_grow,
     write_grow,
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
+    end_last_grow_phase,
     read_grow_phase,
     read_grow_phases,
     read_grow_phases_from_multiple_grows,
+    read_last_grow_phase,
     write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
@@ -99,6 +104,21 @@ class DB:
         finally:
             db_conn.close()
 
+    def end_last_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            end_last_grow_phase(db_conn, grow_phase, harvest_time)
+        finally:
+            db_conn.close()
+
+    def harvest_grow(self, grow: Grow) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            harvest_grow(db_conn, grow)
+        finally:
+            db_conn.close()
+
+
     def read_all_racks(self) -> List[Rack]:
         db_conn = self._new_connection(self.db_name)
         try:
@@ -125,6 +145,14 @@ class DB:
             db_conn.close()
 
         return shelves
+
+    def read_grow(self, grow_id: int) -> Optional[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow = read_grow(db_conn, grow_id)
+        finally:
+            db_conn.close()
+        return grow
 
     def read_room(self, room_id: int) -> Optional[Room]:
         db_conn = self._new_connection(self.db_name)
@@ -181,6 +209,14 @@ class DB:
             db_conn.close()
         return grow_phases
 
+    def read_last_grow_phase(self, grow_id: int) -> Optional[GrowPhase]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            grow_phase: Optional[GrowPhase] = read_last_grow_phase(db_conn, grow_id)
+        finally:
+            db_conn.close()
+        return grow_phase
+
     def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
         if not recipe_ids:
             return []
@@ -226,6 +262,9 @@ class DB:
         return current_shelf_grows
 
     def read_shelves_with_grows(self, grow_ids: List[int]) -> List[ShelfGrow]:
+        if not grow_ids:
+            return []
+
         db_conn = self._new_connection(self.db_name)
         try:
             current_shelf_grows = read_shelves_with_grows(db_conn, grow_ids)

@@ -71,7 +71,7 @@ def create_rack_table(conn):
     voltage INT,
     is_on BOOLEAN,
     is_connected BOOLEAN,
-    PRIMARY KEY (rack_id),
+    PRIMARY KEY (rack_id, room_id),
     CONSTRAINT fk_room
     FOREIGN KEY (room_id)
         REFERENCES rooms(room_id)

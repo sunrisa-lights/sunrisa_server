@@ -10,7 +10,7 @@ class AppConfig():
         self.sio = sio
 
         if env == "development":
-            logging.basicConfig(filename="error.log", level=logging.DEBUG)
+            logging.basicConfig(level=logging.DEBUG)
             self.logger = logging
 
             self.db = DB(self.DB_NAME)
