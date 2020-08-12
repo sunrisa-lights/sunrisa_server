@@ -155,7 +155,6 @@ class DB:
             db_conn.close()
         return grow
 
-
     def read_room(self, room_id: int) -> Optional[Room]:
         db_conn = self._new_connection(self.db_name)
         try:
