@@ -54,7 +54,7 @@ def schedule_grow_job(
 ):
     if grow_phase.is_last_phase:
         # schedule this phase without an end date
-        scheduler.add_job(
+        job = scheduler.add_job(
             send_message_to_socketio_server,
             "interval",
             start_date=grow_phase.phase_start_datetime,
@@ -63,7 +63,7 @@ def schedule_grow_job(
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
     else:
-        scheduler.add_job(
+        job = scheduler.add_job(
             send_message_to_socketio_server,
             "interval",
             start_date=grow_phase.phase_start_datetime,
@@ -72,6 +72,8 @@ def schedule_grow_job(
             id=get_job_id(grow_phase),
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
+    
+    print("Scheduled job with id:", job.id)
 
 
 def remove_grow_job(scheduler, grow_phase: GrowPhase) -> None:

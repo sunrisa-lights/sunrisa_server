@@ -173,9 +173,6 @@ def init_event_listeners(app_config, socketio):
         end_date_str: str = message["end_date"]
         end_date: datetime = iso8601_string_to_datetime(end_date_str)
         recipe_id: int = grow.recipe_id
-
-        # first update the grow phases, because the grow phases depend on the recipe phases (and you can't delete a
-        # recipe phase that has a grow phase as a foreign key relation)
         new_grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(light_configurations, grow_id, recipe_id, end_date)
 
         grow_phases_added, grow_phases_removed, grow_phases_modified = old_new_grow_phases_diff(old_grow_phases, new_grow_phases)
@@ -183,13 +180,6 @@ def init_event_listeners(app_config, socketio):
         print("grow phases removed:", grow_phases_removed)
         print("grow phases modified:", grow_phases_modified)
 
-        if grow_phases_added or grow_phases_modified or grow_phases_removed:
-            # need to edit grow phases. Keep it simple and delete all old ones, then re-create all new
-            # phases.
-            app_config.db.delete_grow_phases_from_grow(grow.grow_id)
-            app_config.db.write_grow_phases(new_grow_phases)
-
-        # now update recipe phases
         new_recipe_phases: List[RecipePhase] = create_recipe_phases_from_light_configurations(light_configurations, grow.recipe_id, end_date)
         recipe_phases_added, recipe_phases_removed, recipe_phases_modified = old_new_recipe_phases_diff(old_recipe_phases, new_recipe_phases)
 
@@ -197,7 +187,18 @@ def init_event_listeners(app_config, socketio):
         print("recipe phases removed:", recipe_phases_removed)
         print("recipe phases modified:", recipe_phases_modified)
 
-        if recipe_phases_added or recipe_phases_removed or recipe_phases_modified:
+        grow_phase_edits_needed: bool = grow_phases_added or grow_phases_modified or grow_phases_removed
+
+        if grow_phase_edits_needed:
+            # need to edit grow phases. Keep it simple and delete all old ones, then re-create all new
+            # phases. We can only delete here because grow phases rely on recipe phases for foreign key relations,
+            # and we cannot create the grow phases yet because they will depend on the recipe phases being created.
+            # Therefore we will create the grow phases after the recipe phase logic is executed.
+            app_config.db.delete_grow_phases_from_grow(grow.grow_id)
+
+        recipe_phase_edits_needed: bool = recipe_phases_added or recipe_phases_removed or recipe_phases_modified
+
+        if recipe_phase_edits_needed:
             # if this is a new recipe, we can update the recipe phases. Else, we need to create a new recipe
             # and associate it with the grow.
             if grow.is_new_recipe:
@@ -221,9 +222,23 @@ def init_event_listeners(app_config, socketio):
                 
                 app_config.db.write_recipe_phases(recipe_phases)
                 app_config.db.update_grow_recipe(grow.grow_id, new_recipe.recipe_id)
-                app_config.db.update_grow_phases_recipe_from_grow(grow.grow_id, new_recipe.recipe_id)
+                if not grow_phase_edits_needed:
+                    # grow phases never got deleted, so we can update the recipe on the grow phases. 
+                    # if they got deleted, will batch in the recipe phase update with the grow phase creation.
+                    app_config.db.update_grow_phases_recipe_from_grow(grow.grow_id, new_recipe.recipe_id)
 
-        was_new_recipe_created: bool = (recipe_phases_added or recipe_phases_removed or recipe_phases_modified) and not grow.is_new_recipe
+        was_new_recipe_created: bool = recipe_phase_edits_needed and not grow.is_new_recipe
+
+        if grow_phase_edits_needed: 
+            if was_new_recipe_created:
+                # a new recipe was created. Update the grows recipe, and update the grow phases recipe as well.
+                for gp in new_grow_phases:
+                    gp.recipe_id = new_recipe.recipe_id
+
+            # we deleted the previous grow phases, now we recreate them. We recreate them after
+            # the recipe phases are created because grow phases have a foreign key relation with recipe phases.
+            app_config.db.write_grow_phases(new_grow_phases)
+
         recipe_name: str = message["recipe_name"]
         if recipe_name != recipe.recipe_name and not was_new_recipe_created:
             # if the recipe_name is different and a new recipe wasn't created with the recipe_name, then
@@ -232,21 +247,23 @@ def init_event_listeners(app_config, socketio):
             app_config.db.update_recipe_name(recipe)
 
         # you can't modify current running phase in job scheduler, but you could change the start time
-        # of the phase directly afterwards. Check if the phase after the current phase was modified or deleted,
+        # of the phase directly afterwards. Check if the phase after the current phase was modified, deleted or added,
         # if modified we need to change the jobs end date to the new phases start date, if deleted need to make 
-        # the current job run forever. We can handle this easily by deleting the current job and rescheduling it
-        # with the current phase (which should have updated start and end dates).
+        # the current job run forever, if added we need to reschedule the current job with an end date. We can handle
+        # this easily by deleting the current job and rescheduling it with the current phase (which should have updated start and end dates).
+        # because you can't modify the current phase, we only care about dates and not light values, so we only check the grow phases.
         next_phase: int = grow.current_phase + 1
 
         was_next_grow_phase_modified: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_modified)
         was_next_grow_phase_removed: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_removed)
-        was_next_recipe_phase_modified: bool = recipe_phase_exists_with_phase_number(next_phase, recipe_phases_modified)
-        was_next_recipe_phase_removed: bool = recipe_phase_exists_with_phase_number(next_phase, recipe_phases_removed)
+        was_next_grow_phase_added: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_added)
 
-        if was_next_grow_phase_modified or was_next_grow_phase_removed or was_next_recipe_phase_modified or was_next_recipe_phase_removed:
-            # next grow phase or next recipe phase was modified or removed, reschedule the job that is currently running
-            grow_phase = new_grow_phases[grow.current_phase]
-            client_reschedule_job(app_config, grow_phase)
+        if was_next_grow_phase_modified or was_next_grow_phase_removed or was_next_grow_phase_added:
+            # next grow phase was added/modified/removed, reschedule the job that is currently running
+            # use the old grow phase to delete the current job, then add the new grow phase in.
+            old_grow_phase: GrowPhase = old_grow_phases[grow.current_phase]
+            new_grow_phase: GrowPhase = new_grow_phases[grow.current_phase]
+            client_reschedule_job(app_config, old_grow_phase, new_grow_phase)
         
         # change the grows start and end dates if they were modified
         new_start_datetime: datetime = new_grow_phases[0].phase_start_datetime

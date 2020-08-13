@@ -9,7 +9,7 @@ def write_recipe(conn, recipe: Recipe) -> Recipe:
     sql = "INSERT INTO `recipes` (recipe_name) VALUES (%s)"
     cursor = conn.cursor()
     cursor.execute(
-        sql, (recipe_name, recipe_name,),
+        sql, (recipe_name),
     )
 
     # return the id since it's created dynamically on insert by AUTO_INCREMENT
