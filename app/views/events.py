@@ -150,6 +150,7 @@ def init_event_listeners(app_config, socketio):
             "search_recipes_response",
             {"succeeded": True, "recipes": recipes_json, "recipe_phases": recipe_phases_json},
         )
+        print("search_recipes message here", {"succeeded": True, "recipes": recipes_json, "recipe_phases": recipe_phases_json})
         
 
     @socketio.on("harvest_grow")

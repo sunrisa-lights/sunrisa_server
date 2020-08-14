@@ -168,6 +168,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         "shelves": shelf_grows, 
         "grow_phases": recipe_phases,
         "is_new_recipe": is_new_recipe,
+        "recipe_name": "OG Kush",
         "end_date": end_time
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
@@ -264,8 +265,22 @@ def _test_create_entities(sio):
         sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
     )
     _test_harvest_grow(sio, grow_id)
+    _test_search_recipes(sio)
+
     print("create_entities_test passed!")
 
+def _test_search_recipes(sio):
+    flag = []
+    @sio.on("search_recipes_response")
+    def search_recipe_listener(message):
+        assert message["succeeded"] == True
+        print("search_recipe_listener", message)
+        flag.append(True)
+
+
+    sio.emit("search_recipes", {"search_name": "OG"})
+    wait_for_event(sio, flag, 1, 10, "test_search_recipes")
+    print("_test_search_recipes completed")
 
 def _test_room_not_found(sio):
     flag = []
