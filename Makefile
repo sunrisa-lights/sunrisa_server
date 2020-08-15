@@ -1,8 +1,16 @@
-.PHONY: build-up clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
+.PHONY: build-up up-d logs stop clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
 
-build-up: 
+build-up:
 	docker-compose up --build
 
+up-d:
+	docker-compose up -d
+
+logs:
+	docker-compose logs -f -t
+
+stop:
+	docker-compose stop
 
 clean:
 	docker system prune -f\
