@@ -20,6 +20,7 @@ from app.models.shelf_grow import ShelfGrow
 from app.utils.grow_phase_utils import create_grow_phases_from_light_configurations, grow_phase_exists_with_phase_number, old_new_grow_phases_diff
 from app.utils.recipe_phase_utils import create_recipe_phases_from_light_configurations, old_new_recipe_phases_diff, recipe_phase_exists_with_phase_number
 from app.utils.time_utils import iso8601_string_to_datetime  # type: ignore
+from app.validation.start_grows_for_shelves import validate_start_grows_for_shelves
 
 NAMESPACE = "namespace"
 
@@ -485,41 +486,16 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("start_grows_for_shelves")
     def start_grows_for_shelves(message) -> None:
         print("message:", message)
-        logging.debug("message sent to post_room_schedule:", message)
-        if "grow_phases" not in message:
+        validation_succeeded, failure_reason = validate_start_grows_for_shelves(app_config, message)
+        print("Start_grows_for_shelves validation:", validation_succeeded, failure_reason)
+        if not validation_succeeded:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
-                "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "Grow phases not included"},
+                "start_grows_for_shelves_succeeded",
+                {"succeeded": False, "reason": failure_reason},
             )
-            return
-        elif "shelves" not in message:
-            send_message_to_namespace_if_specified(
-                socketio,
-                message,
-                "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "Shelves not included"},
-            )
-            return
-        elif "is_new_recipe" not in message:
-            send_message_to_namespace_if_specified(
-                socketio,
-                message,
-                "start_grow_for_shelf_succeeded",
-                {
-                    "succeeded": False,
-                    "reason": "Not specified whether this is a new recipe",
-                },
-            )
-            return
-        elif "end_date" not in message:
-            send_message_to_namespace_if_specified(
-                socketio,
-                message,
-                "start_grow_for_shelf_succeeded",
-                {"succeeded": False, "reason": "End date not specified"},
-            )
+            print("Failed validation!")
             return
 
         is_new_recipe: bool = bool(message["is_new_recipe"])
