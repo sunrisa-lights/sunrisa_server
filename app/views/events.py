@@ -138,7 +138,13 @@ def init_event_listeners(app_config, socketio):
         search_name: str = message['search_name']
         matching_recipes: List[Recipe] = app_config.db.read_recipes_with_name(search_name)
 
-        recipe_ids: List[int] = [r.recipe_id for r in matching_recipes]
+        recipe_ids: List[int] = []
+        for r in matching_recipes:
+            if not r.recipe_id:
+                print("FATAL ERROR. Null recipe_id:", r.recipe_id)
+            else:
+                recipe_ids.append(r.recipe_id)
+
         recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipes(recipe_ids)
         
         recipes_json = [r.to_json() for r in matching_recipes]
@@ -253,6 +259,7 @@ def init_event_listeners(app_config, socketio):
         print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
 
         # TODO: Abstract this if/else statement into a method
+        recipe_id: Optional[int] = None
         if is_new_recipe:
             # create the recipe and the recipe phases before creating the grow
             recipe_name = message["recipe_name"]  # potentially not specified
@@ -286,10 +293,13 @@ def init_event_listeners(app_config, socketio):
             print("recipe_phases:", recipe_phases)
             app_config.db.write_recipe_phases(recipe_phases)
 
-            recipe_id: int = recipe.recipe_id
+            recipe_id = recipe.recipe_id
         else:
-            recipe_id: int = message["template_recipe_id"]
+            recipe_id = message["template_recipe_id"]
 
+        if not recipe_id:
+            raise Exception("Recipe not created")
+    
         # create the grow first so we can read the grow_id
         grow_start_date: datetime = iso8601_string_to_datetime(
             message["grow_phases"][0]["start_date"]
