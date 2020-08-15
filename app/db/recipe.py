@@ -36,7 +36,6 @@ def read_recipes(conn, recipe_ids: List[int]) -> List[Recipe]:
 def read_recipes_with_name(conn, search_name: str) -> List[Recipe]:
     # have to use .format() because pymysql won't let you escape the %
     sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_name LIKE '%{}%'".format(search_name)
-    print("sql:", sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)
         found_recipes = cursor.fetchall()
