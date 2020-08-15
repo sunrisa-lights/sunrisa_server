@@ -102,8 +102,6 @@ def _test_send_rack(sio, room):
 
         flag.append(True)
 
-
-
     return Rack.from_json(rack_dict["rack"])
 
 
@@ -142,6 +140,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         ]
 
     is_new_recipe = True
+    recipe_name = "OG Kush"
     flag = []
 
     @sio.on("start_grows_for_shelves_succeeded")
@@ -170,6 +169,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         "shelves": shelf_grows, 
         "grow_phases": recipe_phases,
         "is_new_recipe": is_new_recipe,
+        "recipe_name": recipe_name,
         "end_date": end_time
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
@@ -177,7 +177,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     wait_for_event(sio, flag, 2, 10, "test_set_lights_for_grow")
 
     print("test send shelf grow passed")
-    return (start_time, end_time, recipe_phases)
+    return (start_time, end_time, recipe_phases, recipe_name)
 
 
 def _test_find_all_entities(
@@ -259,15 +259,28 @@ def _test_create_entities(sio):
                 }
             ]
 
-    start_time, end_time, recipe_phases = _test_send_shelf_grow(
+    start_time, end_time, recipe_phases, recipe_name = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
     )
     grow_id = _test_find_all_entities(
         sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
     )
-    print("create_entities_test passed!")
     _test_harvest_grow(sio, grow_id)
+    _test_search_recipes(sio, recipe_name)
 
+    print("create_entities_test passed!")
+
+def _test_search_recipes(sio, recipe_name):
+    flag = []
+    @sio.on("search_recipes_response")
+    def search_recipe_listener(message):
+        assert message["succeeded"] == True
+        flag.append(True)
+
+
+    sio.emit("search_recipes", {"search_name": recipe_name[:2]})
+    wait_for_event(sio, flag, 1, 10, "test_search_recipes")
+    print("_test_search_recipes completed")
 
 def _test_room_not_found(sio):
     flag = []
@@ -292,10 +305,7 @@ def _test_harvest_grow(sio, grow_id):
     
     @sio.on("harvest_grow_response")
     def harvest_grow_response_listener(message):
-        print("the message", message)
         assert message["succeeded"] == True
-        print("things appear to be working")
-        print(message)
         
         flag.append(True)
 
@@ -324,11 +334,6 @@ def run_test_and_disconnect(test_func):
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
-
-# def test_harvest_integration():
-#     run_test_and_disconnect(_test_harvest_grow)
-#     print("Harvest integration test passed!")
-
 
 def test_entities_not_found():
     run_test_and_disconnect(_test_entities_not_found)
