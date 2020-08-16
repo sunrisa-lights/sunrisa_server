@@ -82,11 +82,11 @@ def create_shelf_grow_table(conn):
     room_id INT NOT NULL,
     rack_id INT NOT NULL,
     shelf_id INT NOT NULL,
-    PRIMARY KEY (grow_id, shelf_id),
+    PRIMARY KEY (grow_id, shelf_id, rack_id, room_id),
     FOREIGN KEY (grow_id)
         REFERENCES grows(grow_id),
-    FOREIGN KEY (shelf_id, rack_id)
-        REFERENCES shelves(shelf_id, rack_id)
+    FOREIGN KEY (shelf_id, rack_id, room_id)
+        REFERENCES shelves(shelf_id, rack_id, room_id)
     );
     """
     cursor = conn.cursor()
