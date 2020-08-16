@@ -78,9 +78,12 @@ def create_grow_phases_from_light_configurations(
 
     return grow_phases
 
-def grow_phase_exists_with_phase_number(phase_number: int, grow_phases: List[GrowPhase]) -> bool:
+
+def grow_phase_exists_with_phase_number(
+    phase_number: int, grow_phases: List[GrowPhase]
+) -> bool:
     for grow_phase in grow_phases:
         if grow_phase.recipe_phase_num == phase_number:
             return True
-    
+
     return False

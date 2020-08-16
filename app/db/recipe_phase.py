@@ -3,14 +3,18 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.recipe_phase import RecipePhase
 
+
 def delete_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
-    value_list: List[str] = ["({}, {})".format(rp.recipe_id, rp.recipe_phase_num) for rp in recipe_phases]
+    value_list: List[str] = [
+        "({}, {})".format(rp.recipe_id, rp.recipe_phase_num) for rp in recipe_phases
+    ]
     sql = "DELETE FROM `recipe_phases` WHERE (recipe_id, recipe_phase_num) IN ({})".format(
         ",".join(value_list)
     )
     cursor = conn.cursor()
     cursor.execute(sql)
     cursor.close()
+
 
 def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     recipe_phase_sql_args: Tuple[int, ...] = ()
@@ -31,6 +35,7 @@ def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     cursor.execute(sql, recipe_phase_sql_args)
     cursor.close()
 
+
 def update_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     recipe_phase_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []
@@ -45,7 +50,9 @@ def update_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
         )
         value_list.append("(%s, %s, %s, %s, %s, %s)")
 
-    sql = "INSERT INTO `recipe_phases` VALUES {} ON DUPLICATE KEY UPDATE num_hours=VALUES(num_hours), power_level=VALUES(power_level), red_level=VALUES(red_level), blue_level=VALUES(blue_level)".format(", ".join(value_list))
+    sql = "INSERT INTO `recipe_phases` VALUES {} ON DUPLICATE KEY UPDATE num_hours=VALUES(num_hours), power_level=VALUES(power_level), red_level=VALUES(red_level), blue_level=VALUES(blue_level)".format(
+        ", ".join(value_list)
+    )
     cursor = conn.cursor()
     cursor.execute(sql, recipe_phase_sql_args)
     cursor.close()

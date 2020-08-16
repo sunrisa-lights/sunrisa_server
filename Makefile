@@ -57,13 +57,5 @@ test:
 	docker-compose -f docker-compose.test.yml up
 
 
-up: 
+up:
 	docker-compose up
-
-
-
-
-
-
-
-

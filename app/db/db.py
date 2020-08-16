@@ -362,7 +362,9 @@ class DB:
         finally:
             db_conn.close()
 
-    def update_grow_dates(self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime) -> None:
+    def update_grow_dates(
+        self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             update_grow_dates(db_conn, grow_id, start_datetime, estimated_end_datetime)

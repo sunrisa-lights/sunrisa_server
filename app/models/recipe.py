@@ -4,9 +4,7 @@ import json
 
 
 class Recipe:
-    def __init__(
-        self, recipe_id: Optional[int], recipe_name: Optional[str],
-    ):
+    def __init__(self, recipe_id: Optional[int], recipe_name: Optional[str]):
         self.recipe_id = recipe_id
         self.recipe_name = recipe_name
 
@@ -19,17 +17,14 @@ class Recipe:
         return cls(recipe_id, recipe_name)
 
     def to_json(self) -> Dict[str, Any]:
-        return {
-            "recipe_id": self.recipe_id,
-            "recipe_name": self.recipe_name,
-        }
+        return {"recipe_id": self.recipe_id, "recipe_name": self.recipe_name}
 
     def __hash__(self):
         return hash(str(self))
 
     def __str__(self):
         return json.dumps(
-            {"recipe_id": self.recipe_id, "recipe_name": self.recipe_name,}
+            {"recipe_id": self.recipe_id, "recipe_name": self.recipe_name}
         )
 
     def __eq__(self, other):

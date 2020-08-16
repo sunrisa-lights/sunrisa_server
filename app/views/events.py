@@ -5,7 +5,11 @@ from time import mktime
 
 from typing import Any, List, Optional
 
-from app.job_scheduler.schedule_jobs import client_remove_job, client_reschedule_job, client_schedule_job
+from app.job_scheduler.schedule_jobs import (
+    client_remove_job,
+    client_reschedule_job,
+    client_schedule_job,
+)
 
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
@@ -17,8 +21,16 @@ from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 
-from app.utils.grow_phase_utils import create_grow_phases_from_light_configurations, grow_phase_exists_with_phase_number, old_new_grow_phases_diff
-from app.utils.recipe_phase_utils import create_recipe_phases_from_light_configurations, old_new_recipe_phases_diff, recipe_phase_exists_with_phase_number
+from app.utils.grow_phase_utils import (
+    create_grow_phases_from_light_configurations,
+    grow_phase_exists_with_phase_number,
+    old_new_grow_phases_diff,
+)
+from app.utils.recipe_phase_utils import (
+    create_recipe_phases_from_light_configurations,
+    old_new_recipe_phases_diff,
+    recipe_phase_exists_with_phase_number,
+)
 from app.utils.time_utils import iso8601_string_to_datetime  # type: ignore
 from app.validation.start_grows_for_shelves import validate_start_grows_for_shelves
 
@@ -104,7 +116,7 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Grow ID not included"},
             )
             return
-        elif 'grow_phases' not in message:
+        elif "grow_phases" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -112,7 +124,7 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Grow phases not included"},
             )
             return
-        elif 'end_date' not in message:
+        elif "end_date" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -120,7 +132,7 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "End date not included"},
             )
             return
-        elif 'recipe_name' not in message:
+        elif "recipe_name" not in message:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -128,7 +140,7 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Recipe name not included"},
             )
             return
-        
+
         grow_id: int = message["grow_id"]
         grow: Optional[Grow] = app_config.db.read_grow(grow_id)
         if not grow:
@@ -160,7 +172,9 @@ def init_event_listeners(app_config, socketio):
             )
             return
 
-        old_recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipe(grow.recipe_id)
+        old_recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipe(
+            grow.recipe_id
+        )
         if not old_recipe_phases:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -169,20 +183,30 @@ def init_event_listeners(app_config, socketio):
                 {"succeeded": False, "reason": "Previous recipe phases not found"},
             )
             return
-        
+
         light_configurations: List[Any] = message["grow_phases"]
         end_date_str: str = message["end_date"]
         end_date: datetime = iso8601_string_to_datetime(end_date_str)
         recipe_id: int = grow.recipe_id
-        new_grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(light_configurations, grow_id, recipe_id, end_date)
+        new_grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
+            light_configurations, grow_id, recipe_id, end_date
+        )
 
-        grow_phases_added, grow_phases_removed, grow_phases_modified = old_new_grow_phases_diff(old_grow_phases, new_grow_phases)
+        grow_phases_added, grow_phases_removed, grow_phases_modified = old_new_grow_phases_diff(
+            old_grow_phases, new_grow_phases
+        )
         print("grow phases added:", grow_phases_added)
         print("grow phases removed:", grow_phases_removed)
         print("grow phases modified:", grow_phases_modified)
 
-        new_recipe_phases: List[RecipePhase] = create_recipe_phases_from_light_configurations(light_configurations, grow.recipe_id, end_date)
-        recipe_phases_added, recipe_phases_removed, recipe_phases_modified = old_new_recipe_phases_diff(old_recipe_phases, new_recipe_phases)
+        new_recipe_phases: List[
+            RecipePhase
+        ] = create_recipe_phases_from_light_configurations(
+            light_configurations, grow.recipe_id, end_date
+        )
+        recipe_phases_added, recipe_phases_removed, recipe_phases_modified = old_new_recipe_phases_diff(
+            old_recipe_phases, new_recipe_phases
+        )
 
         print("recipe phases added:", recipe_phases_added)
         print("recipe phases removed:", recipe_phases_removed)
@@ -220,17 +244,19 @@ def init_event_listeners(app_config, socketio):
                 for recipe_phase in new_recipe_phases:
                     recipe_phase.recipe_id = new_recipe.recipe_id
                     recipe_phases.append(recipe_phase)
-                
+
                 app_config.db.write_recipe_phases(recipe_phases)
                 app_config.db.update_grow_recipe(grow.grow_id, new_recipe.recipe_id)
                 if not grow_phase_edits_needed:
-                    # grow phases never got deleted, so we can update the recipe on the grow phases. 
+                    # grow phases never got deleted, so we can update the recipe on the grow phases.
                     # if they got deleted, will batch in the recipe phase update with the grow phase creation.
-                    app_config.db.update_grow_phases_recipe_from_grow(grow.grow_id, new_recipe.recipe_id)
+                    app_config.db.update_grow_phases_recipe_from_grow(
+                        grow.grow_id, new_recipe.recipe_id
+                    )
 
         was_new_recipe_created: bool = recipe_phase_edits_needed and not grow.is_new_recipe
 
-        if grow_phase_edits_needed: 
+        if grow_phase_edits_needed:
             if was_new_recipe_created:
                 # a new recipe was created. Update the grows recipe, and update the grow phases recipe as well.
                 for gp in new_grow_phases:
@@ -249,35 +275,47 @@ def init_event_listeners(app_config, socketio):
 
         # you can't modify current running phase in job scheduler, but you could change the start time
         # of the phase directly afterwards. Check if the phase after the current phase was modified, deleted or added,
-        # if modified we need to change the jobs end date to the new phases start date, if deleted need to make 
+        # if modified we need to change the jobs end date to the new phases start date, if deleted need to make
         # the current job run forever, if added we need to reschedule the current job with an end date. We can handle
         # this easily by deleting the current job and rescheduling it with the current phase (which should have updated start and end dates).
         # because you can't modify the current phase, we only care about dates and not light values, so we only check the grow phases.
         next_phase: int = grow.current_phase + 1
 
-        was_next_grow_phase_modified: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_modified)
-        was_next_grow_phase_removed: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_removed)
-        was_next_grow_phase_added: bool = grow_phase_exists_with_phase_number(next_phase, grow_phases_added)
+        was_next_grow_phase_modified: bool = grow_phase_exists_with_phase_number(
+            next_phase, grow_phases_modified
+        )
+        was_next_grow_phase_removed: bool = grow_phase_exists_with_phase_number(
+            next_phase, grow_phases_removed
+        )
+        was_next_grow_phase_added: bool = grow_phase_exists_with_phase_number(
+            next_phase, grow_phases_added
+        )
 
-        if was_next_grow_phase_modified or was_next_grow_phase_removed or was_next_grow_phase_added:
+        if (
+            was_next_grow_phase_modified
+            or was_next_grow_phase_removed
+            or was_next_grow_phase_added
+        ):
             # next grow phase was added/modified/removed, reschedule the job that is currently running
             # use the old grow phase to delete the current job, then add the new grow phase in.
             old_grow_phase: GrowPhase = old_grow_phases[grow.current_phase]
             new_grow_phase: GrowPhase = new_grow_phases[grow.current_phase]
             client_reschedule_job(app_config, old_grow_phase, new_grow_phase)
-        
+
         # change the grows start and end dates if they were modified
         new_start_datetime: datetime = new_grow_phases[0].phase_start_datetime
         new_estimated_end_datetime: datetime = new_grow_phases[-1].phase_end_datetime
 
-        if grow.start_datetime != new_start_datetime or grow.estimated_end_datetime != new_estimated_end_datetime:
-            app_config.db.update_grow_dates(grow.grow_id, new_start_datetime, new_estimated_end_datetime)    
-        
+        if (
+            grow.start_datetime != new_start_datetime
+            or grow.estimated_end_datetime != new_estimated_end_datetime
+        ):
+            app_config.db.update_grow_dates(
+                grow.grow_id, new_start_datetime, new_estimated_end_datetime
+            )
+
         send_message_to_namespace_if_specified(
-            socketio,
-            message,
-            "modify_grow_response",
-            {"succeeded": True},
+            socketio, message, "modify_grow_response", {"succeeded": True}
         )
 
     @socketio.on("read_grow_with_phases")
@@ -480,14 +518,18 @@ def init_event_listeners(app_config, socketio):
         print("Updating grow_phase:", current_grow_phase)
         app_config.db.end_grow_phase(current_grow_phase, harvest_datetime)
         send_message_to_namespace_if_specified(
-            socketio, message, "harvest_grow_response", {"succeeded": True},
+            socketio, message, "harvest_grow_response", {"succeeded": True}
         )
 
     @socketio.on("start_grows_for_shelves")
     def start_grows_for_shelves(message) -> None:
         print("message:", message)
-        validation_succeeded, failure_reason = validate_start_grows_for_shelves(app_config, message)
-        print("Start_grows_for_shelves validation:", validation_succeeded, failure_reason)
+        validation_succeeded, failure_reason = validate_start_grows_for_shelves(
+            app_config, message
+        )
+        print(
+            "Start_grows_for_shelves validation:", validation_succeeded, failure_reason
+        )
         if not validation_succeeded:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -512,7 +554,11 @@ def init_event_listeners(app_config, socketio):
             end_date_str: str = message["end_date"]
             end_date: datetime = iso8601_string_to_datetime(end_date_str)
 
-            recipe_phases: List[RecipePhase] = create_recipe_phases_from_light_configurations(light_configurations, recipe_id, end_date)
+            recipe_phases: List[
+                RecipePhase
+            ] = create_recipe_phases_from_light_configurations(
+                light_configurations, recipe_id, end_date
+            )
             print("recipe_phases:", recipe_phases)
             # write the recipe phases to database
             app_config.db.write_recipe_phases(recipe_phases)
@@ -546,7 +592,9 @@ def init_event_listeners(app_config, socketio):
         light_configurations = message["grow_phases"]
         end_date_str: str = message["end_date"]
         end_date: datetime = iso8601_string_to_datetime(end_date_str)
-        grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(light_configurations, grow.grow_id, recipe_id, end_date)
+        grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
+            light_configurations, grow.grow_id, recipe_id, end_date
+        )
 
         shelf_grows: List[ShelfGrow] = []
         for shelf_data in message["shelves"]:

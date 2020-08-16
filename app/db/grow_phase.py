@@ -44,9 +44,7 @@ def write_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
 def end_grow_phase(conn, grow_phase: GrowPhase, harvest_time: datetime) -> None:
     sql = "UPDATE `grow_phases` SET phase_end_datetime = %s WHERE grow_id = %s AND recipe_phase_num = %s"
     cursor = conn.cursor()
-    cursor.execute(
-        sql, (harvest_time, grow_phase.grow_id, grow_phase.recipe_phase_num,),
-    )
+    cursor.execute(sql, (harvest_time, grow_phase.grow_id, grow_phase.recipe_phase_num))
     cursor.close()
 
 
@@ -66,29 +64,27 @@ def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
         )
         create_value_list.append("(%s, %s, %s, %s, %s, %s)")
 
-    sql = ("INSERT INTO `grow_phases` "
-           "(grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase) "
-           "VALUES {} ON DUPLICATE KEY UPDATE "
-           "recipe_id=VALUES(recipe_id), recipe_phase_num=VALUES(recipe_phase_num), "
-           "phase_start_datetime=VALUES(phase_start_datetime), phase_end_datetime=VALUES(phase_end_datetime), "
-           "is_last_phase=VALUES(is_last_phase)"
-           )
+    sql = (
+        "INSERT INTO `grow_phases` "
+        "(grow_id, recipe_id, recipe_phase_num, phase_start_datetime, phase_end_datetime, is_last_phase) "
+        "VALUES {} ON DUPLICATE KEY UPDATE "
+        "recipe_id=VALUES(recipe_id), recipe_phase_num=VALUES(recipe_phase_num), "
+        "phase_start_datetime=VALUES(phase_start_datetime), phase_end_datetime=VALUES(phase_end_datetime), "
+        "is_last_phase=VALUES(is_last_phase)"
+    )
     sql = sql.format(", ".join(create_value_list))
 
     print("sql:", sql, "args:", grow_phase_sql_args)
     cursor = conn.cursor()
-    cursor.execute(
-        sql, grow_phase_sql_args,
-    )
+    cursor.execute(sql, grow_phase_sql_args)
     cursor.close()
+
 
 def update_grow_phases_recipe_from_grow(conn, grow_id: int, recipe_id: int) -> None:
     sql = "UPDATE `grow_phases` SET recipe_id = %s WHERE grow_id = %s"
 
     cursor = conn.cursor()
-    cursor.execute(
-        sql, (recipe_id, grow_id),
-    )
+    cursor.execute(sql, (recipe_id, grow_id))
     cursor.close()
 
 
@@ -159,7 +155,6 @@ def read_grow_phases_from_multiple_grows(conn, grow_ids: List[int]) -> List[Grow
 
         cursor.close()
         return found_grow_phases
-
 
 
 def create_grow_phase_table(conn):

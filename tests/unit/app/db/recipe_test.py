@@ -5,9 +5,6 @@ from app.models.recipe import Recipe
 from app.db.recipe import create_recipe_table, write_recipe
 
 
-
-
-
 def test_create_recipe_table():
     conn = MagicMock()
 

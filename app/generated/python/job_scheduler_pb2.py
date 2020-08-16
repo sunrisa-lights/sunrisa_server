@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
     serialized_pb=b'\n\x13job_scheduler.proto\x1a\x1fgoogle/protobuf/timestamp.proto"\x91\x01\n\x12ScheduleJobRequest\x12\x1f\n\x0bshelf_grows\x18\x01 \x03(\x0b\x32\n.ShelfGrow\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase\x12\x13\n\x0bpower_level\x18\x03 \x01(\x05\x12\x11\n\tred_level\x18\x04 \x01(\x05\x12\x12\n\nblue_level\x18\x05 \x01(\x05"5\n\x10ScheduleJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t"P\n\tShelfGrow\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x0f\n\x07room_id\x18\x02 \x01(\x05\x12\x0f\n\x07rack_id\x18\x03 \x01(\x05\x12\x10\n\x08shelf_id\x18\x04 \x01(\x05"\xd2\x01\n\tGrowPhase\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x18\n\x10recipe_phase_num\x18\x02 \x01(\x05\x12\x11\n\trecipe_id\x18\x03 \x01(\x05\x12\x38\n\x14phase_start_datetime\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x36\n\x12phase_end_datetime\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x15\n\ris_last_phase\x18\x06 \x01(\x08"2\n\x10RemoveJobRequest\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase"3\n\x0eRemoveJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t2z\n\x0cJobScheduler\x12\x37\n\x0bScheduleJob\x12\x13.ScheduleJobRequest\x1a\x11.ScheduleJobReply"\x00\x12\x31\n\tRemoveJob\x12\x11.RemoveJobRequest\x1a\x0f.RemoveJobReply"\x00\x62\x06proto3',
-    dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,],
+    dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR],
 )
 
 
@@ -463,7 +463,7 @@ _REMOVEJOBREQUEST = _descriptor.Descriptor(
             serialized_options=None,
             file=DESCRIPTOR,
             create_key=_descriptor._internal_create_key,
-        ),
+        )
     ],
     extensions=[],
     nested_types=[],

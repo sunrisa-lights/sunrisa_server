@@ -72,7 +72,7 @@ def schedule_grow_job(
             id=get_job_id(grow_phase),
             minutes=5,  # TODO: Put this in a constants file and link with usage in schedule_jobs.py
         )
-    
+
     print("Scheduled job with id:", job.id)
 
 
