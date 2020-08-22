@@ -33,6 +33,23 @@ def validate_start_grows_for_shelves(
     return (True, "")
 
 
+def validate_grow_id(
+    app_config: AppConfig, message
+) -> Tuple[bool, str]:
+    if "grow" not in message:
+        return (False, "Grow not included")
+
+    grow_json = message["grow"]
+
+    if "grow_id" not in grow_json:
+        return (False, "Grow ID not included")
+
+    growid: int = int(grow_json["grow_id"])
+
+    return (True, str(growid))
+
+
+
 # returns the list of shelves specified from caller. Throws exception if shelves are invalid.
 def parse_shelves_from_message(message) -> List[Shelf]:
     shelf_json_list: List[Any] = message["shelves"]
@@ -68,3 +85,5 @@ def validate_all_shelves_free(
             in_use_shelves.append(shelf)
 
     return in_use_shelves
+def test_validate_grow_id():
+    print("error message", validate_grow_id({"Notgrow": 50}))
