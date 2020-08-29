@@ -50,25 +50,6 @@ def _test_send_room(sio):
     sio.emit("message_sent", room_dict)
     sio.sleep(1)
 
-    flag = []
-
-    @sio.on("return_room")
-    def find_room_listener(message) -> None:
-        print("got message:", message)
-        assert "room" in message
-        assert message["room"] is not None
-        returned_room = Room.from_json(message["room"])
-        expected_room = Room.from_json(room_dict["room"])
-
-        print("returned_room:", returned_room, "expected_room:", expected_room)
-        assert returned_room == expected_room
-        flag.append(True)
-
-    sio.emit("read_room", room_dict)
-    wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
-
-    print("first room found and returned")
-
     return [Room.from_json(room_dict["room"])]
 
 
@@ -85,20 +66,6 @@ def _test_send_rack(sio, room):
     }
     sio.emit("message_sent", rack_dict)
     sio.sleep(1)
-
-    flag = []
-
-    @sio.on("return_racks_in_room")
-    def return_racks_in_room_listener(message) -> None:
-        found_racks = message["racks"]
-        room_id = message["room_id"]
-
-        print("found_racks:", found_racks, rack_dict)
-        assert len(found_racks) == 1
-        assert Rack.from_json(found_racks[0]) == Rack.from_json(rack_dict["rack"])
-        assert room_id == room.room_id
-
-        flag.append(True)
 
     return Rack.from_json(rack_dict["rack"])
 
@@ -244,14 +211,6 @@ def _test_create_entities(sio):
     p_level = 9
     r_level = 8
     b_level = 7
-    recipe_phases = [
-        {
-            "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
-            "power_level": p_level,
-            "red_level": r_level,
-            "blue_level": b_level,
-        }
-    ]
 
     start_time, end_time, recipe_phases, recipe_name = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id

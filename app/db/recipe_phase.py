@@ -36,6 +36,20 @@ def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     cursor.close()
 
 
+def read_phases_from_recipe(conn, recipe_id: int) -> List[RecipePhase]:
+    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE recipe_id = %s"
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (recipe_id))
+        found_recipe_phases = cursor.fetchall()
+        recipe_phases = [
+            RecipePhase(rid, rpn, nh, pl, rl, bl)
+            for (rid, rpn, nh, pl, rl, bl) in found_recipe_phases
+        ]
+        cursor.close()
+        return recipe_phases
+
+
 def update_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     recipe_phase_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []
@@ -87,21 +101,6 @@ def read_recipe_phases(
 
     with conn.cursor() as cursor:
         cursor.execute(sql)
-        found_recipe_phases = cursor.fetchall()
-        recipe_phases = [
-            RecipePhase(rid, rpn, nh, pl, rl, bl)
-            for (rid, rpn, nh, pl, rl, bl) in found_recipe_phases
-        ]
-        cursor.close()
-        return recipe_phases
-
-
-def read_phases_from_recipe(conn, recipe_id: int) -> List[RecipePhase]:
-
-    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE recipe_id = %s"
-
-    with conn.cursor() as cursor:
-        cursor.execute(sql, (recipe_id))
         found_recipe_phases = cursor.fetchall()
         recipe_phases = [
             RecipePhase(rid, rpn, nh, pl, rl, bl)
