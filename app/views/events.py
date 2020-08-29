@@ -454,7 +454,7 @@ def init_event_listeners(app_config, socketio):
         recipe_ids: List[int] = []
         for r in matching_recipes:
             if not r.recipe_id:
-                raise ValueError("recipe_id not in list")
+                raise ValueError("recipe_id null on recipe {}".format(r))
             else:
                 recipe_ids.append(r.recipe_id)
 

@@ -74,7 +74,6 @@ def update_grow_phases(conn, grow_phases: List[GrowPhase]) -> None:
     )
     sql = sql.format(", ".join(create_value_list))
 
-    print("sql:", sql, "args:", grow_phase_sql_args)
     cursor = conn.cursor()
     cursor.execute(sql, grow_phase_sql_args)
     cursor.close()
