@@ -67,20 +67,6 @@ def read_recipes_with_name(conn, search_name: str) -> List[Recipe]:
         return recipes
 
 
-def read_recipes_with_name(conn, search_name: str) -> List[Recipe]:
-    # have to use .format() because pymysql won't let you escape the %
-    sql = "SELECT recipe_id, recipe_name FROM recipes WHERE recipe_name LIKE '%{}%'".format(
-        search_name
-    )
-    print("sql:", sql)
-    with conn.cursor() as cursor:
-        cursor.execute(sql)
-        found_recipes = cursor.fetchall()
-        recipes = [Recipe(rid, name) for (rid, name) in found_recipes]
-        cursor.close()
-        return recipes
-
-
 def create_recipe_table(conn):
     sql = """CREATE TABLE IF NOT EXISTS recipes(
     recipe_id INT NOT NULL AUTO_INCREMENT,

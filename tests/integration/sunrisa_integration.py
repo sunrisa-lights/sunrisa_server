@@ -100,24 +100,13 @@ def _test_send_rack(sio, room):
 
         flag.append(True)
 
-    sio.emit("read_all_racks_in_room", {"room": {"room_id": room.room_id}})
-    wait_for_event(sio, flag, 1, 10, "test_send_rack.read_all_racks_in_room.1")
-
-    print("first rack found and returned")
-
-    # update same rack to on
-    rack_dict["rack"]["is_on"] = not rack_dict["rack"]["is_on"]
-    sio.emit("message_sent", rack_dict)
-    sio.emit("read_all_racks_in_room", {"room": {"room_id": room.room_id}})
-    wait_for_event(sio, flag, 2, 10, "test_send_rack.read_all_racks_in_room.2")
-
-    print("second rack found and returned")
-
     return Rack.from_json(rack_dict["rack"])
 
 
 def _test_send_shelf(sio, rack):
-    shelf_dict = {"shelf": {"shelf_id": 1, "rack_id": rack.rack_id}}
+    shelf_dict = {
+        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id}
+    }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
     expected = Shelf.from_json(shelf_dict["shelf"])
@@ -135,12 +124,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
 
     shelf_grows = [{"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}]
     recipe_phases = [
-        {
-            "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
-            "power_level": 9,
-            "red_level": 8,
-            "blue_level": 7,
-        }
+        {"start_date": start_time, "power_level": 9, "red_level": 8, "blue_level": 7}
     ]
 
     is_new_recipe = True
@@ -332,8 +316,8 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    # sio.connect("http://sunrisa_server:5000")
-    sio.connect("http://localhost:5000")
+    sio.connect("http://sunrisa_server:5000")
+    # sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
 

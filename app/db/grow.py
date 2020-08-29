@@ -27,56 +27,6 @@ def write_grow(conn, grow: Grow) -> Grow:
     return grow
 
 
-def harvest_grow(conn, grow: Grow) -> Grow:
-    sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s WHERE grow_id = %s"
-    cursor = conn.cursor()
-    print("grow to harvest in db layer:", grow)
-    cursor.execute(
-        sql,
-        (
-            grow.estimated_end_datetime,
-            grow.is_finished,
-            grow.all_fields_complete,
-            grow.olcc_number,
-            grow.grow_id,
-        ),
-    )
-    cursor.close()
-
-    return grow
-
-
-def read_grow(conn, grow_id: int) -> Optional[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number FROM grows WHERE grow_id = %s"
-
-    with conn.cursor() as cursor:
-        cursor.execute(sql, (grow_id))
-        found_grow = cursor.fetchone()
-        grow: Optional[Grow] = None
-        if found_grow is not None:
-            (
-                grow_id,
-                recipe_id,
-                start_datetime,
-                estimated_end_datetime,
-                is_finished,
-                all_fields_complete,
-                olcc_number,
-            ) = found_grow
-            grow = Grow(
-                grow_id,
-                recipe_id,
-                start_datetime,
-                estimated_end_datetime,
-                is_finished,
-                all_fields_complete,
-                olcc_number,
-            )
-
-        cursor.close()
-        return grow
-
-
 def harvest_grow(conn, grow: Grow) -> None:
     sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s WHERE grow_id = %s"
     cursor = conn.cursor()
