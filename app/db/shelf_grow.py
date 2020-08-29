@@ -57,11 +57,9 @@ def read_shelves_with_grows(conn, grow_ids: List[int]) -> List[ShelfGrow]:
     sql = "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id IN ({})".format(
         ", ".join(grow_ids_str)
     )
-    print("sql from read_shelves_with_grows:", sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)
         all_shelf_grows = cursor.fetchall()
-        print("all_shelf_grows", all_shelf_grows)
         found_shelf_grows: List[ShelfGrow] = [
             ShelfGrow(grow_id, room_id, rack_id, sid)
             for (grow_id, room_id, rack_id, sid) in all_shelf_grows

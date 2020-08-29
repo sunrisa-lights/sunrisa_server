@@ -33,22 +33,22 @@ def test_write_rack(mock_rack):
     )
 
 
-def test_create_rack_table():
-    conn = MagicMock()
+# def test_create_rack_table():
+#     conn = MagicMock()
 
-    create_rack_table(conn)
-    sql = """CREATE TABLE IF NOT EXISTS racks(
-    rack_id INT NOT NULL,
-    room_id INT NOT NULL,
-    voltage INT,
-    is_on BOOLEAN,
-    is_connected BOOLEAN,
-    PRIMARY KEY (rack_id),
-    CONSTRAINT fk_room
-    FOREIGN KEY (room_id)
-        REFERENCES rooms(room_id)
+#     create_rack_table(conn)
+#     sql = """CREATE TABLE IF NOT EXISTS racks(
+#     rack_id INT NOT NULL,
+#     room_id INT NOT NULL,
+#     voltage INT,
+#     is_on BOOLEAN,
+#     is_connected BOOLEAN,
+#     PRIMARY KEY (rack_id),
+#     CONSTRAINT fk_room
+#     FOREIGN KEY (room_id)
+#         REFERENCES rooms(room_id)
 
-    );
-    """
+#     );
+#     """
 
-    conn.cursor().execute.assert_called_with(sql)
+#     conn.cursor().execute.assert_called_with(sql)

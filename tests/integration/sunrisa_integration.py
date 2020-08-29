@@ -65,48 +65,11 @@ def _test_send_room(sio):
         flag.append(True)
 
     sio.emit("read_room", room_dict)
-
     wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
 
     print("first room found and returned")
 
-    # update same room to on
-    room_dict["room"]["is_on"] = not room_dict["room"]["is_on"]
-    sio.emit("message_sent", room_dict)
-
-    sio.emit("read_room", room_dict)
-
-    wait_for_event(sio, flag, 2, 5, "test_send_room.update_room")
-
-    print("second room read and updated")
-
-    # create new room
-    room_dict2 = {
-        "room": {"room_id": 2, "is_on": False, "is_veg_room": True, "brightness": 80}
-    }
-    sio.emit("message_sent", room_dict2)
-    sio.sleep(1)
-
-    # return both rooms
-    rooms = []
-
-    @sio.on("return_rooms")
-    def find_all_rooms_listener(message) -> None:
-        found_rooms = message["rooms"]
-        for fr in found_rooms:
-            rooms.append(Room.from_json(fr))
-
-        room_map = {room.room_id: room for room in rooms}
-        first_id = room_dict["room"]["room_id"]
-        second_id = room_dict2["room"]["room_id"]
-        assert room_map[first_id] == Room.from_json(room_dict["room"])
-        assert room_map[second_id] == Room.from_json(room_dict2["room"])
-
-    sio.emit("read_all_rooms", {})
-    wait_for_event(sio, rooms, 2, 5, "test_send_room.read_rooms")
-    print("read all rooms")
-
-    return [Room.from_json(room_dict["room"]), Room.from_json(room_dict2["room"])]
+    return [Room.from_json(room_dict["room"])]
 
 
 def _test_send_rack(sio, room):
@@ -181,6 +144,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     ]
 
     is_new_recipe = True
+    recipe_name = "OG Kush"
     flag = []
 
     @sio.on("start_grows_for_shelves_succeeded")
@@ -208,6 +172,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         "shelves": shelf_grows,
         "grow_phases": recipe_phases,
         "is_new_recipe": is_new_recipe,
+        "recipe_name": recipe_name,
         "end_date": end_time,
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
@@ -215,7 +180,7 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     wait_for_event(sio, flag, 2, 10, "test_set_lights_for_grow")
 
     print("test send shelf grow passed")
-    return (start_time, end_time, recipe_phases)
+    return (start_time, end_time, recipe_phases, recipe_name)
 
 
 def _test_find_all_entities(
@@ -230,6 +195,7 @@ def _test_find_all_entities(
     b_level,
 ):
     flag = []
+    grow = []
 
     @sio.on("return_all_entities")
     def return_all_entities_listener(message) -> None:
@@ -254,29 +220,36 @@ def _test_find_all_entities(
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
-        assert len(found_grows) == 1
-        assert found_grows[0].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
+        assert len(found_grows) > 0
+        x = len(found_grows)
+        assert found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
         assert (
-            found_grows[0].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
+            found_grows[x - 1].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == end
         )
+        i = len(found_grow_phases)
         assert (
-            found_grow_phases[0].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grow_phases[i - 1].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
             == start
         )
         assert (
-            found_grow_phases[0].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
+            found_grow_phases[i - 1].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == end
         )
-        assert len(found_recipes) == 1
-        assert found_recipe_phases[0].power_level == p_level
-        assert found_recipe_phases[0].red_level == r_level
-        assert found_recipe_phases[0].blue_level == b_level
+        j = len(found_recipes)
+        assert found_recipe_phases[j - 1].power_level == p_level
+        assert found_recipe_phases[j - 1].red_level == r_level
+        assert found_recipe_phases[j - 1].blue_level == b_level
 
         flag.append(True)
+        grow.append(found_grows[0].grow_id)
 
     sio.emit("read_all_entities", {})
     print("WAITING FOR IT!")
     wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
+    print("printing list grow", grow)
+    return grow[0]
 
 
 def _test_create_entities(sio):
@@ -296,13 +269,29 @@ def _test_create_entities(sio):
         }
     ]
 
-    start_time, end_time, recipe_phases = _test_send_shelf_grow(
+    start_time, end_time, recipe_phases, recipe_name = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
     )
-    _test_find_all_entities(
+    grow_id = _test_find_all_entities(
         sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
     )
+    _test_harvest_grow(sio, grow_id)
+    _test_search_recipes(sio, recipe_name)
+
     print("create_entities_test passed!")
+
+
+def _test_search_recipes(sio, recipe_name):
+    flag = []
+
+    @sio.on("search_recipes_response")
+    def search_recipe_listener(message):
+        assert message["succeeded"] == True
+        flag.append(True)
+
+    sio.emit("search_recipes", {"search_name": recipe_name[:2]})
+    wait_for_event(sio, flag, 1, 10, "test_search_recipes")
+    print("_test_search_recipes completed")
 
 
 def _test_room_not_found(sio):
@@ -322,34 +311,29 @@ def _test_room_not_found(sio):
     print("room not found test passed!")
 
 
-def _test_racks_not_found_in_room(sio):
+def _test_harvest_grow(sio, grow_id):
     flag = []
 
-    room_dict = {"room": {"room_id": 5000}}
+    @sio.on("harvest_grow_response")
+    def harvest_grow_response_listener(message):
+        assert message["succeeded"] == True
 
-    @sio.on("return_racks_in_room")
-    def return_racks_in_room_listener(message) -> None:
-        assert message["racks"] == [], "Found nonexistent racks"
-        assert message["room_id"] == room_dict["room"]["room_id"]
         flag.append(True)
 
-    sio.emit("read_all_racks_in_room", room_dict)
-
-    wait_for_event(sio, flag, 1, 10, "test_racks_not_found_in_room")
-
-    print("racks not found in room test passed!")
+    sio.emit("harvest_grow", {"grow": {"grow_id": grow_id}})
+    wait_for_event(sio, flag, 1, 10, "test_harvest_grow")
 
 
 def _test_entities_not_found(sio):
     sio.sleep(1)
     _test_room_not_found(sio)
-    _test_racks_not_found_in_room(sio)
     print("entities_not_found_test passed!")
 
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    sio.connect("http://sunrisa_server:5000")
+    # sio.connect("http://sunrisa_server:5000")
+    sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
 
