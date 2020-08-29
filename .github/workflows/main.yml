@@ -35,7 +35,7 @@ jobs:
     # runs mypy for type annotation checking
     - name: Run mypy
       run: |
-        ./venv/bin/mypy app/
+        ./venv/bin/mypy --ignore-missing-imports app/
 
     # lints code with black
     - name: Run black
