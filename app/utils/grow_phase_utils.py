@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 from datetime import datetime
 
 from app.models.grow_phase import GrowPhase
@@ -55,13 +55,14 @@ def create_grow_phases_from_light_configurations(
     light_configurations: List[Any], grow_id: int, recipe_id: int, end_date: datetime
 ) -> List[GrowPhase]:
     grow_phases: List[GrowPhase] = []
+    grow_phase: Optional[GrowPhase] = None
     for i, light_config in enumerate(light_configurations):
         start_date_str: str = light_config["start_date"]
         start_date: datetime = iso8601_string_to_datetime(start_date_str)
         if i == len(light_configurations) - 1:
             # this is the last phase, use `end_date` attribute for `phase_end_datetime` and mark as last phase
             is_last_phase = True
-            grow_phase: GrowPhase = GrowPhase(
+            grow_phase = GrowPhase(
                 grow_id, recipe_id, i, start_date, end_date, is_last_phase
             )
         else:
@@ -70,10 +71,10 @@ def create_grow_phases_from_light_configurations(
                 next_phase_start_date_str
             )
             is_last_phase = False
-            grow_phase: GrowPhase = GrowPhase(
+            grow_phase = GrowPhase(
                 grow_id, recipe_id, i, start_date, next_phase_start_date, is_last_phase
             )
-
+        assert grow_phase != None
         grow_phases.append(grow_phase)
 
     return grow_phases

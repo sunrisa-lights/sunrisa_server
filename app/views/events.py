@@ -189,7 +189,12 @@ def init_event_listeners(app_config, socketio):
         light_configurations: List[Any] = message["grow_phases"]
         end_date_str: str = message["end_date"]
         end_date: datetime = iso8601_string_to_datetime(end_date_str)
-        recipe_id: int = grow.recipe_id
+        if not grow.recipe_id:
+            raise ValueError("recipe_id doesn't exist on grow")
+            return
+        else:
+            recipe_id: int = grow.recipe_id
+
         new_grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
             light_configurations, grow_id, recipe_id, end_date
         )
@@ -244,7 +249,10 @@ def init_event_listeners(app_config, socketio):
                 # update recipe phases, grow and grow phases to have the new recipe_id
                 recipe_phases: List[RecipePhase] = []
                 for recipe_phase in new_recipe_phases:
-                    recipe_phase.recipe_id = new_recipe.recipe_id
+                    if not new_recipe.recipe_id:
+                        raise ValueError("No recipe ID in new_recipe_phases")
+                    else:
+                        recipe_phase.recipe_id = new_recipe.recipe_id
                     recipe_phases.append(recipe_phase)
 
                 app_config.db.write_recipe_phases(recipe_phases)
@@ -262,7 +270,10 @@ def init_event_listeners(app_config, socketio):
             if was_new_recipe_created:
                 # a new recipe was created. Update the grows recipe, and update the grow phases recipe as well.
                 for gp in new_grow_phases:
-                    gp.recipe_id = new_recipe.recipe_id
+                    if not new_recipe.recipe_id:
+                        raise ValueError("No recipe ID in new_grow_phases")
+                    else:
+                        gp.recipe_id = new_recipe.recipe_id
 
             # we deleted the previous grow phases, now we recreate them. We recreate them after
             # the recipe phases are created because grow phases have a foreign key relation with recipe phases.
@@ -436,8 +447,13 @@ def init_event_listeners(app_config, socketio):
         matching_recipes: List[Recipe] = app_config.db.read_recipes_with_name(
             search_name
         )
+        recipe_ids: List[int] = []
+        for r in matching_recipes:
+            if not r.recipe_id:
+                raise ValueError("recipe_id not in list")
+            else:
+                recipe_ids.append(r.recipe_id)
 
-        recipe_ids: List[int] = [r.recipe_id for r in matching_recipes]
         recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipes(
             recipe_ids
         )
@@ -544,17 +560,19 @@ def init_event_listeners(app_config, socketio):
 
         is_new_recipe: bool = bool(message["is_new_recipe"])
         print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
-
+        recipe_id: Optional[int] = None
+        end_date_str: Optional[str] = None
+        end_date: Optional[datetime] = None
         if is_new_recipe:
             # create the recipe and the recipe phases before creating the grow
             recipe_name = message["recipe_name"] if "recipe_name" in message else None
             recipe_no_id: Recipe = Recipe(None, recipe_name)
             recipe: Recipe = app_config.db.write_recipe(recipe_no_id)
-            recipe_id: int = recipe.recipe_id
+            recipe_id = recipe.recipe_id
 
             light_configurations: List[Any] = message["grow_phases"]
-            end_date_str: str = message["end_date"]
-            end_date: datetime = iso8601_string_to_datetime(end_date_str)
+            end_date_str = message["end_date"]
+            end_date = iso8601_string_to_datetime(end_date_str)
 
             recipe_phases: List[
                 RecipePhase
@@ -566,7 +584,7 @@ def init_event_listeners(app_config, socketio):
             app_config.db.write_recipe_phases(recipe_phases)
 
         else:
-            recipe_id: int = message["template_recipe_id"]
+            recipe_id = message["template_recipe_id"]
 
         # create the grow first so we can read the grow_id
         grow_start_date: datetime = iso8601_string_to_datetime(
@@ -592,8 +610,8 @@ def init_event_listeners(app_config, socketio):
         grow: Grow = app_config.db.write_grow(grow_without_id)
 
         light_configurations = message["grow_phases"]
-        end_date_str: str = message["end_date"]
-        end_date: datetime = iso8601_string_to_datetime(end_date_str)
+        end_date_str = message["end_date"]
+        end_date = iso8601_string_to_datetime(end_date_str)
         grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
             light_configurations, grow.grow_id, recipe_id, end_date
         )
