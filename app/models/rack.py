@@ -48,6 +48,7 @@ class Rack:
                 "is_connected": self.is_connected,
             }
         )
+
     def __repr__(self):
         return str(self)
 

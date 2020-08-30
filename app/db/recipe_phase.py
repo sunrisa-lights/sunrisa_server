@@ -4,6 +4,18 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.models.recipe_phase import RecipePhase
 
 
+def delete_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
+    value_list: List[str] = [
+        "({}, {})".format(rp.recipe_id, rp.recipe_phase_num) for rp in recipe_phases
+    ]
+    sql = "DELETE FROM `recipe_phases` WHERE (recipe_id, recipe_phase_num) IN ({})".format(
+        ",".join(value_list)
+    )
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()
+
+
 def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     recipe_phase_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []
@@ -18,8 +30,43 @@ def write_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
         )
         value_list.append("(%s, %s, %s, %s, %s, %s)")
 
-    # TODO (lww515): Handle updates to existing recipe phases
     sql = "INSERT INTO `recipe_phases` VALUES {}".format(", ".join(value_list))
+    cursor = conn.cursor()
+    cursor.execute(sql, recipe_phase_sql_args)
+    cursor.close()
+
+
+def read_phases_from_recipe(conn, recipe_id: int) -> List[RecipePhase]:
+    sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE recipe_id = %s"
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (recipe_id))
+        found_recipe_phases = cursor.fetchall()
+        recipe_phases = [
+            RecipePhase(rid, rpn, nh, pl, rl, bl)
+            for (rid, rpn, nh, pl, rl, bl) in found_recipe_phases
+        ]
+        cursor.close()
+        return recipe_phases
+
+
+def update_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
+    recipe_phase_sql_args: Tuple[int, ...] = ()
+    value_list: List[str] = []
+    for rp in recipe_phases:
+        recipe_phase_sql_args += (
+            rp.recipe_id,
+            rp.recipe_phase_num,
+            rp.num_hours,
+            rp.power_level,
+            rp.red_level,
+            rp.blue_level,
+        )
+        value_list.append("(%s, %s, %s, %s, %s, %s)")
+
+    sql = "INSERT INTO `recipe_phases` VALUES {} ON DUPLICATE KEY UPDATE num_hours=VALUES(num_hours), power_level=VALUES(power_level), red_level=VALUES(red_level), blue_level=VALUES(blue_level)".format(
+        ", ".join(value_list)
+    )
     cursor = conn.cursor()
     cursor.execute(sql, recipe_phase_sql_args)
     cursor.close()
@@ -62,9 +109,8 @@ def read_recipe_phases(
         cursor.close()
         return recipe_phases
 
-def read_phases_from_recipes(
-    conn, recipe_ids: List[int]
-) -> List[RecipePhase]:
+
+def read_phases_from_recipes(conn, recipe_ids: List[int]) -> List[RecipePhase]:
 
     values_list: List[str] = [str(rid) for rid in recipe_ids]
     sql = "SELECT recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level FROM recipe_phases WHERE (recipe_id) IN ({})".format(

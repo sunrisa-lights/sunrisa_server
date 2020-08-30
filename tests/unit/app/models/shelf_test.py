@@ -19,11 +19,7 @@ def test_create_shelf_from_json():
 
 def test_to_json():
     shelf = Shelf(1, 2, 3)
-    assert shelf.to_json() == {
-        "shelf_id": 1,
-        "room_id": 2,
-        "rack_id": 3,
-    }
+    assert shelf.to_json() == {"shelf_id": 1, "room_id": 2, "rack_id": 3}
 
 
 def test__str__():

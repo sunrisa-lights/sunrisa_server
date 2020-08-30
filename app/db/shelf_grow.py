@@ -23,12 +23,7 @@ def write_shelf_grows(conn, shelf_grows: List[ShelfGrow]) -> None:
     shelf_grow_sql_args: Tuple[int, ...] = ()
     value_list: List[str] = []
     for sg in shelf_grows:
-        shelf_grow_sql_args += (
-            sg.grow_id,
-            sg.room_id,
-            sg.rack_id,
-            sg.shelf_id,
-        )
+        shelf_grow_sql_args += (sg.grow_id, sg.room_id, sg.rack_id, sg.shelf_id)
         value_list.append("(%s, %s, %s, %s)")
 
     sql = "INSERT INTO `shelf_grows` (grow_id, room_id, rack_id, shelf_id) VALUES {}".format(
@@ -80,11 +75,11 @@ def create_shelf_grow_table(conn):
     room_id INT NOT NULL,
     rack_id INT NOT NULL,
     shelf_id INT NOT NULL,
-    PRIMARY KEY (grow_id, shelf_id),
+    PRIMARY KEY (grow_id, shelf_id, rack_id, room_id),
     FOREIGN KEY (grow_id)
         REFERENCES grows(grow_id),
-    FOREIGN KEY (shelf_id, rack_id)
-        REFERENCES shelves(shelf_id, rack_id)
+    FOREIGN KEY (shelf_id, rack_id, room_id)
+        REFERENCES shelves(shelf_id, rack_id, room_id)
     );
     """
     cursor = conn.cursor()

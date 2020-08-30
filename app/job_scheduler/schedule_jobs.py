@@ -78,6 +78,11 @@ def schedule_next_phase_if_needed(
 
         client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
 
+        # update `current_phase` attribute of Grow object now that we've moved to the next phase
+        app_config.db.move_grow_to_next_phase(
+            next_grow_phase.grow_id, next_grow_phase.recipe_phase_num
+        )
+
 
 def client_schedule_job(
     shelf_grows: List[ShelfGrow],
@@ -85,7 +90,7 @@ def client_schedule_job(
     power_level: int,
     red_level: int,
     blue_level: int,
-):
+) -> None:
     with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
         stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
         shelf_grow_protos = [
@@ -127,9 +132,8 @@ def client_schedule_job(
         )
     )
 
-def client_remove_job(
-    grow_phase: GrowPhase,
-):
+
+def client_remove_job(grow_phase: GrowPhase) -> None:
     with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
         stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
 
@@ -147,9 +151,7 @@ def client_remove_job(
             phase_end_datetime=phase_end_timestamp,
             is_last_phase=grow_phase.is_last_phase,
         )
-        proto = job_scheduler_pb2.RemoveJobRequest(
-            grow_phase=grow_phase_proto,
-        )
+        proto = job_scheduler_pb2.RemoveJobRequest(grow_phase=grow_phase_proto)
 
         response = stub.RemoveJob(proto)  # TODO: Add retries?
     print(
@@ -157,3 +159,27 @@ def client_remove_job(
             response.succeeded
         )
     )
+
+
+def client_reschedule_job(
+    app_config: AppConfig, old_grow_phase: GrowPhase, new_grow_phase: GrowPhase
+) -> None:
+    print("Removing grow phase job:", old_grow_phase)
+
+    # first remove the old job
+    client_remove_job(old_grow_phase)
+
+    # find all shelf grows associated with this grow
+    shelf_grows: List[ShelfGrow] = app_config.db.read_shelves_with_grow(
+        old_grow_phase.grow_id
+    )
+
+    if not shelf_grows:
+        raise Exception("No shelf grows found for grow:", old_grow_phase.grow_id)
+
+    (power_level, red_level, blue_level) = app_config.db.read_lights_from_recipe_phase(
+        new_grow_phase.recipe_id, new_grow_phase.recipe_phase_num
+    )
+
+    print("Rescheduling grow phase job:", new_grow_phase)
+    client_schedule_job(shelf_grows, new_grow_phase, power_level, red_level, blue_level)

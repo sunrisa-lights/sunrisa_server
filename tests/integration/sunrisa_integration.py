@@ -50,27 +50,6 @@ def _test_send_room(sio):
     sio.emit("message_sent", room_dict)
     sio.sleep(1)
 
-    flag = []
-
-    @sio.on("return_room")
-    def find_room_listener(message) -> None:
-        print("got message:", message)
-        assert "room" in message
-        assert message["room"] is not None
-        returned_room = Room.from_json(message["room"])
-        expected_room = Room.from_json(room_dict["room"])
-
-        print("returned_room:", returned_room, "expected_room:", expected_room)
-        assert returned_room == expected_room
-        flag.append(True)
-
-    sio.emit("read_room", room_dict)
-    wait_for_event(sio, flag, 1, 5, "test_send_room.create_room")
-
-    print("first room found and returned")
-
-    
-
     return [Room.from_json(room_dict["room"])]
 
 
@@ -83,38 +62,23 @@ def _test_send_rack(sio, room):
             "voltage": 100,
             "is_on": True,
             "is_connected": True,
-        },
+        }
     }
     sio.emit("message_sent", rack_dict)
     sio.sleep(1)
-
-    flag = []
-
-    @sio.on("return_racks_in_room")
-    def return_racks_in_room_listener(message) -> None:
-        found_racks = message["racks"]
-        room_id = message["room_id"]
-
-        print("found_racks:", found_racks, rack_dict)
-        assert len(found_racks) == 1
-        assert Rack.from_json(found_racks[0]) == Rack.from_json(rack_dict["rack"])
-        assert room_id == room.room_id
-
-        flag.append(True)
 
     return Rack.from_json(rack_dict["rack"])
 
 
 def _test_send_shelf(sio, rack):
     shelf_dict = {
-        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id},
+        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id}
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
     expected = Shelf.from_json(shelf_dict["shelf"])
 
     return expected
-
 
 
 def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
@@ -125,19 +89,10 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grows = [{
-                "room_id": room_id,
-                "rack_id": rack_id,
-                "shelf_id": shelf_id,
-            }]
+    shelf_grows = [{"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}]
     recipe_phases = [
-            {
-                "start_date": start_time,
-                "power_level": 9,
-                "red_level": 8,
-                "blue_level": 7,
-            }
-        ]
+        {"start_date": start_time, "power_level": 9, "red_level": 8, "blue_level": 7}
+    ]
 
     is_new_recipe = True
     recipe_name = "OG Kush"
@@ -161,16 +116,15 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         assert message["shelves"][0]["room_id"] == room_id
         assert message["shelves"][0]["rack_id"] == rack_id
         assert message["shelves"][0]["shelf_id"] == shelf_id
-      
-
 
         flag.append(True)
+
     start_grows_for_shelves_dict = {
-        "shelves": shelf_grows, 
+        "shelves": shelf_grows,
         "grow_phases": recipe_phases,
         "is_new_recipe": is_new_recipe,
         "recipe_name": recipe_name,
-        "end_date": end_time
+        "end_date": end_time,
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
     wait_for_event(sio, flag, 1, 10, "test_start_grows_for_shelves")
@@ -189,8 +143,7 @@ def _test_find_all_entities(
     end,
     p_level,
     r_level,
-    b_level
-
+    b_level,
 ):
     flag = []
     grow = []
@@ -218,17 +171,26 @@ def _test_find_all_entities(
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
         assert collections.Counter(found_shelves) == collections.Counter(shelves)
-        assert len(found_grows) > 0 
-        x = len(found_grows) 
-        assert found_grows[x-1].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
-        assert found_grows[x-1].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
+        assert len(found_grows) > 0
+        x = len(found_grows)
+        assert found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
+        assert (
+            found_grows[x - 1].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == end
+        )
         i = len(found_grow_phases)
-        assert found_grow_phases[i-1].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
-        assert found_grow_phases[i-1].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S") == end
+        assert (
+            found_grow_phases[i - 1].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == start
+        )
+        assert (
+            found_grow_phases[i - 1].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == end
+        )
         j = len(found_recipes)
-        assert found_recipe_phases[j-1].power_level == p_level
-        assert found_recipe_phases[j-1].red_level == r_level
-        assert found_recipe_phases[j-1].blue_level == b_level     
+        assert found_recipe_phases[j - 1].power_level == p_level
+        assert found_recipe_phases[j - 1].red_level == r_level
+        assert found_recipe_phases[j - 1].blue_level == b_level
 
         flag.append(True)
         grow.append(found_grows[0].grow_id)
@@ -239,7 +201,6 @@ def _test_find_all_entities(
     print("all entities found")
     print("printing list grow", grow)
     return grow[0]
-  
 
 
 def _test_create_entities(sio):
@@ -250,14 +211,6 @@ def _test_create_entities(sio):
     p_level = 9
     r_level = 8
     b_level = 7
-    recipe_phases = [
-                {
-                    "start_date": start.strftime("%Y-%m-%d %H:%M:%S"),
-                    "power_level": p_level,
-                    "red_level": r_level,
-                    "blue_level": b_level,
-                }
-            ]
 
     start_time, end_time, recipe_phases, recipe_name = _test_send_shelf_grow(
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
@@ -270,17 +223,19 @@ def _test_create_entities(sio):
 
     print("create_entities_test passed!")
 
+
 def _test_search_recipes(sio, recipe_name):
     flag = []
+
     @sio.on("search_recipes_response")
     def search_recipe_listener(message):
         assert message["succeeded"] == True
         flag.append(True)
 
-
     sio.emit("search_recipes", {"search_name": recipe_name[:2]})
     wait_for_event(sio, flag, 1, 10, "test_search_recipes")
     print("_test_search_recipes completed")
+
 
 def _test_room_not_found(sio):
     flag = []
@@ -299,14 +254,13 @@ def _test_room_not_found(sio):
     print("room not found test passed!")
 
 
-
 def _test_harvest_grow(sio, grow_id):
     flag = []
-    
+
     @sio.on("harvest_grow_response")
     def harvest_grow_response_listener(message):
         assert message["succeeded"] == True
-        
+
         flag.append(True)
 
     sio.emit("harvest_grow", {"grow": {"grow_id": grow_id}})
@@ -321,8 +275,8 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    #sio.connect("http://sunrisa_server:5000")
-    sio.connect("http://localhost:5000")
+    sio.connect("http://sunrisa_server:5000")
+    # sio.connect("http://localhost:5000")
     test_func(sio)
     sio.disconnect()
 
@@ -331,9 +285,11 @@ def run_test_and_disconnect(test_func):
 #################### PYTEST DEFINITIONS ####################
 ############################################################
 
+
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
+
 
 def test_entities_not_found():
     run_test_and_disconnect(_test_entities_not_found)

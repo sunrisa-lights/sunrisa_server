@@ -16,17 +16,22 @@ from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     create_grow_table,
     harvest_grow,
+    move_grow_to_next_phase,
     read_current_grows,
     read_grow,
+    update_grow_recipe,
+    update_grow_dates,
     write_grow,
 )
 from app.db.grow_phase import (
     create_grow_phase_table,
-    end_last_grow_phase,
+    delete_grow_phases_from_grow,
+    end_grow_phase,
     read_grow_phase,
     read_grow_phases,
     read_grow_phases_from_multiple_grows,
-    read_last_grow_phase,
+    update_grow_phases,
+    update_grow_phases_recipe_from_grow,
     write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
@@ -37,12 +42,22 @@ from app.db.rack import (
     read_all_racks,
     read_racks_in_room,
 )
-from app.db.recipe import create_recipe_table, read_recipes, read_recipes_with_name, write_recipe
+from app.db.recipe import (
+    create_recipe_table,
+    read_recipe,
+    read_recipes,
+    read_recipes_with_name,
+    update_recipe_name,
+    write_recipe,
+)
 from app.db.recipe_phase import (
     create_recipe_phases_table,
+    delete_recipe_phases,
     read_lights_from_recipe_phase,
+    read_phases_from_recipe,
     read_phases_from_recipes,
     read_recipe_phases,
+    update_recipe_phases,
     write_recipe_phases,
 )
 from app.db.shelf import create_shelf_table, read_all_shelves, write_shelf
@@ -105,10 +120,27 @@ class DB:
         finally:
             db_conn.close()
 
-    def end_last_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+    def delete_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+        if not recipe_phases:
+            return
+
         db_conn = self._new_connection(self.db_name)
         try:
-            end_last_grow_phase(db_conn, grow_phase, harvest_time)
+            delete_recipe_phases(db_conn, recipe_phases)
+        finally:
+            db_conn.close()
+
+    def delete_grow_phases_from_grow(self, grow_id: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            delete_grow_phases_from_grow(db_conn, grow_id)
+        finally:
+            db_conn.close()
+
+    def end_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            end_grow_phase(db_conn, grow_phase, harvest_time)
         finally:
             db_conn.close()
 
@@ -119,6 +151,12 @@ class DB:
         finally:
             db_conn.close()
 
+    def move_grow_to_next_phase(self, grow_id: int, current_phase: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            move_grow_to_next_phase(db_conn, grow_id, current_phase)
+        finally:
+            db_conn.close()
 
     def read_all_racks(self) -> List[Rack]:
         db_conn = self._new_connection(self.db_name)
@@ -210,13 +248,13 @@ class DB:
             db_conn.close()
         return grow_phases
 
-    def read_last_grow_phase(self, grow_id: int) -> Optional[GrowPhase]:
+    def read_recipe(self, recipe_id: int) -> Optional[Recipe]:
         db_conn = self._new_connection(self.db_name)
         try:
-            grow_phase: Optional[GrowPhase] = read_last_grow_phase(db_conn, grow_id)
+            recipe = read_recipe(db_conn, recipe_id)
         finally:
             db_conn.close()
-        return grow_phase
+        return recipe
 
     def read_recipes(self, recipe_ids: List[int]) -> List[Recipe]:
         if not recipe_ids:
@@ -237,9 +275,15 @@ class DB:
             db_conn.close()
         return recipes
 
-    def read_phases_from_recipes(
-        self, recipe_ids: List[int]
-    ) -> List[RecipePhase]:
+    def read_phases_from_recipe(self, recipe_id: int) -> List[RecipePhase]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            recipe_phases = read_phases_from_recipe(db_conn, recipe_id)
+        finally:
+            db_conn.close()
+        return recipe_phases
+
+    def read_phases_from_recipes(self, recipe_ids: List[int]) -> List[RecipePhase]:
         if not recipe_ids:
             return []
 
@@ -294,6 +338,56 @@ class DB:
             db_conn.close()
         return current_shelf_grows
 
+    def update_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+        if not grow_phases:
+            return
+
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_phases(db_conn, grow_phases)
+        finally:
+            db_conn.close()
+
+    def update_grow_phases_recipe_from_grow(self, grow_id: int, recipe_id: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_phases_recipe_from_grow(db_conn, grow_id, recipe_id)
+        finally:
+            db_conn.close()
+
+    def update_grow_recipe(self, grow_id: int, recipe_id: int) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_recipe(db_conn, grow_id, recipe_id)
+        finally:
+            db_conn.close()
+
+    def update_grow_dates(
+        self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime
+    ) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_grow_dates(db_conn, grow_id, start_datetime, estimated_end_datetime)
+        finally:
+            db_conn.close()
+
+    def update_recipe_name(self, recipe: Recipe) -> None:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_recipe_name(db_conn, recipe)
+        finally:
+            db_conn.close()
+
+    def update_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+        if not recipe_phases:
+            return
+
+        db_conn = self._new_connection(self.db_name)
+        try:
+            update_recipe_phases(db_conn, recipe_phases)
+        finally:
+            db_conn.close()
+
     def write_grow(self, grow: Grow) -> Grow:
         db_conn = self._new_connection(self.db_name)
         try:
@@ -337,6 +431,9 @@ class DB:
         return recipe
 
     def write_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+        if not recipe_phases:
+            return
+
         db_conn = self._new_connection(self.db_name)
         try:
             write_recipe_phases(db_conn, recipe_phases)

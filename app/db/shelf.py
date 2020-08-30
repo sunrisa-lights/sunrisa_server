@@ -22,7 +22,10 @@ def read_all_shelves(conn) -> List[Shelf]:
     with conn.cursor() as cursor:
         cursor.execute(sql)
         all_shelves = cursor.fetchall()
-        shelves = [Shelf(shelf_id, room_id, rack_id) for (shelf_id, room_id, rack_id) in all_shelves]
+        shelves = [
+            Shelf(shelf_id, room_id, rack_id)
+            for (shelf_id, room_id, rack_id) in all_shelves
+        ]
         cursor.close()
         return shelves
 

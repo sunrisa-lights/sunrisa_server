@@ -3,7 +3,8 @@ import logging
 
 from app.db.db import DB
 
-class AppConfig():
+
+class AppConfig:
     DB_NAME = "sunrisa_test"
 
     def __init__(self, sio, env):
