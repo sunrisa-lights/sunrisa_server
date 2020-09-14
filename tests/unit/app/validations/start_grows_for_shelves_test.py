@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 import pytest
 
 
-@pytest.fixture
 def test_validate_grow_id_fail():
     AppConfig = MagicMock()
     grow_id = 4
