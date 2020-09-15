@@ -102,7 +102,7 @@ def init_event_listeners(app_config, socketio):
     def modify_grow(message) -> None:
         print("called modify_grow:", message)
         succeeded, reason = validate_modify_grow(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio, message, "Validation failed", {"Reason": reason}
             )
@@ -264,7 +264,7 @@ def init_event_listeners(app_config, socketio):
     def read_grow_with_phases(message) -> None:
         print("called read_grow_with_phases")
         succeeded, reason = validate_read_grow_with_phases(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -299,7 +299,7 @@ def init_event_listeners(app_config, socketio):
     def read_grow(message) -> None:
         print("called read_grow")
         succeeded, reason = validate_read_grow(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio, message, "Validate read_grow failed", {"Reason": reason}
             )
@@ -319,7 +319,7 @@ def init_event_listeners(app_config, socketio):
     def search_recipes(message) -> None:
         print("search_recipes message:", message)
         succeeded, reason = validate_search_recipes(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio, message, "Validate search_recipes failed", {"Reason": reason}
             )
@@ -358,7 +358,7 @@ def init_event_listeners(app_config, socketio):
     def harvest_grow(message) -> None:
         print("harvest_grow message:", message)
         succeeded, reason = validate_harvest_grow(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio, message, "Validate harvest_grow failed", {"Reason": reason}
             )
@@ -407,7 +407,7 @@ def init_event_listeners(app_config, socketio):
         print("message:", message)
         logging.debug("message sent to post_room_schedule:", message)
         succeeded, reason = validate_start_grows_for_shelves(app_config, message)
-        if succeeded != True:
+        if not succeeded:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
