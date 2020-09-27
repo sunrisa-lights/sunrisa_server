@@ -1,4 +1,4 @@
-.PHONY: pre build-up up-d logs stop clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
+.PHONY: pre build-up up-d build-up-d logs stop clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
 
 pre:
 	pre-commit run --all-files
@@ -8,6 +8,9 @@ build-up:
 
 up-d:
 	docker-compose up -d
+
+build-up-d:
+	docker-compose up -d --build
 
 logs:
 	docker-compose logs -f -t
