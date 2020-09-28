@@ -599,6 +599,16 @@ def init_event_listeners(app_config, socketio):
         )
 
         current_phase: int = 0
+        tag_set: str = message["tag_set"]
+        nutrients: str = message["nutrients"]
+        weekly_reps: int = message["weekly_reps"]
+        pruning_date_1: Optional[datetime] = iso8601_string_to_datetime(
+            message["pruning_date_1"]
+        ) if message.get("pruning_date_1") else None
+        pruning_date_2: Optional[datetime] = iso8601_string_to_datetime(
+            message["pruning_date_2"]
+        ) if message.get("pruning_date_2") else None
+
         grow_without_id: Grow = Grow(
             None,
             recipe_id,
@@ -609,6 +619,11 @@ def init_event_listeners(app_config, socketio):
             None,
             current_phase,
             is_new_recipe,
+            tag_set,
+            nutrients,
+            weekly_reps,
+            pruning_date_1,
+            pruning_date_2,
         )
 
         grow: Grow = app_config.db.write_grow(grow_without_id)

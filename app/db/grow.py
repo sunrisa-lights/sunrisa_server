@@ -5,7 +5,7 @@ from app.models.grow import Grow
 
 
 def write_grow(conn, grow: Grow) -> Grow:
-    sql = "INSERT INTO `grows` (recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, current_phase, is_new_recipe) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO `grows` (recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     cursor = conn.cursor()
     cursor.execute(
         sql,
@@ -17,6 +17,11 @@ def write_grow(conn, grow: Grow) -> Grow:
             grow.all_fields_complete,
             grow.current_phase,
             grow.is_new_recipe,
+            grow.tag_set,
+            grow.nutrients,
+            grow.weekly_reps,
+            grow.pruning_date_1,
+            grow.pruning_date_2,
         ),
     )
     # return the id since it's created dynamically on insert by AUTO_INCREMENT
@@ -52,7 +57,7 @@ def move_grow_to_next_phase(conn, grow_id: int, current_phase: int) -> None:
 
 
 def read_grow(conn, grow_id: int) -> Optional[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe FROM grows WHERE grow_id = %s"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2 FROM grows WHERE grow_id = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -69,6 +74,11 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 olcc_number,
                 current_phase,
                 is_new_recipe,
+                tag_set,
+                nutrients,
+                weekly_reps,
+                pruning_date_1,
+                pruning_date_2,
             ) = found_grow
             grow = Grow(
                 grow_id,
@@ -80,6 +90,11 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 olcc_number,
                 current_phase,
                 is_new_recipe,
+                tag_set,
+                nutrients,
+                weekly_reps,
+                pruning_date_1,
+                pruning_date_2,
             )
 
         cursor.close()
@@ -87,15 +102,30 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
 
 
 def read_current_grows(conn) -> List[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe FROM grows WHERE is_finished = false"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2 FROM grows WHERE is_finished = false"
 
     with conn.cursor() as cursor:
         cursor.execute(sql)
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_grows: List[Grow] = [
-            Grow(grow_id, rid, sd, ed, fin, comp, olcc, cp, inr)
-            for (grow_id, rid, sd, ed, fin, comp, olcc, cp, inr) in all_grows
+            Grow(grow_id, rid, sd, ed, fin, comp, olcc, cp, inr, ts, nts, wr, pd1, pd2)
+            for (
+                grow_id,
+                rid,
+                sd,
+                ed,
+                fin,
+                comp,
+                olcc,
+                cp,
+                inr,
+                ts,
+                nts,
+                wr,
+                pd1,
+                pd2,
+            ) in all_grows
         ]
 
         cursor.close()
@@ -129,6 +159,11 @@ def create_grow_table(conn):
     olcc_number INT,
     current_phase INT NOT NULL,
     is_new_recipe BOOLEAN NOT NULL,
+    tag_set VARCHAR(256) NOT NULL,
+    nutrients VARCHAR(512) NOT NULL,
+    weekly_reps INT NOT NULL,
+    pruning_date_1 DATETIME,
+    pruning_date_2 DATETIME,
     PRIMARY KEY (grow_id),
     FOREIGN KEY (recipe_id)
         REFERENCES recipes(recipe_id)

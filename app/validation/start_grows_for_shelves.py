@@ -20,6 +20,12 @@ def validate_start_grows_for_shelves(
         return (False, "Not specified whether this is a new recipe")
     elif "end_date" not in message:
         return (False, "End date not specified")
+    elif "tag_set" not in message:
+        return (False, "Tag set not specified")
+    elif "nutrients" not in message:
+        return (False, "Nutrients not specified")
+    elif "weekly_reps" not in message:
+        return (False, "Weekly reps not specified")
 
     shelves: List[Shelf] = parse_shelves_from_message(message)
     if not shelves:
