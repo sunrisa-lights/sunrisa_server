@@ -52,7 +52,10 @@ def verify_grow_phases_sorted_ascending(grow_phases: List[GrowPhase]) -> bool:
 
 # Each entry in light_configurations is a JSON dict with a power_level, red_level, blue_level, and start_date entry
 def create_grow_phases_from_light_configurations(
-    light_configurations: List[Any], grow_id: int, recipe_id: int, end_date: datetime
+    light_configurations: List[Any],
+    grow_id: int,
+    recipe_id: int,
+    end_date: datetime,
 ) -> List[GrowPhase]:
     grow_phases: List[GrowPhase] = []
     grow_phase: Optional[GrowPhase] = None
@@ -66,13 +69,20 @@ def create_grow_phases_from_light_configurations(
                 grow_id, recipe_id, i, start_date, end_date, is_last_phase
             )
         else:
-            next_phase_start_date_str: str = light_configurations[i + 1]["start_date"]
+            next_phase_start_date_str: str = light_configurations[i + 1][
+                "start_date"
+            ]
             next_phase_start_date: datetime = iso8601_string_to_datetime(
                 next_phase_start_date_str
             )
             is_last_phase = False
             grow_phase = GrowPhase(
-                grow_id, recipe_id, i, start_date, next_phase_start_date, is_last_phase
+                grow_id,
+                recipe_id,
+                i,
+                start_date,
+                next_phase_start_date,
+                is_last_phase,
             )
         assert grow_phase != None
         grow_phases.append(grow_phase)

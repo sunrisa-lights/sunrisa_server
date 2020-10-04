@@ -4,7 +4,11 @@ import json
 
 class Room:
     def __init__(
-        self, room_id: int, is_on: bool, is_veg_room: bool, brightness: Optional[int]
+        self,
+        room_id: int,
+        is_on: bool,
+        is_veg_room: bool,
+        brightness: Optional[int],
     ):
         self.room_id = room_id
         self.is_on = is_on
@@ -16,7 +20,9 @@ class Room:
         if not "room_id" in room_json:
             raise Exception("Invalid")
         room_id: int = int(room_json["room_id"])
-        is_on: bool = bool(room_json["is_on"]) if "is_on" in room_json else False
+        is_on: bool = bool(
+            room_json["is_on"]
+        ) if "is_on" in room_json else False
         is_veg_room: bool = bool(
             room_json["is_veg_room"]
         ) if "is_veg_room" in room_json else False

@@ -6,7 +6,8 @@ from app.models.recipe_phase import RecipePhase
 
 def delete_recipe_phases(conn, recipe_phases: List[RecipePhase]) -> None:
     value_list: List[str] = [
-        "({}, {})".format(rp.recipe_id, rp.recipe_phase_num) for rp in recipe_phases
+        "({}, {})".format(rp.recipe_id, rp.recipe_phase_num)
+        for rp in recipe_phases
     ]
     sql = "DELETE FROM `recipe_phases` WHERE (recipe_id, recipe_phase_num) IN ({})".format(
         ",".join(value_list)

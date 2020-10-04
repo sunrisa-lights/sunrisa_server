@@ -22,6 +22,10 @@ class Grow:
         weekly_reps: int,
         pruning_date_1: Optional[datetime],
         pruning_date_2: Optional[datetime],
+        harvest_weight: Optional[float],
+        trim_weight: Optional[float],
+        dry_weight: Optional[float],
+        notes: Optional[str],
     ):
         self.grow_id = grow_id
         self.recipe_id = recipe_id
@@ -37,6 +41,10 @@ class Grow:
         self.weekly_reps = weekly_reps
         self.pruning_date_1 = pruning_date_1
         self.pruning_date_2 = pruning_date_2
+        self.harvest_weight = harvest_weight
+        self.trim_weight = trim_weight
+        self.dry_weight = dry_weight
+        self.notes = notes
         self.round_dates_to_seconds()
 
     @classmethod
@@ -96,6 +104,11 @@ class Grow:
             else None
         )
 
+        harvest_weight: Optional[float] = grow_json.get("harvest_weight")
+        trim_weight: Optional[float] = grow_json.get("trim_weight")
+        dry_weight: Optional[float] = grow_json.get("dry_weight")
+        notes: Optional[str] = grow_json.get("notes")
+
         return cls(
             grow_id,
             recipe_id,
@@ -111,13 +124,19 @@ class Grow:
             weekly_reps,
             pruning_datetime_1,
             pruning_datetime_2,
+            harvest_weight,
+            trim_weight,
+            dry_weight,
+            notes,
         )
 
     def to_json(self):
         return {
             "grow_id": self.grow_id,
             "recipe_id": self.recipe_id,
-            "start_datetime": self.start_datetime.replace(microsecond=0).isoformat(),
+            "start_datetime": self.start_datetime.replace(
+                microsecond=0
+            ).isoformat(),
             "estimated_end_datetime": self.estimated_end_datetime.replace(
                 microsecond=0
             ).isoformat(),
@@ -129,13 +148,23 @@ class Grow:
             "tag_set": self.tag_set,
             "nutrients": self.nutrients,
             "weekly_reps": self.weekly_reps,
-            "pruning_date_1": self.pruning_date_1.replace(microsecond=0).isoformat(),
-            "pruning_date_2": self.pruning_date_2.replace(microsecond=0).isoformat(),
+            "pruning_date_1": self.pruning_date_1.replace(
+                microsecond=0
+            ).isoformat(),
+            "pruning_date_2": self.pruning_date_2.replace(
+                microsecond=0
+            ).isoformat(),
+            "harvest_weight": self.harvest_weight,
+            "trim_weight": self.trim_weight,
+            "dry_weight": self.dry_weight,
+            "notes": self.notes,
         }
 
     # Removes microseconds because they're lost in json conversions
     def round_dates_to_seconds(self):
-        self.start_datetime -= timedelta(microseconds=self.start_datetime.microsecond)
+        self.start_datetime -= timedelta(
+            microseconds=self.start_datetime.microsecond
+        )
         self.estimated_end_datetime -= timedelta(
             microseconds=self.estimated_end_datetime.microsecond
         )
@@ -169,12 +198,20 @@ class Grow:
                 "tag_set": self.tag_set,
                 "nutrients": self.nutrients,
                 "weekly_reps": self.weekly_reps,
-                "pruning_date_1": self.pruning_date_1.replace(microsecond=0).isoformat()
+                "pruning_date_1": self.pruning_date_1.replace(
+                    microsecond=0
+                ).isoformat()
                 if self.pruning_date_1
                 else None,
-                "pruning_date_2": self.pruning_date_2.replace(microsecond=0).isoformat()
+                "pruning_date_2": self.pruning_date_2.replace(
+                    microsecond=0
+                ).isoformat()
                 if self.pruning_date_2
                 else None,
+                "harvest_weight": self.harvest_weight,
+                "trim_weight": self.trim_weight,
+                "dry_weight": self.dry_weight,
+                "notes": self.notes,
             }
         )
 
@@ -201,4 +238,8 @@ class Grow:
             and self.weekly_reps == other.weekly_reps
             and self.pruning_date_1 == other.pruning_date_1
             and self.pruning_date_2 == other.pruning_date_2
+            and self.harvest_weight == other.harvest_weight
+            and self.trim_weight == other.trim_weight
+            and self.dry_weight == other.dry_weight
+            and self.notes == other.notes
         )

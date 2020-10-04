@@ -31,7 +31,9 @@ def validate_start_grows_for_shelves(
     if not shelves:
         return (False, "No shelves specified")
 
-    invalid_shelves: List[Shelf] = validate_all_shelves_free(app_config, shelves)
+    invalid_shelves: List[Shelf] = validate_all_shelves_free(
+        app_config, shelves
+    )
     if invalid_shelves:
         print("Invalid shelves:", invalid_shelves)
         return (False, "Not all specified shelves are free")

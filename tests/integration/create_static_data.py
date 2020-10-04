@@ -57,7 +57,11 @@ def create_shelves(
     for i in range(num_shelves_in_rack):
         for rack_id, room_id in rack_ids_room_ids:
             shelf_dict = {
-                "shelf": {"shelf_id": i + 1, "rack_id": rack_id, "room_id": room_id}
+                "shelf": {
+                    "shelf_id": i + 1,
+                    "rack_id": rack_id,
+                    "room_id": room_id,
+                }
             }
             sio.emit("message_sent", shelf_dict)
             sio.sleep(1)

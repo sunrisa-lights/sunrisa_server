@@ -137,7 +137,9 @@ class DB:
         finally:
             db_conn.close()
 
-    def end_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+    def end_grow_phase(
+        self, grow_phase: GrowPhase, harvest_time: datetime
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             end_grow_phase(db_conn, grow_phase, harvest_time)
@@ -243,7 +245,9 @@ class DB:
 
         db_conn = self._new_connection(self.db_name)
         try:
-            grow_phases = read_grow_phases_from_multiple_grows(db_conn, grow_ids)
+            grow_phases = read_grow_phases_from_multiple_grows(
+                db_conn, grow_ids
+            )
         finally:
             db_conn.close()
         return grow_phases
@@ -283,7 +287,9 @@ class DB:
             db_conn.close()
         return recipe_phases
 
-    def read_phases_from_recipes(self, recipe_ids: List[int]) -> List[RecipePhase]:
+    def read_phases_from_recipes(
+        self, recipe_ids: List[int]
+    ) -> List[RecipePhase]:
         if not recipe_ids:
             return []
 
@@ -302,7 +308,9 @@ class DB:
 
         db_conn = self._new_connection(self.db_name)
         try:
-            recipe_phases = read_recipe_phases(db_conn, recipe_id_phase_num_pairs)
+            recipe_phases = read_recipe_phases(
+                db_conn, recipe_id_phase_num_pairs
+            )
         finally:
             db_conn.close()
         return recipe_phases
@@ -348,7 +356,9 @@ class DB:
         finally:
             db_conn.close()
 
-    def update_grow_phases_recipe_from_grow(self, grow_id: int, recipe_id: int) -> None:
+    def update_grow_phases_recipe_from_grow(
+        self, grow_id: int, recipe_id: int
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             update_grow_phases_recipe_from_grow(db_conn, grow_id, recipe_id)
@@ -363,11 +373,16 @@ class DB:
             db_conn.close()
 
     def update_grow_dates(
-        self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime
+        self,
+        grow_id: int,
+        start_datetime: datetime,
+        estimated_end_datetime: datetime,
     ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            update_grow_dates(db_conn, grow_id, start_datetime, estimated_end_datetime)
+            update_grow_dates(
+                db_conn, grow_id, start_datetime, estimated_end_datetime
+            )
         finally:
             db_conn.close()
 

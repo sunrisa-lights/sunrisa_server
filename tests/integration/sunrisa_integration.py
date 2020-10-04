@@ -38,14 +38,21 @@ def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
 
     if not flag:
         kill_server_on_assert_failure(
-            sio, False, "Timed out waiting for event for test {}".format(test_name)
+            sio,
+            False,
+            "Timed out waiting for event for test {}".format(test_name),
         )
 
 
 def _test_send_room(sio):
     # send initial room update
     room_dict = {
-        "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
+        "room": {
+            "room_id": 1,
+            "is_on": False,
+            "is_veg_room": True,
+            "brightness": 5,
+        }
     }
     sio.emit("message_sent", room_dict)
     sio.sleep(1)
@@ -72,7 +79,11 @@ def _test_send_rack(sio, room):
 
 def _test_send_shelf(sio, rack):
     shelf_dict = {
-        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id}
+        "shelf": {
+            "shelf_id": 1,
+            "rack_id": rack.rack_id,
+            "room_id": rack.room_id,
+        }
     }
     sio.emit("message_sent", shelf_dict)
     sio.sleep(1)
@@ -89,9 +100,16 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grows = [{"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}]
+    shelf_grows = [
+        {"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}
+    ]
     recipe_phases = [
-        {"start_date": start_time, "power_level": 9, "red_level": 8, "blue_level": 7}
+        {
+            "start_date": start_time,
+            "power_level": 9,
+            "red_level": 8,
+            "blue_level": 7,
+        }
     ]
 
     is_new_recipe = True
@@ -162,7 +180,9 @@ def _test_find_all_entities(
         found_racks = [Rack.from_json(r) for r in message["racks"]]
         found_shelves = [Shelf.from_json(s) for s in message["shelves"]]
         found_grows = [Grow.from_json(g) for g in message["grows"]]
-        found_grow_phases = [GrowPhase.from_json(g) for g in message["grow_phases"]]
+        found_grow_phases = [
+            GrowPhase.from_json(g) for g in message["grow_phases"]
+        ]
         found_recipes = [Recipe.from_json(r) for r in message["recipes"]]
         found_recipe_phases = [
             RecipePhase.from_json(rp) for rp in message["recipe_phases"]
@@ -170,21 +190,32 @@ def _test_find_all_entities(
 
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
-        assert collections.Counter(found_shelves) == collections.Counter(shelves)
+        assert collections.Counter(found_shelves) == collections.Counter(
+            shelves
+        )
         assert len(found_grows) > 0
         x = len(found_grows)
-        assert found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
         assert (
-            found_grows[x - 1].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == start
+        )
+        assert (
+            found_grows[x - 1].estimated_end_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == end
         )
         i = len(found_grow_phases)
         assert (
-            found_grow_phases[i - 1].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grow_phases[i - 1].phase_start_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == start
         )
         assert (
-            found_grow_phases[i - 1].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grow_phases[i - 1].phase_end_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == end
         )
         j = len(found_recipes)
@@ -216,7 +247,15 @@ def _test_create_entities(sio):
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
     )
     grow_id = _test_find_all_entities(
-        sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
+        sio,
+        rooms,
+        [rack],
+        [shelf],
+        start_time,
+        end_time,
+        p_level,
+        r_level,
+        b_level,
     )
     _test_harvest_grow(sio, grow_id)
     _test_search_recipes(sio, recipe_name)

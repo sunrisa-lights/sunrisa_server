@@ -33,7 +33,7 @@ def write_grow(conn, grow: Grow) -> Grow:
 
 
 def harvest_grow(conn, grow: Grow) -> None:
-    sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s WHERE grow_id = %s"
+    sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s, harvest_weight = %s, trim_weight = %s, dry_weight = %s, notes = %s WHERE grow_id = %s"
     cursor = conn.cursor()
     print("grow to harvest in db layer:", grow)
     cursor.execute(
@@ -44,6 +44,10 @@ def harvest_grow(conn, grow: Grow) -> None:
             grow.all_fields_complete,
             grow.olcc_number,
             grow.grow_id,
+            grow.harvest_weight,
+            grow.trim_weight,
+            grow.dry_weight,
+            grow.notes,
         ),
     )
     cursor.close()
@@ -57,7 +61,7 @@ def move_grow_to_next_phase(conn, grow_id: int, current_phase: int) -> None:
 
 
 def read_grow(conn, grow_id: int) -> Optional[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2 FROM grows WHERE grow_id = %s"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2, harvest_weight, trim_weight, dry_weight, notes FROM grows WHERE grow_id = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))
@@ -79,6 +83,10 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 weekly_reps,
                 pruning_date_1,
                 pruning_date_2,
+                harvest_weight,
+                trim_weight,
+                dry_weight,
+                notes,
             ) = found_grow
             grow = Grow(
                 grow_id,
@@ -95,6 +103,10 @@ def read_grow(conn, grow_id: int) -> Optional[Grow]:
                 weekly_reps,
                 pruning_date_1,
                 pruning_date_2,
+                harvest_weight,
+                trim_weight,
+                dry_weight,
+                notes,
             )
 
         cursor.close()
@@ -109,7 +121,26 @@ def read_current_grows(conn) -> List[Grow]:
         all_grows = cursor.fetchall()
         print("all_grows", all_grows)
         found_grows: List[Grow] = [
-            Grow(grow_id, rid, sd, ed, fin, comp, olcc, cp, inr, ts, nts, wr, pd1, pd2)
+            Grow(
+                grow_id,
+                rid,
+                sd,
+                ed,
+                fin,
+                comp,
+                olcc,
+                cp,
+                inr,
+                ts,
+                nts,
+                wr,
+                pd1,
+                pd2,
+                None,
+                None,
+                None,
+                None,
+            )
             for (
                 grow_id,
                 rid,
@@ -140,7 +171,10 @@ def update_grow_recipe(conn, grow_id: int, recipe_id: int) -> None:
 
 
 def update_grow_dates(
-    conn, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime
+    conn,
+    grow_id: int,
+    start_datetime: datetime,
+    estimated_end_datetime: datetime,
 ) -> None:
     sql = "UPDATE `grows` SET start_datetime = %s, estimated_end_datetime = %s WHERE grow_id = %s"
     cursor = conn.cursor()
@@ -164,6 +198,10 @@ def create_grow_table(conn):
     weekly_reps INT NOT NULL,
     pruning_date_1 DATETIME,
     pruning_date_2 DATETIME,
+    harvest_weight DOUBLE,
+    trim_weight DOUBLE,
+    dry_weight DOUBLE,
+    notes VARCHAR(512),
     PRIMARY KEY (grow_id),
     FOREIGN KEY (recipe_id)
         REFERENCES recipes(recipe_id)
