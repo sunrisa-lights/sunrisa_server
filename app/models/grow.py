@@ -168,7 +168,7 @@ class Grow:
                 "is_new_recipe": self.is_new_recipe,
                 "tag_set": self.tag_set,
                 "nutrients": self.nutrients,
-                "weekly_reps:": self.weekly_reps,
+                "weekly_reps": self.weekly_reps,
                 "pruning_date_1": self.pruning_date_1.replace(microsecond=0).isoformat()
                 if self.pruning_date_1
                 else None,
