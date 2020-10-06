@@ -43,11 +43,11 @@ def harvest_grow(conn, grow: Grow) -> None:
             grow.is_finished,
             grow.all_fields_complete,
             grow.olcc_number,
-            grow.grow_id,
             grow.harvest_weight,
             grow.trim_weight,
             grow.dry_weight,
             grow.notes,
+            grow.grow_id,
         ),
     )
     cursor.close()
