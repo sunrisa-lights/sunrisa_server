@@ -163,6 +163,60 @@ def read_current_grows(conn) -> List[Grow]:
         return found_grows
 
 
+def read_incomplete_grows(conn) -> List[Grow]:
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2, harvest_weight, trim_weight, dry_weight, notes FROM grows WHERE all_fields_complete = false"
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql)
+        all_grows = cursor.fetchall()
+        print("all_grows", all_grows)
+        found_grows: List[Grow] = [
+            Grow(
+                grow_id,
+                rid,
+                sd,
+                ed,
+                fin,
+                comp,
+                olcc,
+                cp,
+                inr,
+                ts,
+                nts,
+                wr,
+                pd1,
+                pd2,
+                hw,
+                tw,
+                dw,
+                notes,
+            )
+            for (
+                grow_id,
+                rid,
+                sd,
+                ed,
+                fin,
+                comp,
+                olcc,
+                cp,
+                inr,
+                ts,
+                nts,
+                wr,
+                pd1,
+                pd2,
+                hw,
+                tw,
+                dw,
+                notes,
+            ) in all_grows
+        ]
+
+        cursor.close()
+        return found_grows
+
+
 def update_grow_recipe(conn, grow_id: int, recipe_id: int) -> None:
     sql = "UPDATE `grows` SET recipe_id = %s WHERE grow_id = %s"
     cursor = conn.cursor()

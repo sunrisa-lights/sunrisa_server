@@ -711,15 +711,21 @@ def init_event_listeners(app_config, socketio):
         all_racks: List[Rack] = app_config.db.read_all_racks()
         all_shelves: List[Shelf] = app_config.db.read_all_shelves()
         all_current_grows: List[Grow] = app_config.db.read_current_grows()
+        all_incomplete_grows: List[Grow] = app_config.db.read_incomplete_grows()
 
-        recipe_ids = {
-            g.recipe_id for g in all_current_grows
-        }  # use a set comprehension since grows may have duplicate recipes
-        all_current_recipes: List[Recipe] = app_config.db.read_recipes(
-            list(recipe_ids)
+        # use set comprehensions since grows may have duplicate recipes
+        current_recipe_ids = {g.recipe_id for g in all_current_grows}
+        incomplete_recipe_ids = {g.recipe_id for g in all_incomplete_grows}
+
+        current_recipe_ids.update(incomplete_recipe_ids)
+
+        all_recipes: List[Recipe] = app_config.db.read_recipes(
+            list(current_recipe_ids)
         )
 
-        all_grow_ids = [g.grow_id for g in all_current_grows]
+        all_grow_ids = [g.grow_id for g in all_current_grows] + [
+            g.grow_id for g in all_incomplete_grows
+        ]
         all_grow_phases: List[
             GrowPhase
         ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
@@ -740,13 +746,13 @@ def init_event_listeners(app_config, socketio):
             "racks": [rck.to_json() for rck in all_racks],
             "shelves": [s.to_json() for s in all_shelves],
             "grows": [g.to_json() for g in all_current_grows],
+            "incomplete_grows": [g.to_json() for g in all_incomplete_grows],
             "grow_phases": [gp.to_json() for gp in all_grow_phases],
-            "recipes": [r.to_json() for r in all_current_recipes],
+            "recipes": [r.to_json() for r in all_recipes],
             "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
             "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
         }
 
-        app_config.logger.debug("returning entities: {}".format(entities_dict))
         print("Returning entities:", entities_dict)
         send_message_to_namespace_if_specified(
             socketio, message, "return_all_entities", entities_dict
