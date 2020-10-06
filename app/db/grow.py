@@ -164,7 +164,7 @@ def read_current_grows(conn) -> List[Grow]:
 
 
 def read_incomplete_grows(conn) -> List[Grow]:
-    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2, harvest_weight, trim_weight, dry_weight, notes FROM grows WHERE all_fields_complete = false"
+    sql = "SELECT grow_id, recipe_id, start_datetime, estimated_end_datetime, is_finished, all_fields_complete, olcc_number, current_phase, is_new_recipe, tag_set, nutrients, weekly_reps, pruning_date_1, pruning_date_2, harvest_weight, trim_weight, dry_weight, notes FROM grows WHERE is_finished = true AND all_fields_complete = false"
 
     with conn.cursor() as cursor:
         cursor.execute(sql)
