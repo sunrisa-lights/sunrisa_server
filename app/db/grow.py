@@ -32,7 +32,7 @@ def write_grow(conn, grow: Grow) -> Grow:
     return grow
 
 
-def harvest_grow(conn, grow: Grow) -> None:
+def update_grow_harvest_data(conn, grow: Grow) -> None:
     sql = "UPDATE `grows` SET estimated_end_datetime = %s, is_finished = %s, all_fields_complete = %s, olcc_number = %s, harvest_weight = %s, trim_weight = %s, dry_weight = %s, notes = %s WHERE grow_id = %s"
     cursor = conn.cursor()
     print("grow to harvest in db layer:", grow)

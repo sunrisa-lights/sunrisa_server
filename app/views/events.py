@@ -499,6 +499,57 @@ def init_event_listeners(app_config, socketio):
             },
         )
 
+    @socketio.on("update_incomplete_grow")
+    def update_incomplete_grow(message) -> None:
+        print("message:", message)
+        if "grow" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "update_incomplete_grow_response",
+                {"succeeded": False, "reason": "Grow not included"},
+            )
+            return
+
+        grow_json = message["grow"]
+        grow_id: int = int(grow_json["grow_id"])
+        grow: Optional[Grow] = app_config.db.read_grow(grow_id)
+        if not grow:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "update_incomplete_grow_response",
+                {"succeeded": False, "reason": "Grow not found"},
+            )
+            return
+
+        found_grow_json = grow.to_json()
+        # read all data sent in by user, and mark it on grow
+        for key in grow_json:
+            found_grow_json[key] = grow_json[key]
+
+        updated_grow: Grow = Grow.from_json(found_grow_json)
+
+        # harvest the grow by marking it as complete
+        harvest_datetime: datetime = datetime.utcnow()
+        updated_grow.estimated_end_datetime = harvest_datetime
+        updated_grow.is_finished = True
+        print(
+            "grow_json to harvest in update_incomplete_grow:",
+            grow_json,
+            updated_grow,
+            flush=True,
+        )
+        # end grow
+        app_config.db.update_grow_harvest_data(updated_grow)
+
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "update_incomplete_grow_response",
+            {"succeeded": True},
+        )
+
     @socketio.on("harvest_grow")
     def harvest_grow(message) -> None:
         print("message:", message)
@@ -537,7 +588,7 @@ def init_event_listeners(app_config, socketio):
 
         print("grow_json to harvest:", grow_json, flush=True)
         # end grow
-        app_config.db.harvest_grow(updated_grow)
+        app_config.db.update_grow_harvest_data(updated_grow)
 
         # read current grow phase
         current_phase: int = updated_grow.current_phase

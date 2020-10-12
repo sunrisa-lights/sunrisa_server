@@ -15,7 +15,7 @@ from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     create_grow_table,
-    harvest_grow,
+    update_grow_harvest_data,
     move_grow_to_next_phase,
     read_current_grows,
     read_grow,
@@ -147,10 +147,10 @@ class DB:
         finally:
             db_conn.close()
 
-    def harvest_grow(self, grow: Grow) -> None:
+    def update_grow_harvest_data(self, grow: Grow) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            harvest_grow(db_conn, grow)
+            update_grow_harvest_data(db_conn, grow)
         finally:
             db_conn.close()
 
