@@ -19,6 +19,7 @@ from app.db.grow import (
     move_grow_to_next_phase,
     read_current_grows,
     read_grow,
+    read_complete_grows,
     read_incomplete_grows,
     update_grow_recipe,
     update_grow_dates,
@@ -219,6 +220,14 @@ class DB:
         finally:
             db_conn.close()
         return current_grows
+
+    def read_complete_grows(self) -> List[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            complete_grows = read_complete_grows(db_conn)
+        finally:
+            db_conn.close()
+        return complete_grows
 
     def read_incomplete_grows(self) -> List[Grow]:
         db_conn = self._new_connection(self.db_name)

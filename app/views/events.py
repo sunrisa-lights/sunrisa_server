@@ -809,6 +809,49 @@ def init_event_listeners(app_config, socketio):
             socketio, message, "return_all_entities", entities_dict
         )
 
+    @socketio.on("read_complete_grows")
+    def read_complete_grows(message) -> None:
+        all_complete_grows: List[Grow] = app_config.db.read_complete_grows()
+
+        # use set comprehensions since grows may have duplicate recipes
+        current_recipe_ids = {g.recipe_id for g in all_complete_grows}
+        incomplete_recipe_ids = {g.recipe_id for g in all_complete_grows}
+
+        current_recipe_ids.update(incomplete_recipe_ids)
+
+        all_recipes: List[Recipe] = app_config.db.read_recipes(
+            list(current_recipe_ids)
+        )
+
+        all_grow_ids = [g.grow_id for g in all_complete_grows]
+
+        all_grow_phases: List[
+            GrowPhase
+        ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+
+        recipe_id_phase_num_pairs = [
+            (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
+        ]
+        all_recipe_phases: List[RecipePhase] = app_config.db.read_recipe_phases(
+            recipe_id_phase_num_pairs
+        )
+
+        all_current_shelf_grows: List[
+            ShelfGrow
+        ] = app_config.db.read_shelves_with_grows(all_grow_ids)
+
+        entities_dict = {
+            "complete_grows": [g.to_json() for g in all_complete_grows],
+            "grow_phases": [gp.to_json() for gp in all_grow_phases],
+            "recipes": [r.to_json() for r in all_recipes],
+            "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
+            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
+        }
+
+        send_message_to_namespace_if_specified(
+            socketio, message, "read_complete_grows_response", entities_dict
+        )
+
     @socketio.on("read_room")
     def read_room(message) -> None:
         room: Optional[Room] = None
