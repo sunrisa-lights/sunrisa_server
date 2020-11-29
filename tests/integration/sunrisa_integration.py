@@ -354,8 +354,14 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    # sio.connect("http://sunrisa_server:5000")
-    sio.connect("http://localhost:5000", namespaces=[INTEGRATION_NAMESPACE])
+
+    # `sunrisa_server` references the docker container, and should be uncommented for integration tests run
+    # on the CI (github workflows). Local testing can use localhost.
+    sio.connect(
+        "http://sunrisa_server:5000", namespaces=[INTEGRATION_NAMESPACE]
+    )
+    # sio.connect("http://localhost:5000", namespaces=[INTEGRATION_NAMESPACE])
+
     test_func(sio)
     sio.disconnect()
 
