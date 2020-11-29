@@ -4,12 +4,12 @@ FROM python:3.8.1-slim-buster
 # Copy the whole directory to WORKDIR
 COPY . .
 
-# Run the command inside your image filesystem.
-RUN pip install --upgrade -r tests/integration/requirements_integration.txt
+# make `wait-for-it.sh` executable (used for waiting on mysql container startup)
+RUN chmod 777 ./wait-for-it.sh && apt-get update && pip install --upgrade -r tests/integration/requirements_integration.txt
 
 # Run the specified command within the container.
  # -s disables stdout capturing
-CMD [ "py.test", "-s", "tests/integration/sunrisa_integration.py" ]
+CMD ["./wait-for-it.sh", "mysql:3306", "--", "py.test", "-s", "tests/integration/sunrisa_integration.py" ]
 
 HEALTHCHECK --interval=1m --timeout=3s \
   CMD python healthcheck.py
