@@ -159,7 +159,9 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
 def serve():
     print("Serving the application")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    job_scheduler_pb2_grpc.add_JobSchedulerServicer_to_server(JobScheduler(), server)
+    job_scheduler_pb2_grpc.add_JobSchedulerServicer_to_server(
+        JobScheduler(), server
+    )
     server.add_insecure_port("[::]:50051")
     server.start()
     server.wait_for_termination()

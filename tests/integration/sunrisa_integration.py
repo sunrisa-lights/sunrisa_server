@@ -1,4 +1,5 @@
 import collections
+import json
 import socketio
 import pymysql.cursors
 import logging
@@ -8,7 +9,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from typing import List
 
-# TODO(lwotton): Remove this hack
+# TODO(lwotton): Remove this hack. Needed to import project files.
 sys.path.append(".")
 
 from app.models.grow import Grow
@@ -19,14 +20,17 @@ from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 
+from app.views.constants import NAMESPACE
+
 expected_processed_entities = None
 
+INTEGRATION_NAMESPACE = "/test_namespace"
 
-def kill_server_on_assert_failure(sio, condition, assert_arg=""):
-    if not condition:
-        sio.disconnect()
 
-    assert condition, assert_arg
+def kill_server_on_assert_failure(sio, assert_arg=""):
+    sio.disconnect()
+
+    assert False, assert_arg
 
 
 # flag should be an empty list that is populated and has a certain length
@@ -38,16 +42,22 @@ def wait_for_event(sio, flag, length_condition, num_seconds, test_name):
 
     if not flag:
         kill_server_on_assert_failure(
-            sio, False, "Timed out waiting for event for test {}".format(test_name)
+            sio, "Timed out waiting for event for test {}".format(test_name)
         )
 
 
 def _test_send_room(sio):
     # send initial room update
     room_dict = {
-        "room": {"room_id": 1, "is_on": False, "is_veg_room": True, "brightness": 5}
+        "room": {
+            "room_id": 1,
+            "is_on": False,
+            "is_veg_room": True,
+            "brightness": 5,
+        },
+        NAMESPACE: INTEGRATION_NAMESPACE,
     }
-    sio.emit("message_sent", room_dict)
+    sio.emit("create_object", room_dict)
     sio.sleep(1)
 
     return [Room.from_json(room_dict["room"])]
@@ -62,9 +72,10 @@ def _test_send_rack(sio, room):
             "voltage": 100,
             "is_on": True,
             "is_connected": True,
-        }
+        },
+        NAMESPACE: INTEGRATION_NAMESPACE,
     }
-    sio.emit("message_sent", rack_dict)
+    sio.emit("create_object", rack_dict)
     sio.sleep(1)
 
     return Rack.from_json(rack_dict["rack"])
@@ -72,9 +83,14 @@ def _test_send_rack(sio, room):
 
 def _test_send_shelf(sio, rack):
     shelf_dict = {
-        "shelf": {"shelf_id": 1, "rack_id": rack.rack_id, "room_id": rack.room_id}
+        "shelf": {
+            "shelf_id": 1,
+            "rack_id": rack.rack_id,
+            "room_id": rack.room_id,
+        },
+        NAMESPACE: INTEGRATION_NAMESPACE,
     }
-    sio.emit("message_sent", shelf_dict)
+    sio.emit("create_object", shelf_dict)
     sio.sleep(1)
     expected = Shelf.from_json(shelf_dict["shelf"])
 
@@ -89,33 +105,52 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
     start_time = start.strftime("%Y-%m-%d %H:%M:%S")
     end_time = end.strftime("%Y-%m-%d %H:%M:%S")
 
-    shelf_grows = [{"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}]
+    shelf_grows = [
+        {"room_id": room_id, "rack_id": rack_id, "shelf_id": shelf_id}
+    ]
     recipe_phases = [
-        {"start_date": start_time, "power_level": 9, "red_level": 8, "blue_level": 7}
+        {
+            "start_date": start_time,
+            "power_level": 9,
+            "red_level": 8,
+            "blue_level": 7,
+        }
     ]
 
     is_new_recipe = True
     recipe_name = "OG Kush"
     flag = []
 
-    @sio.on("start_grows_for_shelves_succeeded")
+    @sio.on(
+        "start_grows_for_shelves_succeeded", namespace=INTEGRATION_NAMESPACE
+    )
     def start_grows_for_shelves_succeeded(message) -> None:
-        assert "succeeded" in message
-        assert message["succeeded"]
-        flag.append(True)
+        message_dict = json.loads(message)
+        success = message_dict["succeeded"]
+        if not success:
+            # kill server
+            kill_server_on_assert_failure(
+                sio,
+                "start_grows_for_shelves failed: {}".format(
+                    message_dict["reason"]
+                ),
+            )
+        else:
+            flag.append(True)
 
-    @sio.on("set_lights_for_grow")
+    @sio.on("set_lights_for_grow", namespace=INTEGRATION_NAMESPACE)
     def set_lights_for_grow(message) -> None:
-        assert "power_level" in message
-        assert "red_level" in message
-        assert "blue_level" in message
-        assert "shelves" in message
-        assert message["power_level"] == 9
-        assert message["blue_level"] == 7
-        assert message["red_level"] == 8
-        assert message["shelves"][0]["room_id"] == room_id
-        assert message["shelves"][0]["rack_id"] == rack_id
-        assert message["shelves"][0]["shelf_id"] == shelf_id
+        message_dict = json.loads(message)
+        assert "power_level" in message_dict
+        assert "red_level" in message_dict
+        assert "blue_level" in message_dict
+        assert "shelves" in message_dict
+        assert message_dict["power_level"] == 9
+        assert message_dict["blue_level"] == 7
+        assert message_dict["red_level"] == 8
+        assert message_dict["shelves"][0]["room_id"] == room_id
+        assert message_dict["shelves"][0]["rack_id"] == rack_id
+        assert message_dict["shelves"][0]["shelf_id"] == shelf_id
 
         flag.append(True)
 
@@ -125,6 +160,10 @@ def _test_send_shelf_grow(sio, room_id, rack_id, shelf_id):
         "is_new_recipe": is_new_recipe,
         "recipe_name": recipe_name,
         "end_date": end_time,
+        "tag_set": "test_tag_set",
+        "nutrients": "test_nutrients",
+        "weekly_reps": 5,
+        NAMESPACE: INTEGRATION_NAMESPACE,
     }
     sio.emit("start_grows_for_shelves", start_grows_for_shelves_dict)
     wait_for_event(sio, flag, 1, 10, "test_start_grows_for_shelves")
@@ -148,43 +187,57 @@ def _test_find_all_entities(
     flag = []
     grow = []
 
-    @sio.on("return_all_entities")
+    @sio.on("return_all_entities", namespace=INTEGRATION_NAMESPACE)
     def return_all_entities_listener(message) -> None:
-        print("Received message in entities_listener:", message)
-        assert "rooms" in message
-        assert "racks" in message
-        assert "shelves" in message
-        assert "grows" in message
-        assert "grow_phases" in message
-        assert "recipes" in message
-        assert "recipe_phases" in message
-        found_rooms = [Room.from_json(r) for r in message["rooms"]]
-        found_racks = [Rack.from_json(r) for r in message["racks"]]
-        found_shelves = [Shelf.from_json(s) for s in message["shelves"]]
-        found_grows = [Grow.from_json(g) for g in message["grows"]]
-        found_grow_phases = [GrowPhase.from_json(g) for g in message["grow_phases"]]
-        found_recipes = [Recipe.from_json(r) for r in message["recipes"]]
+        message_dict = json.loads(message)
+        print("Received message in entities_listener:", message_dict)
+        assert "rooms" in message_dict
+        assert "racks" in message_dict
+        assert "shelves" in message_dict
+        assert "grows" in message_dict
+        assert "grow_phases" in message_dict
+        assert "recipes" in message_dict
+        assert "recipe_phases" in message_dict
+        found_rooms = [Room.from_json(r) for r in message_dict["rooms"]]
+        found_racks = [Rack.from_json(r) for r in message_dict["racks"]]
+        found_shelves = [Shelf.from_json(s) for s in message_dict["shelves"]]
+        found_grows = [Grow.from_json(g) for g in message_dict["grows"]]
+        found_grow_phases = [
+            GrowPhase.from_json(g) for g in message_dict["grow_phases"]
+        ]
+        found_recipes = [Recipe.from_json(r) for r in message_dict["recipes"]]
         found_recipe_phases = [
-            RecipePhase.from_json(rp) for rp in message["recipe_phases"]
+            RecipePhase.from_json(rp) for rp in message_dict["recipe_phases"]
         ]
 
         assert collections.Counter(found_rooms) == collections.Counter(rooms)
         assert collections.Counter(found_racks) == collections.Counter(racks)
-        assert collections.Counter(found_shelves) == collections.Counter(shelves)
+        assert collections.Counter(found_shelves) == collections.Counter(
+            shelves
+        )
         assert len(found_grows) > 0
         x = len(found_grows)
-        assert found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S") == start
         assert (
-            found_grows[x - 1].estimated_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grows[x - 1].start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            == start
+        )
+        assert (
+            found_grows[x - 1].estimated_end_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == end
         )
         i = len(found_grow_phases)
         assert (
-            found_grow_phases[i - 1].phase_start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grow_phases[i - 1].phase_start_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == start
         )
         assert (
-            found_grow_phases[i - 1].phase_end_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            found_grow_phases[i - 1].phase_end_datetime.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             == end
         )
         j = len(found_recipes)
@@ -195,7 +248,7 @@ def _test_find_all_entities(
         flag.append(True)
         grow.append(found_grows[0].grow_id)
 
-    sio.emit("read_all_entities", {})
+    sio.emit("read_all_entities", {NAMESPACE: INTEGRATION_NAMESPACE})
     print("WAITING FOR IT!")
     wait_for_event(sio, flag, 1, 5, "test_find_all_entities")
     print("all entities found")
@@ -216,7 +269,15 @@ def _test_create_entities(sio):
         sio, rooms[0].room_id, rack.rack_id, shelf.shelf_id
     )
     grow_id = _test_find_all_entities(
-        sio, rooms, [rack], [shelf], start_time, end_time, p_level, r_level, b_level
+        sio,
+        rooms,
+        [rack],
+        [shelf],
+        start_time,
+        end_time,
+        p_level,
+        r_level,
+        b_level,
     )
     _test_harvest_grow(sio, grow_id)
     _test_search_recipes(sio, recipe_name)
@@ -227,12 +288,18 @@ def _test_create_entities(sio):
 def _test_search_recipes(sio, recipe_name):
     flag = []
 
-    @sio.on("search_recipes_response")
+    @sio.on("search_recipes_response", namespace=INTEGRATION_NAMESPACE)
     def search_recipe_listener(message):
-        assert message["succeeded"] == True
+        message_dict = json.loads(message)
+        assert message_dict["succeeded"] == True
         flag.append(True)
 
-    sio.emit("search_recipes", {"search_name": recipe_name[:2]})
+    search_recipes_dict = {
+        NAMESPACE: INTEGRATION_NAMESPACE,
+        "search_name": recipe_name[:2],
+    }
+
+    sio.emit("search_recipes", search_recipes_dict)
     wait_for_event(sio, flag, 1, 10, "test_search_recipes")
     print("_test_search_recipes completed")
 
@@ -240,11 +307,15 @@ def _test_search_recipes(sio, recipe_name):
 def _test_room_not_found(sio):
     flag = []
 
-    room_dict = {"room": {"room_id": 5000, "is_on": True}}
+    room_dict = {
+        "room": {"room_id": 5000, "is_on": True},
+        NAMESPACE: INTEGRATION_NAMESPACE,
+    }
 
-    @sio.on("return_room")
+    @sio.on("return_room", namespace=INTEGRATION_NAMESPACE)
     def find_room_listener(message) -> None:
-        assert message["room"] is None, "Found a nonexistent room"
+        message_dict = json.loads(message)
+        assert message_dict["room"] is None, "Found a nonexistent room"
         flag.append(True)
 
     sio.emit("read_room", room_dict)
@@ -257,14 +328,22 @@ def _test_room_not_found(sio):
 def _test_harvest_grow(sio, grow_id):
     flag = []
 
-    @sio.on("harvest_grow_response")
+    @sio.on("harvest_grow_response", namespace=INTEGRATION_NAMESPACE)
     def harvest_grow_response_listener(message):
-        assert message["succeeded"] == True
+        message_dict = json.loads(message)
+        if not message_dict["succeeded"]:
+            kill_server_on_assert_failure(sio, "test_harvest_grow")
+        else:
+            flag.append(True)
 
-        flag.append(True)
+    harvest_grow_dict = {
+        "grow": {"grow_id": grow_id},
+        NAMESPACE: INTEGRATION_NAMESPACE,
+    }
 
-    sio.emit("harvest_grow", {"grow": {"grow_id": grow_id}})
+    sio.emit("harvest_grow", harvest_grow_dict)
     wait_for_event(sio, flag, 1, 10, "test_harvest_grow")
+    print("test_harvest_grow passed")
 
 
 def _test_entities_not_found(sio):
@@ -275,8 +354,14 @@ def _test_entities_not_found(sio):
 
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
-    sio.connect("http://sunrisa_server:5000")
-    # sio.connect("http://localhost:5000")
+
+    # `sunrisa_server` references the docker container, and should be uncommented for integration tests run
+    # on the CI (github workflows). Local testing can use localhost.
+    sio.connect(
+        "http://sunrisa_server:5000", namespaces=[INTEGRATION_NAMESPACE]
+    )
+    # sio.connect("http://localhost:5000", namespaces=[INTEGRATION_NAMESPACE])
+
     test_func(sio)
     sio.disconnect()
 

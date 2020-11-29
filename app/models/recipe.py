@@ -33,5 +33,6 @@ class Recipe:
             return NotImplemented
 
         return (
-            self.recipe_id == other.recipe_id and self.recipe_name == other.recipe_name
+            self.recipe_id == other.recipe_id
+            and self.recipe_name == other.recipe_name
         )

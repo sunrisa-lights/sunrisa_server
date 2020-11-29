@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from time import mktime
+import json
 
 from typing import Any, List, Optional
 
@@ -32,22 +33,22 @@ from app.utils.recipe_phase_utils import (
     recipe_phase_exists_with_phase_number,
 )
 from app.utils.time_utils import iso8601_string_to_datetime  # type: ignore
-from app.validation.start_grows_for_shelves import validate_start_grows_for_shelves
 
-from app.utils.time_utils import iso8601_string_to_datetime
+from app.validation.start_grows_for_shelves import (
+    validate_start_grows_for_shelves,
+)
 
-from app.utils.time_utils import iso8601_string_to_datetime
-
-from app.utils.time_utils import iso8601_string_to_datetime
-
-NAMESPACE = "namespace"
+from app.views.constants import NAMESPACE
 
 
-def send_message_to_namespace_if_specified(socketio, message, event_name, event_data):
+def send_message_to_namespace_if_specified(
+    socketio, message, event_name, event_data
+):
     if NAMESPACE in message:
         message_namespace = message[NAMESPACE]
-        print("Emitting event with namespace:", message_namespace)
-        socketio.emit(event_name, event_data, namespace=message_namespace)
+        socketio.emit(
+            event_name, json.dumps(event_data), namespace=message_namespace
+        )
     else:
         socketio.emit(event_name, event_data)
 
@@ -65,12 +66,11 @@ def init_event_listeners(app_config, socketio):
     def disconnect():
         print("I'm disconnected!")
 
-    @socketio.on("message_sent")
-    def message_sent(message):
-        logging.debug("message sent:", message)
+    @socketio.on("create_object")
+    def create_object(message):
         entities_processed = []
 
-        print("message:", message)
+        print("received message:", message)
         if "room" in message:
             # a room is contained in this update
             entities_processed.append("room")
@@ -108,7 +108,10 @@ def init_event_listeners(app_config, socketio):
             app_config.db.write_shelf(shelf)
 
         send_message_to_namespace_if_specified(
-            socketio, message, "message_received", {"processed": entities_processed}
+            socketio,
+            message,
+            "create_object_success",
+            {"processed": entities_processed},
         )
 
     @socketio.on("modify_grow")
@@ -158,13 +161,18 @@ def init_event_listeners(app_config, socketio):
             )
             return
 
-        old_grow_phases: List[GrowPhase] = app_config.db.read_grow_phases(grow_id)
+        old_grow_phases: List[GrowPhase] = app_config.db.read_grow_phases(
+            grow_id
+        )
         if not old_grow_phases:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
                 "modify_grow_response",
-                {"succeeded": False, "reason": "Previous grow phases not found"},
+                {
+                    "succeeded": False,
+                    "reason": "Previous grow phases not found",
+                },
             )
             return
 
@@ -178,15 +186,18 @@ def init_event_listeners(app_config, socketio):
             )
             return
 
-        old_recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipe(
-            grow.recipe_id
-        )
+        old_recipe_phases: List[
+            RecipePhase
+        ] = app_config.db.read_phases_from_recipe(grow.recipe_id)
         if not old_recipe_phases:
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
                 "modify_grow_response",
-                {"succeeded": False, "reason": "Previous recipe phases not found"},
+                {
+                    "succeeded": False,
+                    "reason": "Previous recipe phases not found",
+                },
             )
             return
 
@@ -199,7 +210,9 @@ def init_event_listeners(app_config, socketio):
         else:
             recipe_id: int = grow.recipe_id
 
-        new_grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
+        new_grow_phases: List[
+            GrowPhase
+        ] = create_grow_phases_from_light_configurations(
             light_configurations, grow_id, recipe_id, end_date
         )
 
@@ -248,7 +261,9 @@ def init_event_listeners(app_config, socketio):
                 # the edits.
                 new_recipe_name: str = message["recipe_name"]
                 new_recipe_no_id: Recipe = Recipe(None, new_recipe_name)
-                new_recipe: Recipe = app_config.db.write_recipe(new_recipe_no_id)
+                new_recipe: Recipe = app_config.db.write_recipe(
+                    new_recipe_no_id
+                )
 
                 # update recipe phases, grow and grow phases to have the new recipe_id
                 recipe_phases: List[RecipePhase] = []
@@ -260,7 +275,9 @@ def init_event_listeners(app_config, socketio):
                     recipe_phases.append(recipe_phase)
 
                 app_config.db.write_recipe_phases(recipe_phases)
-                app_config.db.update_grow_recipe(grow.grow_id, new_recipe.recipe_id)
+                app_config.db.update_grow_recipe(
+                    grow.grow_id, new_recipe.recipe_id
+                )
                 if not grow_phase_edits_needed:
                     # grow phases never got deleted, so we can update the recipe on the grow phases.
                     # if they got deleted, will batch in the recipe phase update with the grow phase creation.
@@ -321,7 +338,9 @@ def init_event_listeners(app_config, socketio):
 
         # change the grows start and end dates if they were modified
         new_start_datetime: datetime = new_grow_phases[0].phase_start_datetime
-        new_estimated_end_datetime: datetime = new_grow_phases[-1].phase_end_datetime
+        new_estimated_end_datetime: datetime = new_grow_phases[
+            -1
+        ].phase_end_datetime
 
         if (
             grow.start_datetime != new_start_datetime
@@ -379,9 +398,9 @@ def init_event_listeners(app_config, socketio):
             )
             return
 
-        recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipe(
-            grow.recipe_id
-        )
+        recipe_phases: List[
+            RecipePhase
+        ] = app_config.db.read_phases_from_recipe(grow.recipe_id)
         if not recipe_phases:
             send_message_to_namespace_if_specified(
                 socketio,
@@ -458,9 +477,9 @@ def init_event_listeners(app_config, socketio):
             else:
                 recipe_ids.append(r.recipe_id)
 
-        recipe_phases: List[RecipePhase] = app_config.db.read_phases_from_recipes(
-            recipe_ids
-        )
+        recipe_phases: List[
+            RecipePhase
+        ] = app_config.db.read_phases_from_recipes(recipe_ids)
 
         recipes_json = [r.to_json() for r in matching_recipes]
         recipe_phases_json = [rp.to_json() for rp in recipe_phases]
@@ -474,6 +493,57 @@ def init_event_listeners(app_config, socketio):
                 "recipes": recipes_json,
                 "recipe_phases": recipe_phases_json,
             },
+        )
+
+    @socketio.on("update_incomplete_grow")
+    def update_incomplete_grow(message) -> None:
+        print("message:", message)
+        if "grow" not in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "update_incomplete_grow_response",
+                {"succeeded": False, "reason": "Grow not included"},
+            )
+            return
+
+        grow_json = message["grow"]
+        grow_id: int = int(grow_json["grow_id"])
+        grow: Optional[Grow] = app_config.db.read_grow(grow_id)
+        if not grow:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "update_incomplete_grow_response",
+                {"succeeded": False, "reason": "Grow not found"},
+            )
+            return
+
+        found_grow_json = grow.to_json()
+        # read all data sent in by user, and mark it on grow
+        for key in grow_json:
+            found_grow_json[key] = grow_json[key]
+
+        updated_grow: Grow = Grow.from_json(found_grow_json)
+
+        # harvest the grow by marking it as complete
+        harvest_datetime: datetime = datetime.utcnow()
+        updated_grow.estimated_end_datetime = harvest_datetime
+        updated_grow.is_finished = True
+        print(
+            "grow_json to harvest in update_incomplete_grow:",
+            grow_json,
+            updated_grow,
+            flush=True,
+        )
+        # end grow
+        app_config.db.update_grow_harvest_data(updated_grow)
+
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "update_incomplete_grow_response",
+            {"succeeded": True},
         )
 
     @socketio.on("harvest_grow")
@@ -514,7 +584,7 @@ def init_event_listeners(app_config, socketio):
 
         print("grow_json to harvest:", grow_json, flush=True)
         # end grow
-        app_config.db.harvest_grow(updated_grow)
+        app_config.db.update_grow_harvest_data(updated_grow)
 
         # read current grow phase
         current_phase: int = updated_grow.current_phase
@@ -528,7 +598,9 @@ def init_event_listeners(app_config, socketio):
                 "harvest_grow_response",
                 {
                     "succeeded": False,
-                    "reason": "Current grow phase {} not found".format(current_phase),
+                    "reason": "Current grow phase {} not found".format(
+                        current_phase
+                    ),
                 },
             )
             return
@@ -550,7 +622,9 @@ def init_event_listeners(app_config, socketio):
             app_config, message
         )
         print(
-            "Start_grows_for_shelves validation:", validation_succeeded, failure_reason
+            "Start_grows_for_shelves validation:",
+            validation_succeeded,
+            failure_reason,
         )
         if not validation_succeeded:
             send_message_to_namespace_if_specified(
@@ -569,7 +643,9 @@ def init_event_listeners(app_config, socketio):
         end_date: Optional[datetime] = None
         if is_new_recipe:
             # create the recipe and the recipe phases before creating the grow
-            recipe_name = message["recipe_name"] if "recipe_name" in message else None
+            recipe_name = (
+                message["recipe_name"] if "recipe_name" in message else None
+            )
             recipe_no_id: Recipe = Recipe(None, recipe_name)
             recipe: Recipe = app_config.db.write_recipe(recipe_no_id)
             recipe_id = recipe.recipe_id
@@ -599,6 +675,16 @@ def init_event_listeners(app_config, socketio):
         )
 
         current_phase: int = 0
+        tag_set: str = message["tag_set"]
+        nutrients: str = message["nutrients"]
+        weekly_reps: int = message["weekly_reps"]
+        pruning_date_1: Optional[datetime] = iso8601_string_to_datetime(
+            message["pruning_date_1"]
+        ) if message.get("pruning_date_1") else None
+        pruning_date_2: Optional[datetime] = iso8601_string_to_datetime(
+            message["pruning_date_2"]
+        ) if message.get("pruning_date_2") else None
+
         grow_without_id: Grow = Grow(
             None,
             recipe_id,
@@ -609,6 +695,15 @@ def init_event_listeners(app_config, socketio):
             None,
             current_phase,
             is_new_recipe,
+            tag_set,
+            nutrients,
+            weekly_reps,
+            pruning_date_1,
+            pruning_date_2,
+            None,
+            None,
+            None,
+            None,
         )
 
         grow: Grow = app_config.db.write_grow(grow_without_id)
@@ -616,7 +711,9 @@ def init_event_listeners(app_config, socketio):
         light_configurations = message["grow_phases"]
         end_date_str = message["end_date"]
         end_date = iso8601_string_to_datetime(end_date_str)
-        grow_phases: List[GrowPhase] = create_grow_phases_from_light_configurations(
+        grow_phases: List[
+            GrowPhase
+        ] = create_grow_phases_from_light_configurations(
             light_configurations, grow.grow_id, recipe_id, end_date
         )
 
@@ -661,13 +758,21 @@ def init_event_listeners(app_config, socketio):
         all_racks: List[Rack] = app_config.db.read_all_racks()
         all_shelves: List[Shelf] = app_config.db.read_all_shelves()
         all_current_grows: List[Grow] = app_config.db.read_current_grows()
+        all_incomplete_grows: List[Grow] = app_config.db.read_incomplete_grows()
 
-        recipe_ids = {
-            g.recipe_id for g in all_current_grows
-        }  # use a set comprehension since grows may have duplicate recipes
-        all_current_recipes: List[Recipe] = app_config.db.read_recipes(list(recipe_ids))
+        # use set comprehensions since grows may have duplicate recipes
+        current_recipe_ids = {g.recipe_id for g in all_current_grows}
+        incomplete_recipe_ids = {g.recipe_id for g in all_incomplete_grows}
 
-        all_grow_ids = [g.grow_id for g in all_current_grows]
+        current_recipe_ids.update(incomplete_recipe_ids)
+
+        all_recipes: List[Recipe] = app_config.db.read_recipes(
+            list(current_recipe_ids)
+        )
+
+        all_grow_ids = [g.grow_id for g in all_current_grows] + [
+            g.grow_id for g in all_incomplete_grows
+        ]
         all_grow_phases: List[
             GrowPhase
         ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
@@ -688,16 +793,59 @@ def init_event_listeners(app_config, socketio):
             "racks": [rck.to_json() for rck in all_racks],
             "shelves": [s.to_json() for s in all_shelves],
             "grows": [g.to_json() for g in all_current_grows],
+            "incomplete_grows": [g.to_json() for g in all_incomplete_grows],
             "grow_phases": [gp.to_json() for gp in all_grow_phases],
-            "recipes": [r.to_json() for r in all_current_recipes],
+            "recipes": [r.to_json() for r in all_recipes],
             "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
             "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
         }
 
-        app_config.logger.debug("returning entities: {}".format(entities_dict))
         print("Returning entities:", entities_dict)
         send_message_to_namespace_if_specified(
             socketio, message, "return_all_entities", entities_dict
+        )
+
+    @socketio.on("read_complete_grows")
+    def read_complete_grows(message) -> None:
+        all_complete_grows: List[Grow] = app_config.db.read_complete_grows()
+
+        # use set comprehensions since grows may have duplicate recipes
+        current_recipe_ids = {g.recipe_id for g in all_complete_grows}
+        incomplete_recipe_ids = {g.recipe_id for g in all_complete_grows}
+
+        current_recipe_ids.update(incomplete_recipe_ids)
+
+        all_recipes: List[Recipe] = app_config.db.read_recipes(
+            list(current_recipe_ids)
+        )
+
+        all_grow_ids = [g.grow_id for g in all_complete_grows]
+
+        all_grow_phases: List[
+            GrowPhase
+        ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+
+        recipe_id_phase_num_pairs = [
+            (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
+        ]
+        all_recipe_phases: List[RecipePhase] = app_config.db.read_recipe_phases(
+            recipe_id_phase_num_pairs
+        )
+
+        all_current_shelf_grows: List[
+            ShelfGrow
+        ] = app_config.db.read_shelves_with_grows(all_grow_ids)
+
+        entities_dict = {
+            "complete_grows": [g.to_json() for g in all_complete_grows],
+            "grow_phases": [gp.to_json() for gp in all_grow_phases],
+            "recipes": [r.to_json() for r in all_recipes],
+            "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
+            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
+        }
+
+        send_message_to_namespace_if_specified(
+            socketio, message, "read_complete_grows_response", entities_dict
         )
 
     @socketio.on("read_room")
@@ -712,5 +860,8 @@ def init_event_listeners(app_config, socketio):
 
         print("found_room:", room)
         send_message_to_namespace_if_specified(
-            socketio, message, "return_room", {"room": room.to_json() if room else None}
+            socketio,
+            message,
+            "return_room",
+            {"room": room.to_json() if room else None},
         )

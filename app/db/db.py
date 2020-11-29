@@ -15,10 +15,12 @@ from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
 from app.db.grow import (
     create_grow_table,
-    harvest_grow,
+    update_grow_harvest_data,
     move_grow_to_next_phase,
     read_current_grows,
     read_grow,
+    read_complete_grows,
+    read_incomplete_grows,
     update_grow_recipe,
     update_grow_dates,
     write_grow,
@@ -137,17 +139,19 @@ class DB:
         finally:
             db_conn.close()
 
-    def end_grow_phase(self, grow_phase: GrowPhase, harvest_time: datetime) -> None:
+    def end_grow_phase(
+        self, grow_phase: GrowPhase, harvest_time: datetime
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             end_grow_phase(db_conn, grow_phase, harvest_time)
         finally:
             db_conn.close()
 
-    def harvest_grow(self, grow: Grow) -> None:
+    def update_grow_harvest_data(self, grow: Grow) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            harvest_grow(db_conn, grow)
+            update_grow_harvest_data(db_conn, grow)
         finally:
             db_conn.close()
 
@@ -217,6 +221,22 @@ class DB:
             db_conn.close()
         return current_grows
 
+    def read_complete_grows(self) -> List[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            complete_grows = read_complete_grows(db_conn)
+        finally:
+            db_conn.close()
+        return complete_grows
+
+    def read_incomplete_grows(self) -> List[Grow]:
+        db_conn = self._new_connection(self.db_name)
+        try:
+            incomplete_grows = read_incomplete_grows(db_conn)
+        finally:
+            db_conn.close()
+        return incomplete_grows
+
     def read_grow_phase(
         self, grow_id: int, recipe_phase_num: int
     ) -> Optional[GrowPhase]:
@@ -243,7 +263,9 @@ class DB:
 
         db_conn = self._new_connection(self.db_name)
         try:
-            grow_phases = read_grow_phases_from_multiple_grows(db_conn, grow_ids)
+            grow_phases = read_grow_phases_from_multiple_grows(
+                db_conn, grow_ids
+            )
         finally:
             db_conn.close()
         return grow_phases
@@ -283,7 +305,9 @@ class DB:
             db_conn.close()
         return recipe_phases
 
-    def read_phases_from_recipes(self, recipe_ids: List[int]) -> List[RecipePhase]:
+    def read_phases_from_recipes(
+        self, recipe_ids: List[int]
+    ) -> List[RecipePhase]:
         if not recipe_ids:
             return []
 
@@ -302,7 +326,9 @@ class DB:
 
         db_conn = self._new_connection(self.db_name)
         try:
-            recipe_phases = read_recipe_phases(db_conn, recipe_id_phase_num_pairs)
+            recipe_phases = read_recipe_phases(
+                db_conn, recipe_id_phase_num_pairs
+            )
         finally:
             db_conn.close()
         return recipe_phases
@@ -348,7 +374,9 @@ class DB:
         finally:
             db_conn.close()
 
-    def update_grow_phases_recipe_from_grow(self, grow_id: int, recipe_id: int) -> None:
+    def update_grow_phases_recipe_from_grow(
+        self, grow_id: int, recipe_id: int
+    ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
             update_grow_phases_recipe_from_grow(db_conn, grow_id, recipe_id)
@@ -363,11 +391,16 @@ class DB:
             db_conn.close()
 
     def update_grow_dates(
-        self, grow_id: int, start_datetime: datetime, estimated_end_datetime: datetime
+        self,
+        grow_id: int,
+        start_datetime: datetime,
+        estimated_end_datetime: datetime,
     ) -> None:
         db_conn = self._new_connection(self.db_name)
         try:
-            update_grow_dates(db_conn, grow_id, start_datetime, estimated_end_datetime)
+            update_grow_dates(
+                db_conn, grow_id, start_datetime, estimated_end_datetime
+            )
         finally:
             db_conn.close()
 

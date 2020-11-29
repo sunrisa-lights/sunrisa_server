@@ -43,7 +43,9 @@ def old_new_recipe_phases_diff(
 
 # This method verifies that the lists are sorted in ascending order by recipe phase number,
 # and each recipe phase number is 1 greater than the previous.
-def verify_recipe_phases_sorted_ascending(recipe_phases: List[RecipePhase]) -> bool:
+def verify_recipe_phases_sorted_ascending(
+    recipe_phases: List[RecipePhase]
+) -> bool:
     for i in range(len(recipe_phases)):
         if i != recipe_phases[i].recipe_phase_num:
             return False
@@ -77,7 +79,12 @@ def create_recipe_phases_from_light_configurations(
         blue_level: int = light_config["blue_level"]
 
         recipe_phase: RecipePhase = RecipePhase(
-            recipe_id, recipe_phase_num, num_hours, power_level, red_level, blue_level
+            recipe_id,
+            recipe_phase_num,
+            num_hours,
+            power_level,
+            red_level,
+            blue_level,
         )
         recipe_phases.append(recipe_phase)
 

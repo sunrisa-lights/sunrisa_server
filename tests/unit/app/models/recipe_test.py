@@ -17,7 +17,10 @@ def test_create_recipe_from_json():
 
 def test_to_json():
     recipe = Recipe(1, "OG Blue Dream")
-    assert recipe.to_json() == {"recipe_id": 1, "recipe_name": recipe.recipe_name}
+    assert recipe.to_json() == {
+        "recipe_id": 1,
+        "recipe_name": recipe.recipe_name,
+    }
 
 
 def test__hash__():

@@ -76,7 +76,9 @@ def schedule_next_phase_if_needed(
             next_grow_phase.recipe_id, next_grow_phase.recipe_phase_num
         )
 
-        client_schedule_job(shelf_grows, grow_phase, power_level, red_level, blue_level)
+        client_schedule_job(
+            shelf_grows, grow_phase, power_level, red_level, blue_level
+        )
 
         # update `current_phase` attribute of Grow object now that we've moved to the next phase
         app_config.db.move_grow_to_next_phase(
@@ -175,11 +177,19 @@ def client_reschedule_job(
     )
 
     if not shelf_grows:
-        raise Exception("No shelf grows found for grow:", old_grow_phase.grow_id)
+        raise Exception(
+            "No shelf grows found for grow:", old_grow_phase.grow_id
+        )
 
-    (power_level, red_level, blue_level) = app_config.db.read_lights_from_recipe_phase(
+    (
+        power_level,
+        red_level,
+        blue_level,
+    ) = app_config.db.read_lights_from_recipe_phase(
         new_grow_phase.recipe_id, new_grow_phase.recipe_phase_num
     )
 
     print("Rescheduling grow phase job:", new_grow_phase)
-    client_schedule_job(shelf_grows, new_grow_phase, power_level, red_level, blue_level)
+    client_schedule_job(
+        shelf_grows, new_grow_phase, power_level, red_level, blue_level
+    )

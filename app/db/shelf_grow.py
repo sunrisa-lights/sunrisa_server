@@ -35,9 +35,7 @@ def write_shelf_grows(conn, shelf_grows: List[ShelfGrow]) -> None:
 
 
 def read_shelves_with_grow(conn, grow_id: int) -> List[ShelfGrow]:
-    sql = (
-        "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id = %s"
-    )
+    sql = "SELECT grow_id, room_id, rack_id, shelf_id FROM shelf_grows WHERE grow_id = %s"
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (grow_id))

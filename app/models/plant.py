@@ -17,11 +17,16 @@ class Plant:
         return cls(olcc_number, shelf_id)
 
     def __str__(self):
-        return json.dumps({"olcc_number": self.olcc_number, "shelf_id": self.shelf_id})
+        return json.dumps(
+            {"olcc_number": self.olcc_number, "shelf_id": self.shelf_id}
+        )
 
     def __eq__(self, other):
         if not isinstance(other, Plant):
             # don't attempt to compare against unrelated types
             return NotImplemented
 
-        return self.olcc_number == other.olcc_number and self.shelf_id == other.shelf_id
+        return (
+            self.olcc_number == other.olcc_number
+            and self.shelf_id == other.shelf_id
+        )
