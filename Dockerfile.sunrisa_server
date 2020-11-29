@@ -14,5 +14,5 @@ RUN chmod 777 ./wait-for-it.sh && apt-get update && pip install --upgrade -r req
 # Times out after 10 seconds. Will fail if mysql has not properly started.
 CMD ["./wait-for-it.sh", "mysql:3306", "--", "python",  "-u", "sunrisa.py"]
 
-HEALTHCHECK --interval=5m --timeout=3s \
+HEALTHCHECK --interval=1m --timeout=3s \
   CMD python healthcheck.py

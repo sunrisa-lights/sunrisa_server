@@ -3,7 +3,7 @@ version: "3.7"
 services:
   sut:
     depends_on:
-      - sunrisa_job_scheduler
+      - sunrisa_server
     build:
       context: "."
       dockerfile: "Dockerfile.integration"
