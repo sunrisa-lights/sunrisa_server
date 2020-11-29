@@ -68,7 +68,7 @@ class Grow:
         recipe_id: int = int(grow_json["recipe_id"])
         is_finished: bool = bool(grow_json["is_finished"])
         all_fields_complete: bool = bool(grow_json["all_fields_complete"])
-        olcc_number: int = int(grow_json["olcc_number"])
+        olcc_number: Optional[int] = grow_json.get("olcc_number")
         current_phase: int = int(grow_json["current_phase"])
         is_new_recipe: bool = bool(grow_json["is_new_recipe"])
         tag_set: str = str(grow_json["tag_set"])
@@ -150,10 +150,14 @@ class Grow:
             "weekly_reps": self.weekly_reps,
             "pruning_date_1": self.pruning_date_1.replace(
                 microsecond=0
-            ).isoformat(),
+            ).isoformat()
+            if self.pruning_date_1
+            else None,
             "pruning_date_2": self.pruning_date_2.replace(
                 microsecond=0
-            ).isoformat(),
+            ).isoformat()
+            if self.pruning_date_2
+            else None,
             "harvest_weight": self.harvest_weight,
             "trim_weight": self.trim_weight,
             "dry_weight": self.dry_weight,

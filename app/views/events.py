@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from time import mktime
+import json
 
 from typing import Any, List, Optional
 
@@ -32,17 +33,12 @@ from app.utils.recipe_phase_utils import (
     recipe_phase_exists_with_phase_number,
 )
 from app.utils.time_utils import iso8601_string_to_datetime  # type: ignore
+
 from app.validation.start_grows_for_shelves import (
     validate_start_grows_for_shelves,
 )
 
-from app.utils.time_utils import iso8601_string_to_datetime
-
-from app.utils.time_utils import iso8601_string_to_datetime
-
-from app.utils.time_utils import iso8601_string_to_datetime
-
-NAMESPACE = "namespace"
+from app.views.constants import NAMESPACE
 
 
 def send_message_to_namespace_if_specified(
@@ -50,8 +46,9 @@ def send_message_to_namespace_if_specified(
 ):
     if NAMESPACE in message:
         message_namespace = message[NAMESPACE]
-        print("Emitting event with namespace:", message_namespace)
-        socketio.emit(event_name, event_data, namespace=message_namespace)
+        socketio.emit(
+            event_name, json.dumps(event_data), namespace=message_namespace
+        )
     else:
         socketio.emit(event_name, event_data)
 
@@ -69,12 +66,11 @@ def init_event_listeners(app_config, socketio):
     def disconnect():
         print("I'm disconnected!")
 
-    @socketio.on("message_sent")
-    def message_sent(message):
-        logging.debug("message sent:", message)
+    @socketio.on("create_object")
+    def create_object(message):
         entities_processed = []
 
-        print("message:", message)
+        print("received message:", message)
         if "room" in message:
             # a room is contained in this update
             entities_processed.append("room")
@@ -114,7 +110,7 @@ def init_event_listeners(app_config, socketio):
         send_message_to_namespace_if_specified(
             socketio,
             message,
-            "message_received",
+            "create_object_success",
             {"processed": entities_processed},
         )
 

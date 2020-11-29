@@ -22,7 +22,7 @@ def create_rooms(sio, num_rooms: int) -> List[int]:
                 "brightness": 0,
             }
         }
-        sio.emit("message_sent", room_dict)
+        sio.emit("create_object", room_dict)
         sio.sleep(1)
         room_ids.append(i + 1)
 
@@ -44,7 +44,7 @@ def create_racks(
                     "is_connected": True,
                 }
             }
-            sio.emit("message_sent", rack_dict)
+            sio.emit("create_object", rack_dict)
             sio.sleep(1)
             rack_ids_room_ids.append((i + 1, room_id))
 
@@ -63,7 +63,7 @@ def create_shelves(
                     "room_id": room_id,
                 }
             }
-            sio.emit("message_sent", shelf_dict)
+            sio.emit("create_object", shelf_dict)
             sio.sleep(1)
 
 

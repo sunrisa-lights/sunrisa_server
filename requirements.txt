@@ -14,6 +14,8 @@ filelock==3.0.12
 Flask==1.1.1
 Flask-SocketIO==4.2.1
 greenlet==0.4.15
+grpcio==1.30.0
+grpcio-tools==1.30.0
 gunicorn==20.0.4
 identify==1.4.27
 idna==2.9
