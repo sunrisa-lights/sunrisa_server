@@ -29,22 +29,6 @@ def write_room(conn, room: Room) -> None:
     print("WROTE ROOM", room)
 
 
-def read_room(conn, room_id: int) -> Optional[Room]:
-    sql = "SELECT room_id, is_on, is_veg_room, brightness FROM rooms WHERE room_id=%s"
-    with conn.cursor() as cursor:
-        cursor.execute(sql, (room_id))
-        found_room_data = cursor.fetchone()
-        found_room: Optional[Room] = None
-        if (
-            found_room_data is not None
-        ):  # if found_room_data is None, room was not found
-            rid, is_on, is_veg, brightness = found_room_data
-            found_room = Room(rid, bool(is_on), bool(is_veg), brightness)
-
-        cursor.close()
-        return found_room
-
-
 def read_all_rooms(conn) -> List[Room]:
     sql = "SELECT room_id, is_on, is_veg_room, brightness FROM rooms"
     with conn.cursor() as cursor:

@@ -88,7 +88,6 @@ def create_recipe_phases_from_light_configurations(
         )
         recipe_phases.append(recipe_phase)
 
-    print("recipe_phases:", recipe_phases)
     return recipe_phases
 
 

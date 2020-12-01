@@ -37,13 +37,8 @@ from app.db.grow_phase import (
     write_grow_phases,
 )
 from app.db.plant import create_plant_table, write_plant
-from app.db.room import create_room_table, read_all_rooms, read_room, write_room
-from app.db.rack import (
-    create_rack_table,
-    write_rack,
-    read_all_racks,
-    read_racks_in_room,
-)
+from app.db.room import create_room_table, read_all_rooms, write_room
+from app.db.rack import create_rack_table, write_rack, read_all_racks
 from app.db.recipe import (
     create_recipe_table,
     read_recipe,
@@ -92,7 +87,18 @@ class DB:
 
         return conn
 
-    def create_db(self, conn, db_name: str) -> None:
+    def _new_transaction(self, db_name) -> pymysql.connections.Connection:
+        conn = pymysql.connect(host="db", user="root", password="root")
+        conn.autocommit(False)
+
+        use_db_sql = "use {}".format(db_name)
+        conn.cursor().execute(use_db_sql)
+
+        return conn
+
+    def create_db(
+        self, conn: pymysql.connections.Connection, db_name: str
+    ) -> None:
         conn = pymysql.connect(host="db", user="root", password="root")
         conn.autocommit(True)
 
@@ -105,7 +111,7 @@ class DB:
             conn.close()
 
     def initialize_tables(self) -> None:
-        db_conn = self._new_connection(self.db_name)
+        db_conn = self._new_transaction(self.db_name)
         try:
             create_room_table(db_conn)
             create_rack_table(db_conn)
@@ -116,8 +122,12 @@ class DB:
             create_grow_table(db_conn)
             create_grow_phase_table(db_conn)
             create_shelf_grow_table(db_conn)
+
+            # if creating all tables was successful, commit the transaction
+            db_conn.commit()
         except Exception as e:
-            print("Error initializing tables", e)
+            print("Error initializing tables", str(e))
+            db_conn.rollback()
             raise
         finally:
             db_conn.close()
@@ -196,22 +206,6 @@ class DB:
         finally:
             db_conn.close()
         return grow
-
-    def read_room(self, room_id: int) -> Optional[Room]:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            room = read_room(db_conn, room_id)
-        finally:
-            db_conn.close()
-        return room
-
-    def read_racks_in_room(self, room_id: int) -> List[Rack]:
-        db_conn = self._new_connection(self.db_name)
-        try:
-            racks = read_racks_in_room(db_conn, room_id)
-        finally:
-            db_conn.close()
-        return racks
 
     def read_current_grows(self) -> List[Grow]:
         db_conn = self._new_connection(self.db_name)
@@ -334,15 +328,25 @@ class DB:
         return recipe_phases
 
     def read_lights_from_recipe_phase(
-        self, recipe_id: int, recipe_phase_num: int
+        self,
+        db_conn: pymysql.connections.Connection,
+        recipe_id: int,
+        recipe_phase_num: int,
     ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
-        db_conn = self._new_connection(self.db_name)
+
         try:
             power_level, red_level, blue_level = read_lights_from_recipe_phase(
                 db_conn, recipe_id, recipe_phase_num
             )
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print(
+                "Error reading lights from recipe phase:",
+                recipe_id,
+                recipe_phase_num,
+                str(e),
+            )
+            raise
+
         return power_level, red_level, blue_level
 
     def read_shelves_with_grow(self, grow_id: int) -> List[ShelfGrow]:
@@ -421,24 +425,30 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_grow(self, grow: Grow) -> Grow:
-        db_conn = self._new_connection(self.db_name)
+    def write_grow(
+        self, db_conn: pymysql.connections.Connection, grow: Grow
+    ) -> Grow:
         try:
             grow = write_grow(db_conn, grow)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing grow:", grow, str(e))
+            raise
 
         return grow
 
-    def write_grow_phases(self, grow_phases: List[GrowPhase]) -> None:
+    def write_grow_phases(
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_phases: List[GrowPhase],
+    ) -> None:
         if not grow_phases:
             return
 
-        db_conn = self._new_connection(self.db_name)
         try:
             write_grow_phases(db_conn, grow_phases)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing grow phases:", grow_phases, str(e))
+            raise
 
     def write_room(self, room: Room) -> None:
         db_conn = self._new_connection(self.db_name)
@@ -454,24 +464,30 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_recipe(self, recipe: Recipe) -> Recipe:
-        db_conn = self._new_connection(self.db_name)
+    def write_recipe(
+        self, db_conn: pymysql.connections.Connection, recipe: Recipe
+    ) -> Recipe:
         try:
             recipe = write_recipe(db_conn, recipe)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing recipe:", recipe, str(e))
+            raise
 
         return recipe
 
-    def write_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+    def write_recipe_phases(
+        self,
+        db_conn: pymysql.connections.Connection,
+        recipe_phases: List[RecipePhase],
+    ) -> None:
         if not recipe_phases:
             return
 
-        db_conn = self._new_connection(self.db_name)
         try:
             write_recipe_phases(db_conn, recipe_phases)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing recipe phases:", recipe_phases, str(e))
+            raise
 
     def write_shelf(self, shelf: Shelf) -> None:
         db_conn = self._new_connection(self.db_name)
@@ -480,15 +496,19 @@ class DB:
         finally:
             db_conn.close()
 
-    def write_shelf_grows(self, shelf_grows: List[ShelfGrow]) -> None:
+    def write_shelf_grows(
+        self,
+        db_conn: pymysql.connections.Connection,
+        shelf_grows: List[ShelfGrow],
+    ) -> None:
         if not shelf_grows:
             return
 
-        db_conn = self._new_connection(self.db_name)
         try:
             write_shelf_grows(db_conn, shelf_grows)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing shelf grows:", shelf_grows, str(e))
+            raise
 
     def write_plant(self, plant: Plant) -> None:
         db_conn = self._new_connection(self.db_name)

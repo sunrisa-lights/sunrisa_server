@@ -617,139 +617,171 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("start_grows_for_shelves")
     def start_grows_for_shelves(message) -> None:
-        print("message:", message)
-        validation_succeeded, failure_reason = validate_start_grows_for_shelves(
-            app_config, message
-        )
-        print(
-            "Start_grows_for_shelves validation:",
-            validation_succeeded,
-            failure_reason,
-        )
-        if not validation_succeeded:
+        try:
+            validation_succeeded, failure_reason = validate_start_grows_for_shelves(
+                app_config, message
+            )
+            print(
+                "Start_grows_for_shelves validation:",
+                validation_succeeded,
+                failure_reason,
+            )
+            if not validation_succeeded:
+                send_message_to_namespace_if_specified(
+                    socketio,
+                    message,
+                    "start_grows_for_shelves_succeeded",
+                    {"succeeded": False, "reason": failure_reason},
+                )
+                print("Failed validation!")
+                return
+
+            db_conn = app_config.db._new_transaction(app_config.DB_NAME)
+            is_new_recipe: bool = bool(message["is_new_recipe"])
+            recipe_id: Optional[int] = None
+            end_date_str: Optional[str] = None
+            end_date: Optional[datetime] = None
+            if is_new_recipe:
+                # create the recipe and the recipe phases before creating the grow
+                recipe_name = (
+                    message["recipe_name"] if "recipe_name" in message else None
+                )
+                recipe_no_id: Recipe = Recipe(None, recipe_name)
+                recipe: Recipe = app_config.db.write_recipe(
+                    db_conn, recipe_no_id
+                )
+                recipe_id = recipe.recipe_id
+
+                light_configurations: List[Any] = message["grow_phases"]
+                end_date_str = message["end_date"]
+                end_date = iso8601_string_to_datetime(end_date_str)
+
+                recipe_phases: List[
+                    RecipePhase
+                ] = create_recipe_phases_from_light_configurations(
+                    light_configurations, recipe_id, end_date
+                )
+                print("recipe_phases:", recipe_phases)
+                # write the recipe phases to database
+                app_config.db.write_recipe_phases(db_conn, recipe_phases)
+
+            else:
+                recipe_id = message["template_recipe_id"]
+
+            # create the grow first so we can read the grow_id
+            grow_start_date: datetime = iso8601_string_to_datetime(
+                message["grow_phases"][0]["start_date"]
+            )
+            grow_estimated_end_date: datetime = iso8601_string_to_datetime(
+                message["end_date"]
+            )
+
+            current_phase: int = 0
+            tag_set: str = message["tag_set"]
+            nutrients: str = message["nutrients"]
+            weekly_reps: int = message["weekly_reps"]
+            pruning_date_1: Optional[datetime] = iso8601_string_to_datetime(
+                message["pruning_date_1"]
+            ) if message.get("pruning_date_1") else None
+            pruning_date_2: Optional[datetime] = iso8601_string_to_datetime(
+                message["pruning_date_2"]
+            ) if message.get("pruning_date_2") else None
+
+            grow_without_id: Grow = Grow(
+                None,
+                recipe_id,
+                grow_start_date,
+                grow_estimated_end_date,
+                False,
+                False,
+                None,
+                current_phase,
+                is_new_recipe,
+                tag_set,
+                nutrients,
+                weekly_reps,
+                pruning_date_1,
+                pruning_date_2,
+                None,
+                None,
+                None,
+                None,
+            )
+
+            grow: Grow = app_config.db.write_grow(db_conn, grow_without_id)
+
+            light_configurations = message["grow_phases"]
+            end_date_str = message["end_date"]
+            end_date = iso8601_string_to_datetime(end_date_str)
+            grow_phases: List[
+                GrowPhase
+            ] = create_grow_phases_from_light_configurations(
+                light_configurations, grow.grow_id, recipe_id, end_date
+            )
+
+            shelf_grows: List[ShelfGrow] = []
+            for shelf_data in message["shelves"]:
+                shelf_data["grow_id"] = grow.grow_id
+                shelf_grow = ShelfGrow.from_json(shelf_data)
+                shelf_grows.append(shelf_grow)
+
+            # only schedule 1st grow phase, but write all grow phases to DB
+            first_grow_phase: GrowPhase = grow_phases[0]
+            (
+                power_level,
+                red_level,
+                blue_level,
+            ) = app_config.db.read_lights_from_recipe_phase(
+                db_conn,
+                first_grow_phase.recipe_id,
+                first_grow_phase.recipe_phase_num,
+            )
+
+            # enqueue the job to the job scheduler
+            client_schedule_job(
+                shelf_grows,
+                first_grow_phase,
+                power_level,
+                red_level,
+                blue_level,
+            )
+
+            # write grow phases and shelf grows to db
+            app_config.db.write_grow_phases(db_conn, grow_phases)
+            app_config.db.write_shelf_grows(db_conn, shelf_grows)
+
+            print("start_grow_for_shelf succeeded!")
+
+            # commit the transaction
+            db_conn.commit()
+
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
                 "start_grows_for_shelves_succeeded",
-                {"succeeded": False, "reason": failure_reason},
+                {"succeeded": True, "grow": grow.to_json()},
             )
-            print("Failed validation!")
-            return
-
-        is_new_recipe: bool = bool(message["is_new_recipe"])
-        print("is_new_recipe:", is_new_recipe, message["is_new_recipe"])
-        recipe_id: Optional[int] = None
-        end_date_str: Optional[str] = None
-        end_date: Optional[datetime] = None
-        if is_new_recipe:
-            # create the recipe and the recipe phases before creating the grow
-            recipe_name = (
-                message["recipe_name"] if "recipe_name" in message else None
+            print("Grow started successfully, event emitted")
+        except Exception as e:
+            exception_str: str = str(e)
+            print("Error with starting grow:", message, exception_str)
+            # rollback connection and report error back to client
+            db_conn.rollback()
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "start_grows_for_shelves_succeeded",
+                {
+                    "succeeded": False,
+                    "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
+                        exception_str
+                    ),
+                },
             )
-            recipe_no_id: Recipe = Recipe(None, recipe_name)
-            recipe: Recipe = app_config.db.write_recipe(recipe_no_id)
-            recipe_id = recipe.recipe_id
-
-            light_configurations: List[Any] = message["grow_phases"]
-            end_date_str = message["end_date"]
-            end_date = iso8601_string_to_datetime(end_date_str)
-
-            recipe_phases: List[
-                RecipePhase
-            ] = create_recipe_phases_from_light_configurations(
-                light_configurations, recipe_id, end_date
-            )
-            print("recipe_phases:", recipe_phases)
-            # write the recipe phases to database
-            app_config.db.write_recipe_phases(recipe_phases)
-
-        else:
-            recipe_id = message["template_recipe_id"]
-
-        # create the grow first so we can read the grow_id
-        grow_start_date: datetime = iso8601_string_to_datetime(
-            message["grow_phases"][0]["start_date"]
-        )
-        grow_estimated_end_date: datetime = iso8601_string_to_datetime(
-            message["end_date"]
-        )
-
-        current_phase: int = 0
-        tag_set: str = message["tag_set"]
-        nutrients: str = message["nutrients"]
-        weekly_reps: int = message["weekly_reps"]
-        pruning_date_1: Optional[datetime] = iso8601_string_to_datetime(
-            message["pruning_date_1"]
-        ) if message.get("pruning_date_1") else None
-        pruning_date_2: Optional[datetime] = iso8601_string_to_datetime(
-            message["pruning_date_2"]
-        ) if message.get("pruning_date_2") else None
-
-        grow_without_id: Grow = Grow(
-            None,
-            recipe_id,
-            grow_start_date,
-            grow_estimated_end_date,
-            False,
-            False,
-            None,
-            current_phase,
-            is_new_recipe,
-            tag_set,
-            nutrients,
-            weekly_reps,
-            pruning_date_1,
-            pruning_date_2,
-            None,
-            None,
-            None,
-            None,
-        )
-
-        grow: Grow = app_config.db.write_grow(grow_without_id)
-
-        light_configurations = message["grow_phases"]
-        end_date_str = message["end_date"]
-        end_date = iso8601_string_to_datetime(end_date_str)
-        grow_phases: List[
-            GrowPhase
-        ] = create_grow_phases_from_light_configurations(
-            light_configurations, grow.grow_id, recipe_id, end_date
-        )
-
-        shelf_grows: List[ShelfGrow] = []
-        for shelf_data in message["shelves"]:
-            shelf_data["grow_id"] = grow.grow_id
-            shelf_grow = ShelfGrow.from_json(shelf_data)
-            shelf_grows.append(shelf_grow)
-
-        # only schedule 1st grow phase, but write all grow phases to DB
-        first_grow_phase: GrowPhase = grow_phases[0]
-        (
-            power_level,
-            red_level,
-            blue_level,
-        ) = app_config.db.read_lights_from_recipe_phase(
-            first_grow_phase.recipe_id, first_grow_phase.recipe_phase_num
-        )
-
-        # enqueue the job to the job scheduler
-        client_schedule_job(
-            shelf_grows, first_grow_phase, power_level, red_level, blue_level
-        )
-
-        # write grow phases and shelf grows to db
-        app_config.db.write_grow_phases(grow_phases)
-        app_config.db.write_shelf_grows(shelf_grows)
-
-        logging.debug("start_grow_for_shelf succeeded!")
-        send_message_to_namespace_if_specified(
-            socketio,
-            message,
-            "start_grows_for_shelves_succeeded",
-            {"succeeded": True, "grow": grow.to_json()},
-        )
-        print("Grow started successfully, event emitted")
+        finally:
+            if db_conn:
+                # close the db connection if it's defined
+                db_conn.close()
 
     @socketio.on("read_all_entities")
     def read_all_entities(message) -> None:
@@ -846,22 +878,4 @@ def init_event_listeners(app_config, socketio):
 
         send_message_to_namespace_if_specified(
             socketio, message, "read_complete_grows_response", entities_dict
-        )
-
-    @socketio.on("read_room")
-    def read_room(message) -> None:
-        room: Optional[Room] = None
-        print("message:", message)
-        if "room" in message:
-            room_id = message["room"]["room_id"]
-            # room is None if not found
-            room = app_config.db.read_room(room_id)
-            print("Queried for room:", room)
-
-        print("found_room:", room)
-        send_message_to_namespace_if_specified(
-            socketio,
-            message,
-            "return_room",
-            {"room": room.to_json() if room else None},
         )
