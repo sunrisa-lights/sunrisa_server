@@ -69,14 +69,7 @@ from app.db.shelf_grow import (
 class DB:
     def __init__(self, db_name):
         self.db_name = db_name
-        try:
-            conn = pymysql.connect(
-                host="db", user="root", password="root"
-            )  # uses default port 3306
-            conn.autocommit(True)
-            self.create_db(conn, db_name)
-        finally:
-            conn.close()
+        self.create_db(db_name)
 
     def _new_connection(self, db_name):
         conn = pymysql.connect(host="db", user="root", password="root")
@@ -96,9 +89,7 @@ class DB:
 
         return conn
 
-    def create_db(
-        self, conn: pymysql.connections.Connection, db_name: str
-    ) -> None:
+    def create_db(self, db_name: str) -> None:
         conn = pymysql.connect(host="db", user="root", password="root")
         conn.autocommit(True)
 
@@ -108,7 +99,9 @@ class DB:
         except pymysql.err.ProgrammingError:
             print("db already exists:", db_name)
         finally:
-            conn.close()
+            if conn:
+                # close the connection if it's defined
+                conn.close()
 
     def initialize_tables(self) -> None:
         db_conn = self._new_transaction(self.db_name)

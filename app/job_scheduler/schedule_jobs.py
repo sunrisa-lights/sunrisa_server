@@ -1,5 +1,8 @@
-from typing import List
 from datetime import datetime, timedelta
+import traceback
+from typing import List
+
+from pymysql.connections import Connection
 
 from app.models.grow_phase import GrowPhase
 from app.models.shelf_grow import ShelfGrow
@@ -32,9 +35,25 @@ def schedule_grow_for_shelf(
     app_config.sio.emit("set_lights_for_grow", shelf_grow_dict)
     print("Set_lights_for_grow event emitted")
 
-    # check if this is the last run and we need to schedule the next phase
-    schedule_next_phase_if_needed(app_config, shelf_grows, grow_phase)
-    print("Successfully scheduled grow for shelf!")
+    try:
+        db_conn = app_config.db._new_transaction()
+
+        # check if this is the last run and we need to schedule the next phase
+        schedule_next_phase_if_needed(
+            app_config, db_conn, shelf_grows, grow_phase
+        )
+        print("Successfully scheduled grow for shelf!")
+    except Exception as e:
+        exception_str: str = str(e)
+        print(
+            "Error with scheduling next grow phase:",
+            exception_str,
+            traceback.format_exc(),
+        )
+    finally:
+        if db_conn:
+            # close db_conn if it was opened
+            db_conn.close()
 
 
 def get_job_id(grow_phase: GrowPhase) -> str:
@@ -47,7 +66,10 @@ def get_job_id(grow_phase: GrowPhase) -> str:
 
 
 def schedule_next_phase_if_needed(
-    app_config: AppConfig, shelf_grows: List[ShelfGrow], grow_phase: GrowPhase
+    app_config: AppConfig,
+    db_conn: Connection,
+    shelf_grows: List[ShelfGrow],
+    grow_phase: GrowPhase,
 ) -> None:
     if grow_phase.is_last_phase:
         # last phase runs forever
@@ -73,7 +95,7 @@ def schedule_next_phase_if_needed(
             red_level,
             blue_level,
         ) = app_config.db.read_lights_from_recipe_phase(
-            next_grow_phase.recipe_id, next_grow_phase.recipe_phase_num
+            db_conn, next_grow_phase.recipe_id, next_grow_phase.recipe_phase_num
         )
 
         client_schedule_job(
@@ -164,7 +186,10 @@ def client_remove_job(grow_phase: GrowPhase) -> None:
 
 
 def client_reschedule_job(
-    app_config: AppConfig, old_grow_phase: GrowPhase, new_grow_phase: GrowPhase
+    app_config: AppConfig,
+    db_conn: Connection,
+    old_grow_phase: GrowPhase,
+    new_grow_phase: GrowPhase,
 ) -> None:
     print("Removing grow phase job:", old_grow_phase)
 
@@ -186,7 +211,7 @@ def client_reschedule_job(
         red_level,
         blue_level,
     ) = app_config.db.read_lights_from_recipe_phase(
-        new_grow_phase.recipe_id, new_grow_phase.recipe_phase_num
+        db_conn, new_grow_phase.recipe_id, new_grow_phase.recipe_phase_num
     )
 
     print("Rescheduling grow phase job:", new_grow_phase)

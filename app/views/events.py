@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from time import mktime
 import json
-
+from time import mktime
+import traceback
 from typing import Any, List, Optional
 
 from app.job_scheduler.schedule_jobs import (
@@ -336,19 +336,6 @@ def init_event_listeners(app_config, socketio):
                 next_phase, grow_phases_added
             )
 
-            if (
-                was_next_grow_phase_modified
-                or was_next_grow_phase_removed
-                or was_next_grow_phase_added
-            ):
-                # next grow phase was added/modified/removed, reschedule the job that is currently running
-                # use the old grow phase to delete the current job, then add the new grow phase in.
-                old_grow_phase: GrowPhase = old_grow_phases[grow.current_phase]
-                new_grow_phase: GrowPhase = new_grow_phases[grow.current_phase]
-                client_reschedule_job(
-                    app_config, old_grow_phase, new_grow_phase
-                )
-
             # change the grows start and end dates if they were modified
             new_start_datetime: datetime = new_grow_phases[
                 0
@@ -368,6 +355,23 @@ def init_event_listeners(app_config, socketio):
                     new_estimated_end_datetime,
                 )
 
+            # Modify the scheduled job last, since at this point all db writes should have succeeded.
+            # If this fails we can still rollback the transaction.
+            if (
+                was_next_grow_phase_modified
+                or was_next_grow_phase_removed
+                or was_next_grow_phase_added
+            ):
+                # next grow phase was added/modified/removed, reschedule the job that is currently running
+                # use the old grow phase to delete the current job, then add the new grow phase in.
+                old_grow_phase: GrowPhase = old_grow_phases[grow.current_phase]
+                new_grow_phase: GrowPhase = new_grow_phases[grow.current_phase]
+
+                # pass the app_config and db_conn because rescheduling the job needs to read from db
+                client_reschedule_job(
+                    app_config, db_conn, old_grow_phase, new_grow_phase
+                )
+
             # commit the transaction since all writes were successful
             db_conn.commit()
             send_message_to_namespace_if_specified(
@@ -376,14 +380,17 @@ def init_event_listeners(app_config, socketio):
         except Exception as e:
             exception_str: str = str(e)
             print(
-                "Error with updating incomplete grow:", message, exception_str
+                "Error with modifying grow:",
+                message,
+                exception_str,
+                traceback.format_exc(),
             )
             # rollback connection and report error back to client
             db_conn.rollback()
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
-                "update_incomplete_grow_response",
+                "modify_grow_response",
                 {
                     "succeeded": False,
                     "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
@@ -469,7 +476,10 @@ def init_event_listeners(app_config, socketio):
         except Exception as e:
             exception_str: str = str(e)
             print(
-                "Error with reading grow with phases:", message, exception_str
+                "Error with reading grow with phases:",
+                message,
+                exception_str,
+                traceback.format_exc(),
             )
             send_message_to_namespace_if_specified(
                 socketio,
@@ -515,7 +525,12 @@ def init_event_listeners(app_config, socketio):
             )
         except Exception as e:
             exception_str: str = str(e)
-            print("Error with reading grow:", message, exception_str)
+            print(
+                "Error with reading grow:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -570,7 +585,12 @@ def init_event_listeners(app_config, socketio):
             )
         except Exception as e:
             exception_str: str = str(e)
-            print("Error with searching for recipes:", message, exception_str)
+            print(
+                "Error with searching for recipes:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -640,7 +660,10 @@ def init_event_listeners(app_config, socketio):
         except Exception as e:
             exception_str: str = str(e)
             print(
-                "Error with updating incomplete grow:", message, exception_str
+                "Error with updating incomplete grow:",
+                message,
+                exception_str,
+                traceback.format_exc(),
             )
             # rollback connection and report error back to client
             db_conn.rollback()
@@ -737,7 +760,12 @@ def init_event_listeners(app_config, socketio):
             )
         except Exception as e:
             exception_str: str = str(e)
-            print("Error with harvesting grow:", message, exception_str)
+            print(
+                "Error with harvesting grow:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
             # rollback connection and report error back to client
             db_conn.rollback()
             send_message_to_namespace_if_specified(
@@ -905,7 +933,12 @@ def init_event_listeners(app_config, socketio):
             print("Grow started successfully, event emitted")
         except Exception as e:
             exception_str: str = str(e)
-            print("Error with starting grow:", message, exception_str)
+            print(
+                "Error with starting grow:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
             # rollback connection and report error back to client
             db_conn.rollback()
             send_message_to_namespace_if_specified(
