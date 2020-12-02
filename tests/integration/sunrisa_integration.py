@@ -325,12 +325,6 @@ def _test_harvest_grow(sio, grow_id):
     print("test_harvest_grow passed")
 
 
-def _test_entities_not_found(sio):
-    sio.sleep(1)
-    _test_room_not_found(sio)
-    print("entities_not_found_test passed!")
-
-
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
 
