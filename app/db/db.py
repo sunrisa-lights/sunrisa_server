@@ -132,38 +132,49 @@ class DB:
         finally:
             db_conn.close()
 
-    def delete_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+    def delete_recipe_phases(
+        self,
+        db_conn: pymysql.connections.Connection,
+        recipe_phases: List[RecipePhase],
+    ) -> None:
         if not recipe_phases:
             return
 
-        db_conn = self._new_connection(self.db_name)
         try:
             delete_recipe_phases(db_conn, recipe_phases)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error deleting recipe phases:", recipe_phases, str(e))
+            raise
 
-    def delete_grow_phases_from_grow(self, grow_id: int) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def delete_grow_phases_from_grow(
+        self, db_conn: pymysql.connections.Connection, grow_id: int
+    ) -> None:
         try:
             delete_grow_phases_from_grow(db_conn, grow_id)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error deleting grow phases from grow:", grow_id, str(e))
+            raise
 
     def end_grow_phase(
-        self, grow_phase: GrowPhase, harvest_time: datetime
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_phase: GrowPhase,
+        harvest_time: datetime,
     ) -> None:
-        db_conn = self._new_connection(self.db_name)
         try:
             end_grow_phase(db_conn, grow_phase, harvest_time)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error ending grow phase:", grow_phase, harvest_time, str(e))
+            raise
 
-    def update_grow_harvest_data(self, grow: Grow) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def update_grow_harvest_data(
+        self, db_conn: pymysql.connections.Connection, grow: Grow
+    ) -> None:
         try:
             update_grow_harvest_data(db_conn, grow)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error updating grow harvest data:", grow, str(e))
+            raise
 
     def move_grow_to_next_phase(self, grow_id: int, current_phase: int) -> None:
         db_conn = self._new_connection(self.db_name)
@@ -232,13 +243,19 @@ class DB:
         return incomplete_grows
 
     def read_grow_phase(
-        self, grow_id: int, recipe_phase_num: int
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_id: int,
+        recipe_phase_num: int,
     ) -> Optional[GrowPhase]:
-        db_conn = self._new_connection(self.db_name)
         try:
             grow_phase = read_grow_phase(db_conn, grow_id, recipe_phase_num)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print(
+                "Error reading grow phase:", grow_id, recipe_phase_num, str(e)
+            )
+            raise
+
         return grow_phase
 
     def read_grow_phases(self, grow_id: int) -> List[GrowPhase]:
@@ -379,51 +396,77 @@ class DB:
             db_conn.close()
 
     def update_grow_phases_recipe_from_grow(
-        self, grow_id: int, recipe_id: int
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_id: int,
+        recipe_id: int,
     ) -> None:
-        db_conn = self._new_connection(self.db_name)
         try:
             update_grow_phases_recipe_from_grow(db_conn, grow_id, recipe_id)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print(
+                "Error updating grow phases recipe from grow:",
+                grow_id,
+                recipe_id,
+                str(e),
+            )
+            raise
 
-    def update_grow_recipe(self, grow_id: int, recipe_id: int) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def update_grow_recipe(
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_id: int,
+        recipe_id: int,
+    ) -> None:
         try:
             update_grow_recipe(db_conn, grow_id, recipe_id)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error updating grow recipe:", grow_id, recipe_id, str(e))
+            raise
 
     def update_grow_dates(
         self,
+        db_conn: pymysql.connections.Connection,
         grow_id: int,
         start_datetime: datetime,
         estimated_end_datetime: datetime,
     ) -> None:
-        db_conn = self._new_connection(self.db_name)
         try:
             update_grow_dates(
                 db_conn, grow_id, start_datetime, estimated_end_datetime
             )
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print(
+                "Error updating grow dates:",
+                grow_id,
+                start_datetime,
+                estimated_end_datetime,
+                str(e),
+            )
+            raise
 
-    def update_recipe_name(self, recipe: Recipe) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def update_recipe_name(
+        self, db_conn: pymysql.connections.Connection, recipe: Recipe
+    ) -> None:
         try:
             update_recipe_name(db_conn, recipe)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error updating recipe name:", recipe, str(e))
+            raise
 
-    def update_recipe_phases(self, recipe_phases: List[RecipePhase]) -> None:
+    def update_recipe_phases(
+        self,
+        db_conn: pymysql.connections.Connection,
+        recipe_phases: List[RecipePhase],
+    ) -> None:
         if not recipe_phases:
             return
 
-        db_conn = self._new_connection(self.db_name)
         try:
             update_recipe_phases(db_conn, recipe_phases)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print("Error writing recipe phases:", recipe_phases, str(e))
+            raise
 
     def write_grow(
         self, db_conn: pymysql.connections.Connection, grow: Grow
