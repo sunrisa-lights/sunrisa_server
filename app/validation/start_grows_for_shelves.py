@@ -92,7 +92,3 @@ def validate_all_shelves_free(
             in_use_shelves.append(shelf)
 
     return in_use_shelves
-
-
-def test_validate_grow_id():
-    print("error message", validate_grow_id({"Notgrow": 50}))

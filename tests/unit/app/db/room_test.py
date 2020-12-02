@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.models.room import Room
-from app.db.room import create_room_table, read_room, write_room
+from app.db.room import create_room_table, write_room
 
 
 @pytest.fixture

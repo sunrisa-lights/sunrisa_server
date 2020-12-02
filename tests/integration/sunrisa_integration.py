@@ -304,27 +304,6 @@ def _test_search_recipes(sio, recipe_name):
     print("_test_search_recipes completed")
 
 
-def _test_room_not_found(sio):
-    flag = []
-
-    room_dict = {
-        "room": {"room_id": 5000, "is_on": True},
-        NAMESPACE: INTEGRATION_NAMESPACE,
-    }
-
-    @sio.on("return_room", namespace=INTEGRATION_NAMESPACE)
-    def find_room_listener(message) -> None:
-        message_dict = json.loads(message)
-        assert message_dict["room"] is None, "Found a nonexistent room"
-        flag.append(True)
-
-    sio.emit("read_room", room_dict)
-
-    wait_for_event(sio, flag, 1, 10, "test_room_not_found")
-
-    print("room not found test passed!")
-
-
 def _test_harvest_grow(sio, grow_id):
     flag = []
 
@@ -346,12 +325,6 @@ def _test_harvest_grow(sio, grow_id):
     print("test_harvest_grow passed")
 
 
-def _test_entities_not_found(sio):
-    sio.sleep(1)
-    _test_room_not_found(sio)
-    print("entities_not_found_test passed!")
-
-
 def run_test_and_disconnect(test_func):
     sio = socketio.Client()
 
@@ -360,7 +333,9 @@ def run_test_and_disconnect(test_func):
     sio.connect(
         "http://sunrisa_server:5000", namespaces=[INTEGRATION_NAMESPACE]
     )
-    # sio.connect("http://localhost:5000", namespaces=[INTEGRATION_NAMESPACE])
+    """
+    sio.connect("http://localhost:5000", namespaces=[INTEGRATION_NAMESPACE])
+    """
 
     test_func(sio)
     sio.disconnect()
@@ -374,8 +349,3 @@ def run_test_and_disconnect(test_func):
 def test_create_entities():
     run_test_and_disconnect(_test_create_entities)
     print("Test create entities passed!")
-
-
-def test_entities_not_found():
-    run_test_and_disconnect(_test_entities_not_found)
-    print("Test entities not found passed!")
