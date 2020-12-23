@@ -80,11 +80,11 @@ class DB:
 
         return conn
 
-    def _new_transaction(self, db_name) -> pymysql.connections.Connection:
+    def _new_transaction(self) -> pymysql.connections.Connection:
         conn = pymysql.connect(host="db", user="root", password="root")
         conn.autocommit(False)
 
-        use_db_sql = "use {}".format(db_name)
+        use_db_sql = "use {}".format(self.db_name)
         conn.cursor().execute(use_db_sql)
 
         return conn
@@ -104,7 +104,7 @@ class DB:
                 conn.close()
 
     def initialize_tables(self) -> None:
-        db_conn = self._new_transaction(self.db_name)
+        db_conn = self._new_transaction()
         try:
             create_room_table(db_conn)
             create_rack_table(db_conn)
