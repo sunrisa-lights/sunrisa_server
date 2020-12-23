@@ -19,7 +19,7 @@ def write_grow(conn, grow: Grow) -> Grow:
             grow.is_new_recipe,
             grow.tag_set,
             grow.nutrients,
-            grow.weekly_reps,
+            grow.weekly_reps if grow.weekly_reps else None,
             grow.pruning_date_1,
             grow.pruning_date_2,
         ),
