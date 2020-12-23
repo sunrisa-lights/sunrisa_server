@@ -17,9 +17,9 @@ class Grow:
         olcc_number: Optional[int],
         current_phase: int,
         is_new_recipe: bool,
-        tag_set: str,
-        nutrients: str,
-        weekly_reps: int,
+        tag_set: Optional[str],
+        nutrients: Optional[str],
+        weekly_reps: Optional[int],
         pruning_date_1: Optional[datetime],
         pruning_date_2: Optional[datetime],
         harvest_weight: Optional[float],
@@ -57,9 +57,6 @@ class Grow:
             and "all_fields_complete" in grow_json
             and "current_phase" in grow_json
             and "is_new_recipe" in grow_json
-            and "tag_set" in grow_json
-            and "nutrients" in grow_json
-            and "weekly_reps" in grow_json
         ):
             raise Exception("Invalid grow")
 
@@ -71,9 +68,11 @@ class Grow:
         olcc_number: Optional[int] = grow_json.get("olcc_number")
         current_phase: int = int(grow_json["current_phase"])
         is_new_recipe: bool = bool(grow_json["is_new_recipe"])
-        tag_set: str = str(grow_json["tag_set"])
-        nutrients: str = str(grow_json["nutrients"])
-        weekly_reps: int = int(grow_json["weekly_reps"])
+
+        # tag set, nutrients, weekly reps, and pruning dates are optional fields
+        tag_set: Optional[str] = grow_json.get("tag_set")
+        nutrients: Optional[str] = grow_json.get("nutrients")
+        weekly_reps: Optional[int] = grow_json.get("weekly_reps")
 
         # TODO: Write methods for converting datetime -> str and vice versa
         start_date_str = grow_json["start_datetime"]

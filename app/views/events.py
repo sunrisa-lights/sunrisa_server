@@ -116,6 +116,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("modify_grow")
     def modify_grow(message) -> None:
+        db_conn = None
         try:
             if "grow_id" not in message:
                 send_message_to_namespace_if_specified(
@@ -237,7 +238,7 @@ def init_event_listeners(app_config, socketio):
             print("recipe phases modified:", recipe_phases_modified)
 
             grow_phase_edits_needed: bool = grow_phases_added or grow_phases_modified or grow_phases_removed
-            db_conn = app_config.db._new_transaction(app_config.DB_NAME)
+            db_conn = app_config.db._new_transaction()
 
             if grow_phase_edits_needed:
                 # need to edit grow phases. Keep it simple and delete all old ones, then re-create all new
@@ -385,8 +386,10 @@ def init_event_listeners(app_config, socketio):
                 exception_str,
                 traceback.format_exc(),
             )
-            # rollback connection and report error back to client
-            db_conn.rollback()
+            # rollback connection if it exists and report error back to client
+            if db_conn:
+                db_conn.rollback()
+
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -545,6 +548,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("search_recipes")
     def search_recipes(message) -> None:
+        db_conn = None
         try:
             if "search_name" not in message:
                 send_message_to_namespace_if_specified(
@@ -605,6 +609,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("update_incomplete_grow")
     def update_incomplete_grow(message) -> None:
+        db_conn = None
         try:
             if "grow" not in message:
                 send_message_to_namespace_if_specified(
@@ -646,7 +651,7 @@ def init_event_listeners(app_config, socketio):
             )
 
             # end grow
-            db_conn = app_config.db._new_transaction(app_config.DB_NAME)
+            db_conn = app_config.db._new_transaction()
             app_config.db.update_grow_harvest_data(db_conn, updated_grow)
 
             # commit changes
@@ -665,8 +670,10 @@ def init_event_listeners(app_config, socketio):
                 exception_str,
                 traceback.format_exc(),
             )
-            # rollback connection and report error back to client
-            db_conn.rollback()
+            # rollback connection if it exists and report error back to client
+            if db_conn:
+                db_conn.rollback()
+
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -685,6 +692,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("harvest_grow")
     def harvest_grow(message) -> None:
+        db_conn = None
         try:
             if "grow" not in message:
                 send_message_to_namespace_if_specified(
@@ -720,7 +728,7 @@ def init_event_listeners(app_config, socketio):
             updated_grow.is_finished = True
 
             # end grow
-            db_conn = app_config.db._new_transaction(app_config.DB_NAME)
+            db_conn = app_config.db._new_transaction()
             app_config.db.update_grow_harvest_data(db_conn, updated_grow)
 
             # read current grow phase
@@ -766,8 +774,10 @@ def init_event_listeners(app_config, socketio):
                 exception_str,
                 traceback.format_exc(),
             )
-            # rollback connection and report error back to client
-            db_conn.rollback()
+            # rollback connection if it exists and report error back to client
+            if db_conn:
+                db_conn.rollback()
+
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -786,6 +796,7 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("start_grows_for_shelves")
     def start_grows_for_shelves(message) -> None:
+        db_conn = None
         try:
             validation_succeeded, failure_reason = validate_start_grows_for_shelves(
                 app_config, message
@@ -805,7 +816,7 @@ def init_event_listeners(app_config, socketio):
                 print("Failed validation!")
                 return
 
-            db_conn = app_config.db._new_transaction(app_config.DB_NAME)
+            db_conn = app_config.db._new_transaction()
             is_new_recipe: bool = bool(message["is_new_recipe"])
             recipe_id: Optional[int] = None
             end_date_str: Optional[str] = None
@@ -846,9 +857,12 @@ def init_event_listeners(app_config, socketio):
             )
 
             current_phase: int = 0
-            tag_set: str = message["tag_set"]
-            nutrients: str = message["nutrients"]
-            weekly_reps: int = message["weekly_reps"]
+
+            # tag set, nutrients, weekly reps, and pruning dates are optional fields
+            tag_set: Optional[str] = message.get("tag_set")
+            nutrients: Optional[str] = message.get("nutrients")
+
+            weekly_reps: Optional[int] = message.get("weekly_reps")
             pruning_date_1: Optional[datetime] = iso8601_string_to_datetime(
                 message["pruning_date_1"]
             ) if message.get("pruning_date_1") else None
@@ -939,8 +953,10 @@ def init_event_listeners(app_config, socketio):
                 exception_str,
                 traceback.format_exc(),
             )
-            # rollback connection and report error back to client
-            db_conn.rollback()
+            # rollback connection if it exists and report error back to client
+            if db_conn:
+                db_conn.rollback()
+
             send_message_to_namespace_if_specified(
                 socketio,
                 message,
@@ -959,97 +975,139 @@ def init_event_listeners(app_config, socketio):
 
     @socketio.on("read_all_entities")
     def read_all_entities(message) -> None:
-        print("read_all_entities event emitted")
-        all_rooms: List[Room] = app_config.db.read_all_rooms()
-        all_racks: List[Rack] = app_config.db.read_all_racks()
-        all_shelves: List[Shelf] = app_config.db.read_all_shelves()
-        all_current_grows: List[Grow] = app_config.db.read_current_grows()
-        all_incomplete_grows: List[Grow] = app_config.db.read_incomplete_grows()
+        try:
+            print("read_all_entities event emitted")
+            all_rooms: List[Room] = app_config.db.read_all_rooms()
+            all_racks: List[Rack] = app_config.db.read_all_racks()
+            all_shelves: List[Shelf] = app_config.db.read_all_shelves()
+            all_current_grows: List[Grow] = app_config.db.read_current_grows()
+            all_incomplete_grows: List[
+                Grow
+            ] = app_config.db.read_incomplete_grows()
 
-        # use set comprehensions since grows may have duplicate recipes
-        current_recipe_ids = {g.recipe_id for g in all_current_grows}
-        incomplete_recipe_ids = {g.recipe_id for g in all_incomplete_grows}
+            # use set comprehensions since grows may have duplicate recipes
+            current_recipe_ids = {g.recipe_id for g in all_current_grows}
+            incomplete_recipe_ids = {g.recipe_id for g in all_incomplete_grows}
 
-        current_recipe_ids.update(incomplete_recipe_ids)
+            current_recipe_ids.update(incomplete_recipe_ids)
 
-        all_recipes: List[Recipe] = app_config.db.read_recipes(
-            list(current_recipe_ids)
-        )
+            all_recipes: List[Recipe] = app_config.db.read_recipes(
+                list(current_recipe_ids)
+            )
 
-        all_grow_ids = [g.grow_id for g in all_current_grows] + [
-            g.grow_id for g in all_incomplete_grows
-        ]
-        all_grow_phases: List[
-            GrowPhase
-        ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+            all_grow_ids = [g.grow_id for g in all_current_grows] + [
+                g.grow_id for g in all_incomplete_grows
+            ]
+            all_grow_phases: List[
+                GrowPhase
+            ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
 
-        recipe_id_phase_num_pairs = [
-            (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
-        ]
-        all_recipe_phases: List[RecipePhase] = app_config.db.read_recipe_phases(
-            recipe_id_phase_num_pairs
-        )
+            recipe_id_phase_num_pairs = [
+                (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
+            ]
+            all_recipe_phases: List[
+                RecipePhase
+            ] = app_config.db.read_recipe_phases(recipe_id_phase_num_pairs)
 
-        all_current_shelf_grows: List[
-            ShelfGrow
-        ] = app_config.db.read_shelves_with_grows(all_grow_ids)
+            all_current_shelf_grows: List[
+                ShelfGrow
+            ] = app_config.db.read_shelves_with_grows(all_grow_ids)
 
-        entities_dict = {
-            "rooms": [rm.to_json() for rm in all_rooms],
-            "racks": [rck.to_json() for rck in all_racks],
-            "shelves": [s.to_json() for s in all_shelves],
-            "grows": [g.to_json() for g in all_current_grows],
-            "incomplete_grows": [g.to_json() for g in all_incomplete_grows],
-            "grow_phases": [gp.to_json() for gp in all_grow_phases],
-            "recipes": [r.to_json() for r in all_recipes],
-            "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
-            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
-        }
+            entities_dict = {
+                "rooms": [rm.to_json() for rm in all_rooms],
+                "racks": [rck.to_json() for rck in all_racks],
+                "shelves": [s.to_json() for s in all_shelves],
+                "grows": [g.to_json() for g in all_current_grows],
+                "incomplete_grows": [g.to_json() for g in all_incomplete_grows],
+                "grow_phases": [gp.to_json() for gp in all_grow_phases],
+                "recipes": [r.to_json() for r in all_recipes],
+                "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
+                "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
+            }
 
-        print("Returning entities:", entities_dict)
-        send_message_to_namespace_if_specified(
-            socketio, message, "return_all_entities", entities_dict
-        )
+            print("Returning entities:", entities_dict)
+            send_message_to_namespace_if_specified(
+                socketio, message, "return_all_entities", entities_dict
+            )
+        except Exception as e:
+            exception_str: str = str(e)
+            print(
+                "Error with reading complete grows:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "return_all_entities",
+                {
+                    "succeeded": False,
+                    "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
+                        exception_str
+                    ),
+                },
+            )
 
     @socketio.on("read_complete_grows")
     def read_complete_grows(message) -> None:
-        all_complete_grows: List[Grow] = app_config.db.read_complete_grows()
+        try:
+            all_complete_grows: List[Grow] = app_config.db.read_complete_grows()
 
-        # use set comprehensions since grows may have duplicate recipes
-        current_recipe_ids = {g.recipe_id for g in all_complete_grows}
-        incomplete_recipe_ids = {g.recipe_id for g in all_complete_grows}
+            # use set comprehensions since grows may have duplicate recipes
+            current_recipe_ids = {g.recipe_id for g in all_complete_grows}
+            incomplete_recipe_ids = {g.recipe_id for g in all_complete_grows}
 
-        current_recipe_ids.update(incomplete_recipe_ids)
+            current_recipe_ids.update(incomplete_recipe_ids)
 
-        all_recipes: List[Recipe] = app_config.db.read_recipes(
-            list(current_recipe_ids)
-        )
+            all_recipes: List[Recipe] = app_config.db.read_recipes(
+                list(current_recipe_ids)
+            )
 
-        all_grow_ids = [g.grow_id for g in all_complete_grows]
+            all_grow_ids = [g.grow_id for g in all_complete_grows]
 
-        all_grow_phases: List[
-            GrowPhase
-        ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
+            all_grow_phases: List[
+                GrowPhase
+            ] = app_config.db.read_grow_phases_from_multiple_grows(all_grow_ids)
 
-        recipe_id_phase_num_pairs = [
-            (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
-        ]
-        all_recipe_phases: List[RecipePhase] = app_config.db.read_recipe_phases(
-            recipe_id_phase_num_pairs
-        )
+            recipe_id_phase_num_pairs = [
+                (g.recipe_id, g.recipe_phase_num) for g in all_grow_phases
+            ]
+            all_recipe_phases: List[
+                RecipePhase
+            ] = app_config.db.read_recipe_phases(recipe_id_phase_num_pairs)
 
-        all_current_shelf_grows: List[
-            ShelfGrow
-        ] = app_config.db.read_shelves_with_grows(all_grow_ids)
+            all_current_shelf_grows: List[
+                ShelfGrow
+            ] = app_config.db.read_shelves_with_grows(all_grow_ids)
 
-        entities_dict = {
-            "complete_grows": [g.to_json() for g in all_complete_grows],
-            "grow_phases": [gp.to_json() for gp in all_grow_phases],
-            "recipes": [r.to_json() for r in all_recipes],
-            "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
-            "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
-        }
+            entities_dict = {
+                "complete_grows": [g.to_json() for g in all_complete_grows],
+                "grow_phases": [gp.to_json() for gp in all_grow_phases],
+                "recipes": [r.to_json() for r in all_recipes],
+                "recipe_phases": [rp.to_json() for rp in all_recipe_phases],
+                "shelf_grows": [sg.to_json() for sg in all_current_shelf_grows],
+            }
 
-        send_message_to_namespace_if_specified(
-            socketio, message, "read_complete_grows_response", entities_dict
-        )
+            send_message_to_namespace_if_specified(
+                socketio, message, "read_complete_grows_response", entities_dict
+            )
+        except Exception as e:
+            exception_str: str = str(e)
+            print(
+                "Error with reading complete grows:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "read_complete_grows_response",
+                {
+                    "succeeded": False,
+                    "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
+                        exception_str
+                    ),
+                },
+            )
