@@ -920,6 +920,10 @@ def init_event_listeners(app_config, socketio):
                 first_grow_phase.recipe_phase_num,
             )
 
+            # write grow phases and shelf grows to db
+            app_config.db.write_grow_phases(db_conn, grow_phases)
+            app_config.db.write_shelf_grows(db_conn, shelf_grows)
+
             # enqueue the job to the job scheduler
             client_schedule_job(
                 shelf_grows,
@@ -928,10 +932,6 @@ def init_event_listeners(app_config, socketio):
                 red_level,
                 blue_level,
             )
-
-            # write grow phases and shelf grows to db
-            app_config.db.write_grow_phases(db_conn, grow_phases)
-            app_config.db.write_shelf_grows(db_conn, shelf_grows)
 
             print("start_grow_for_shelf succeeded!")
 

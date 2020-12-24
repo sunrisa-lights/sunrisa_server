@@ -35,6 +35,7 @@ def schedule_grow_for_shelf(
     app_config.sio.emit("set_lights_for_grow", shelf_grow_dict)
     print("Set_lights_for_grow event emitted")
 
+    db_conn = None
     try:
         db_conn = app_config.db._new_transaction()
 
@@ -42,6 +43,10 @@ def schedule_grow_for_shelf(
         schedule_next_phase_if_needed(
             app_config, db_conn, shelf_grows, grow_phase
         )
+
+        # commit the transaction
+        db_conn.commit()
+
         print("Successfully scheduled grow for shelf!")
     except Exception as e:
         exception_str: str = str(e)
@@ -98,13 +103,14 @@ def schedule_next_phase_if_needed(
             db_conn, next_grow_phase.recipe_id, next_grow_phase.recipe_phase_num
         )
 
-        client_schedule_job(
-            shelf_grows, grow_phase, power_level, red_level, blue_level
-        )
-
         # update `current_phase` attribute of Grow object now that we've moved to the next phase
         app_config.db.move_grow_to_next_phase(
-            next_grow_phase.grow_id, next_grow_phase.recipe_phase_num
+            db_conn, next_grow_phase.grow_id, next_grow_phase.recipe_phase_num
+        )
+
+        # schedule the job AFTER all DB writes have succeeded
+        client_schedule_job(
+            shelf_grows, grow_phase, power_level, red_level, blue_level
         )
 
 
