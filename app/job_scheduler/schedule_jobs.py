@@ -47,7 +47,8 @@ def schedule_grow_for_shelf(
         # commit the transaction
         db_conn.commit()
 
-        print("Successfully scheduled grow for shelf!")
+        # print the datetime as well to help debug connection aborted errors (to associate with mySQL logs)
+        print("Successfully scheduled grow for shelf!", datetime.utcnow())
     except Exception as e:
         exception_str: str = str(e)
         print(
