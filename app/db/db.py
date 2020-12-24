@@ -169,12 +169,22 @@ class DB:
             print("Error updating grow harvest data:", grow, str(e))
             raise
 
-    def move_grow_to_next_phase(self, grow_id: int, current_phase: int) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def move_grow_to_next_phase(
+        self,
+        db_conn: pymysql.connections.Connection,
+        grow_id: int,
+        current_phase: int,
+    ) -> None:
         try:
             move_grow_to_next_phase(db_conn, grow_id, current_phase)
-        finally:
-            db_conn.close()
+        except Exception as e:
+            print(
+                "Error moving grow to next phase:",
+                grow_id,
+                current_phase,
+                str(e),
+            )
+            raise
 
     def read_all_racks(self) -> List[Rack]:
         db_conn = self._new_connection(self.db_name)
