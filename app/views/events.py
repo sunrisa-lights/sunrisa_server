@@ -7,6 +7,7 @@ import traceback
 from typing import Any, List, Optional
 
 from app.job_scheduler.schedule_jobs import (
+    client_get_jobs,
     client_remove_job,
     client_reschedule_job,
     client_schedule_job,
@@ -1104,6 +1105,40 @@ def init_event_listeners(app_config, socketio):
                 socketio,
                 message,
                 "read_complete_grows_response",
+                {
+                    "succeeded": False,
+                    "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
+                        exception_str
+                    ),
+                },
+            )
+
+    @socketio.on("get_jobs")
+    def get_jobs(message) -> None:
+        try:
+            jobs = client_get_jobs()
+            job_ids = []
+            for job in jobs:
+                job_ids.append(job.id)
+
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_jobs_response",
+                {"jobs": job_ids, "succeeded": True},
+            )
+        except Exception as e:
+            exception_str: str = str(e)
+            print(
+                "Error with getting jobs:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_jobs_response",
                 {
                     "succeeded": False,
                     "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
