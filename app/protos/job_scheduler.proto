@@ -9,6 +9,9 @@ service JobScheduler {
 
   // Removes a job from the job scheduler
   rpc RemoveJob (RemoveJobRequest) returns (RemoveJobReply) {}
+
+  // Gets all jobs from the job scheduler (method for debugging)
+  rpc GetJobs(GetJobsRequest) returns (GetJobsReply) {}
 }
 
 // Request message to schedule a new job
@@ -54,4 +57,16 @@ message RemoveJobReply {
   bool succeeded = 1;
   // if succeeded is False, reason will be populated with reason for failure
   string reason = 2;
+}
+
+// Request message to get all jobs from the job scheduler
+message GetJobsRequest {
+}
+
+message Job {
+  string id = 1;
+}
+
+message GetJobsReply {
+  repeated Job jobs = 1;
 }

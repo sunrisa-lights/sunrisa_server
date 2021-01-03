@@ -6,14 +6,15 @@ from typing import List
 import grpc
 import requests
 
-from app.generated.python import job_scheduler_pb2
-from app.generated.grpc_python import job_scheduler_pb2_grpc
+from app.generated.messages import job_scheduler_pb2
+from app.generated.service import job_scheduler_pb2_grpc
 from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf, get_job_id
 from app.models.shelf_grow import ShelfGrow
 from app.models.grow_phase import GrowPhase
 
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.job import Job
 
 API_ENDPOINT = "http://sunrisa_server:5000/add-job"
 
@@ -79,6 +80,11 @@ def schedule_grow_job(
 def remove_grow_job(scheduler, grow_phase: GrowPhase) -> None:
     grow_id: str = get_job_id(grow_phase)
     scheduler.remove_job(grow_id)  # this will throw exception if job not found
+
+
+def get_scheduler_jobs(scheduler) -> List[Job]:
+    jobs: List[Job] = scheduler.get_jobs()
+    return jobs
 
 
 class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
@@ -154,6 +160,15 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
         )
         remove_grow_job(self.job_scheduler, grow_phase)
         return job_scheduler_pb2.RemoveJobReply(succeeded=True)
+
+    def GetJobs(self, request, context):
+        jobs: List[Job] = get_scheduler_jobs(self.job_scheduler)
+        job_protos = []
+        for job in jobs:
+            job_proto = job_scheduler_pb2.Job(id=job.id)
+            job_protos.append(job_proto)
+
+        return job_scheduler_pb2.GetJobsReply(jobs=job_protos)
 
 
 def serve():

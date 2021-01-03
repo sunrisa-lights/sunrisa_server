@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     syntax="proto3",
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_pb=b'\n\x13job_scheduler.proto\x1a\x1fgoogle/protobuf/timestamp.proto"\x91\x01\n\x12ScheduleJobRequest\x12\x1f\n\x0bshelf_grows\x18\x01 \x03(\x0b\x32\n.ShelfGrow\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase\x12\x13\n\x0bpower_level\x18\x03 \x01(\x05\x12\x11\n\tred_level\x18\x04 \x01(\x05\x12\x12\n\nblue_level\x18\x05 \x01(\x05"5\n\x10ScheduleJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t"P\n\tShelfGrow\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x0f\n\x07room_id\x18\x02 \x01(\x05\x12\x0f\n\x07rack_id\x18\x03 \x01(\x05\x12\x10\n\x08shelf_id\x18\x04 \x01(\x05"\xd2\x01\n\tGrowPhase\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x18\n\x10recipe_phase_num\x18\x02 \x01(\x05\x12\x11\n\trecipe_id\x18\x03 \x01(\x05\x12\x38\n\x14phase_start_datetime\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x36\n\x12phase_end_datetime\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x15\n\ris_last_phase\x18\x06 \x01(\x08"2\n\x10RemoveJobRequest\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase"3\n\x0eRemoveJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t2z\n\x0cJobScheduler\x12\x37\n\x0bScheduleJob\x12\x13.ScheduleJobRequest\x1a\x11.ScheduleJobReply"\x00\x12\x31\n\tRemoveJob\x12\x11.RemoveJobRequest\x1a\x0f.RemoveJobReply"\x00\x62\x06proto3',
+    serialized_pb=b'\n\x13job_scheduler.proto\x1a\x1fgoogle/protobuf/timestamp.proto"\x91\x01\n\x12ScheduleJobRequest\x12\x1f\n\x0bshelf_grows\x18\x01 \x03(\x0b\x32\n.ShelfGrow\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase\x12\x13\n\x0bpower_level\x18\x03 \x01(\x05\x12\x11\n\tred_level\x18\x04 \x01(\x05\x12\x12\n\nblue_level\x18\x05 \x01(\x05"5\n\x10ScheduleJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t"P\n\tShelfGrow\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x0f\n\x07room_id\x18\x02 \x01(\x05\x12\x0f\n\x07rack_id\x18\x03 \x01(\x05\x12\x10\n\x08shelf_id\x18\x04 \x01(\x05"\xd2\x01\n\tGrowPhase\x12\x0f\n\x07grow_id\x18\x01 \x01(\x05\x12\x18\n\x10recipe_phase_num\x18\x02 \x01(\x05\x12\x11\n\trecipe_id\x18\x03 \x01(\x05\x12\x38\n\x14phase_start_datetime\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x36\n\x12phase_end_datetime\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x15\n\ris_last_phase\x18\x06 \x01(\x08"2\n\x10RemoveJobRequest\x12\x1e\n\ngrow_phase\x18\x02 \x01(\x0b\x32\n.GrowPhase"3\n\x0eRemoveJobReply\x12\x11\n\tsucceeded\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t"\x10\n\x0eGetJobsRequest"\x11\n\x03Job\x12\n\n\x02id\x18\x01 \x01(\t""\n\x0cGetJobsReply\x12\x12\n\x04jobs\x18\x01 \x03(\x0b\x32\x04.Job2\xa7\x01\n\x0cJobScheduler\x12\x37\n\x0bScheduleJob\x12\x13.ScheduleJobRequest\x1a\x11.ScheduleJobReply"\x00\x12\x31\n\tRemoveJob\x12\x11.RemoveJobRequest\x1a\x0f.RemoveJobReply"\x00\x12+\n\x07GetJobs\x12\x0f.GetJobsRequest\x1a\r.GetJobsReply"\x00\x62\x06proto3',
     dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR],
 )
 
@@ -539,6 +539,109 @@ _REMOVEJOBREPLY = _descriptor.Descriptor(
     serialized_end=657,
 )
 
+
+_GETJOBSREQUEST = _descriptor.Descriptor(
+    name="GetJobsRequest",
+    full_name="GetJobsRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    create_key=_descriptor._internal_create_key,
+    fields=[],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=659,
+    serialized_end=675,
+)
+
+
+_JOB = _descriptor.Descriptor(
+    name="Job",
+    full_name="Job",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    create_key=_descriptor._internal_create_key,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="id",
+            full_name="Job.id",
+            index=0,
+            number=1,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        )
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=677,
+    serialized_end=694,
+)
+
+
+_GETJOBSREPLY = _descriptor.Descriptor(
+    name="GetJobsReply",
+    full_name="GetJobsReply",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    create_key=_descriptor._internal_create_key,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="jobs",
+            full_name="GetJobsReply.jobs",
+            index=0,
+            number=1,
+            type=11,
+            cpp_type=10,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        )
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=696,
+    serialized_end=730,
+)
+
 _SCHEDULEJOBREQUEST.fields_by_name["shelf_grows"].message_type = _SHELFGROW
 _SCHEDULEJOBREQUEST.fields_by_name["grow_phase"].message_type = _GROWPHASE
 _GROWPHASE.fields_by_name[
@@ -548,12 +651,16 @@ _GROWPHASE.fields_by_name[
     "phase_end_datetime"
 ].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _REMOVEJOBREQUEST.fields_by_name["grow_phase"].message_type = _GROWPHASE
+_GETJOBSREPLY.fields_by_name["jobs"].message_type = _JOB
 DESCRIPTOR.message_types_by_name["ScheduleJobRequest"] = _SCHEDULEJOBREQUEST
 DESCRIPTOR.message_types_by_name["ScheduleJobReply"] = _SCHEDULEJOBREPLY
 DESCRIPTOR.message_types_by_name["ShelfGrow"] = _SHELFGROW
 DESCRIPTOR.message_types_by_name["GrowPhase"] = _GROWPHASE
 DESCRIPTOR.message_types_by_name["RemoveJobRequest"] = _REMOVEJOBREQUEST
 DESCRIPTOR.message_types_by_name["RemoveJobReply"] = _REMOVEJOBREPLY
+DESCRIPTOR.message_types_by_name["GetJobsRequest"] = _GETJOBSREQUEST
+DESCRIPTOR.message_types_by_name["Job"] = _JOB
+DESCRIPTOR.message_types_by_name["GetJobsReply"] = _GETJOBSREPLY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 ScheduleJobRequest = _reflection.GeneratedProtocolMessageType(
@@ -622,6 +729,39 @@ RemoveJobReply = _reflection.GeneratedProtocolMessageType(
 )
 _sym_db.RegisterMessage(RemoveJobReply)
 
+GetJobsRequest = _reflection.GeneratedProtocolMessageType(
+    "GetJobsRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _GETJOBSREQUEST,
+        "__module__": "job_scheduler_pb2"
+        # @@protoc_insertion_point(class_scope:GetJobsRequest)
+    },
+)
+_sym_db.RegisterMessage(GetJobsRequest)
+
+Job = _reflection.GeneratedProtocolMessageType(
+    "Job",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _JOB,
+        "__module__": "job_scheduler_pb2"
+        # @@protoc_insertion_point(class_scope:Job)
+    },
+)
+_sym_db.RegisterMessage(Job)
+
+GetJobsReply = _reflection.GeneratedProtocolMessageType(
+    "GetJobsReply",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _GETJOBSREPLY,
+        "__module__": "job_scheduler_pb2"
+        # @@protoc_insertion_point(class_scope:GetJobsReply)
+    },
+)
+_sym_db.RegisterMessage(GetJobsReply)
+
 
 _JOBSCHEDULER = _descriptor.ServiceDescriptor(
     name="JobScheduler",
@@ -630,8 +770,8 @@ _JOBSCHEDULER = _descriptor.ServiceDescriptor(
     index=0,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=659,
-    serialized_end=781,
+    serialized_start=733,
+    serialized_end=900,
     methods=[
         _descriptor.MethodDescriptor(
             name="ScheduleJob",
@@ -650,6 +790,16 @@ _JOBSCHEDULER = _descriptor.ServiceDescriptor(
             containing_service=None,
             input_type=_REMOVEJOBREQUEST,
             output_type=_REMOVEJOBREPLY,
+            serialized_options=None,
+            create_key=_descriptor._internal_create_key,
+        ),
+        _descriptor.MethodDescriptor(
+            name="GetJobs",
+            full_name="JobScheduler.GetJobs",
+            index=2,
+            containing_service=None,
+            input_type=_GETJOBSREQUEST,
+            output_type=_GETJOBSREPLY,
             serialized_options=None,
             create_key=_descriptor._internal_create_key,
         ),

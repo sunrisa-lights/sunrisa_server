@@ -6,7 +6,10 @@ from typing import List
 from app.models.shelf_grow import ShelfGrow
 from app.models.grow_phase import GrowPhase
 
-from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf
+from app.job_scheduler.schedule_jobs import (
+    client_get_jobs,
+    schedule_grow_for_shelf,
+)
 
 
 def init_endpoint_listeners(app_config, app):
@@ -32,3 +35,12 @@ def init_endpoint_listeners(app_config, app):
         )
 
         return jsonify({"success": True})
+
+    @app.route("/get-jobs", methods=["GET"])
+    def get_jobs():
+        jobs = client_get_jobs()
+        job_ids = []
+        for job in jobs:
+            job_ids.append(job.id)
+
+        return jsonify({"job_ids": job_ids})
