@@ -11,8 +11,7 @@ from app_config import AppConfig
 import grpc  # type: ignore
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from app.generated.messages import job_scheduler_pb2  # type: ignore
-from app.generated.service import job_scheduler_pb2_grpc  # type: ignore
+from app.generated import job_scheduler_pb2, job_scheduler_pb2_grpc  # type: ignore
 
 
 def schedule_grow_for_shelf(

@@ -6,8 +6,7 @@ from typing import List
 import grpc
 import requests
 
-from app.generated.messages import job_scheduler_pb2
-from app.generated.service import job_scheduler_pb2_grpc
+from app.generated import job_scheduler_pb2, job_scheduler_pb2_grpc
 from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf, get_job_id
 from app.models.shelf_grow import ShelfGrow
 from app.models.grow_phase import GrowPhase

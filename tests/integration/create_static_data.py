@@ -3,9 +3,6 @@ import sys
 
 from typing import List, Tuple
 
-# TODO(lwotton): Remove this hack
-sys.path.append(".")
-
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.shelf import Shelf
@@ -69,8 +66,8 @@ def create_shelves(
 
 def create_static_data(sio):
     num_rooms = 2
-    num_racks_in_room = 2
-    num_shelves_in_rack = 3
+    num_racks_in_room = 17
+    num_shelves_in_rack = 4
     room_ids: List[int] = create_rooms(sio, num_rooms)
     rack_ids_room_ids: List[Tuple[int, int]] = create_racks(
         sio, num_racks_in_room, room_ids

@@ -70,10 +70,9 @@ up:
 	docker-compose up
 
 message-protos:
-	mkdir -p app/generated/messages
-	venv/bin/python -m grpc_tools.protoc --proto_path=app/protos --python_out=app/generated/messages app/protos/job_scheduler.proto
+	mkdir -p app/generated
+	venv/bin/python -m grpc_tools.protoc --proto_path=app/protos --python_out=app/generated app/protos/job_scheduler.proto
 
 protos:
-	mkdir -p app/generated/messages
-	mkdir -p app/generated/service
-	venv/bin/python -m grpc_tools.protoc -I=app/protos --python_out=app/generated/messages --grpc_python_out=app/generated/service app/protos/job_scheduler.proto
+	mkdir -p app/generated
+	venv/bin/python -m grpc_tools.protoc -I=app/protos --python_out=app/generated --grpc_python_out=app/generated app/protos/job_scheduler.proto

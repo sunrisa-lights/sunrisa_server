@@ -14,7 +14,7 @@ from app_config import AppConfig
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "gjr38dkjn344_!67#"
-app.debug = True
+app.debug = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 if __name__ == "__main__":
