@@ -1,7 +1,6 @@
 import collections
 import socketio
 import pymysql.cursors
-import logging
 import sys
 import time
 from datetime import date, datetime, timedelta, timezone
@@ -337,6 +336,7 @@ def test_create_entities():
 
 def test_entities_not_found():
     run_test_and_disconnect(_test_entities_not_found)
+
 
 if __name__ == "__main__":
     test_create_entities()

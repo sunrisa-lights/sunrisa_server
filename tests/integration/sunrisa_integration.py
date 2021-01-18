@@ -2,7 +2,6 @@ import collections
 import json
 import socketio
 import pymysql.cursors
-import logging
 import sys
 import time
 from datetime import date, datetime, timedelta, timezone

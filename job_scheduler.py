@@ -1,5 +1,4 @@
 from concurrent import futures
-import logging
 
 from datetime import datetime, timedelta
 from typing import List
@@ -182,5 +181,4 @@ def serve():
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
     serve()

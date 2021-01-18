@@ -1,5 +1,4 @@
 import pymysql.cursors
-import logging
 
 from app.db.db import DB
 
@@ -11,9 +10,6 @@ class AppConfig:
         self.sio = sio
 
         if env == "development":
-            logging.basicConfig(level=logging.DEBUG)
-            self.logger = logging
-
             self.db = DB(self.DB_NAME)
             self.db.initialize_tables()
         else:
