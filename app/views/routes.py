@@ -35,7 +35,7 @@ def init_endpoint_listeners(app_config, app):
         return jsonify({"success": True})
 
     @app.route("/sync-grows", methods=["POST"])
-    def sync_grows():
+    def sync_grows_endpoint():
         print("SYNC GROWS CALLED!")
-        sync_grows()
+        sync_grows(app_config)
         return jsonify({"success": True})
