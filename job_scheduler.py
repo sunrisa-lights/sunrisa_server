@@ -72,7 +72,7 @@ def schedule_grow_sync_job(scheduler):
         sync_grows,
         "interval",
         id=SYNC_GROWS_JOB,
-        minutes=5,  # TODO: Put this in a constants file
+        minutes=1,  # TODO: Put this in a constants file
     )
     print("scheduled grow job:", job)
 
