@@ -51,6 +51,7 @@ def send_message_to_namespace_if_specified(
             event_name, json.dumps(event_data), namespace=message_namespace
         )
     else:
+        print("Emitting a message to everyone:")
         socketio.emit(event_name, event_data)
 
 
@@ -59,10 +60,7 @@ def init_event_listeners(app_config, socketio):
     def connect():
         print("I'm connected!")
         send_message_to_namespace_if_specified(
-            socketio,
-            {NAMESPACE: "/raspberry_pi"},
-            "please_work",
-            {"working": True},
+            socketio, {}, "please_work", {"working": True}
         )
         print("SEnt a message!!!!!!!!!!")
 
