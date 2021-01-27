@@ -59,10 +59,6 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("connect")
     def connect():
         print("I'm connected!")
-        send_message_to_namespace_if_specified(
-            socketio, {}, "please_work", {"working": True}
-        )
-        print("SEnt a message!!!!!!!!!!")
 
     @socketio.on("connect_error")
     def connect_error():
