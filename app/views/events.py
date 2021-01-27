@@ -62,6 +62,10 @@ def init_event_listeners(app_config, socketio):
     def connect_error():
         print("The connection failed!")
 
+    @socketio.on("sync_grows_response")
+    def sync_grows_response(message):
+        print("RECEIVED SYNC GROWS RESPONSE:", message)
+
     @socketio.on("disconnect")
     def disconnect():
         print("I'm disconnected!")

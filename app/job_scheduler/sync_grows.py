@@ -7,10 +7,6 @@ def sync_grows(app_config) -> None:
 
     socketio = app_config.sio
 
-    @socketio.on("sync_grows_response")
-    def sync_grows_response(message):
-        print("RECEIVED SYNC GROWS RESPONSE:", message)
-
     socketio.emit("sync_grows", {})
     print("sync_grows event emitted")
 
