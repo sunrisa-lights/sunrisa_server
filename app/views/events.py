@@ -46,6 +46,7 @@ def send_message_to_namespace_if_specified(
 ):
     if NAMESPACE in message:
         message_namespace = message[NAMESPACE]
+        print("Emitting a message to namespace:", message_namespace)
         socketio.emit(
             event_name, json.dumps(event_data), namespace=message_namespace
         )
@@ -58,7 +59,10 @@ def init_event_listeners(app_config, socketio):
     def connect():
         print("I'm connected!")
         send_message_to_namespace_if_specified(
-            socketio, {}, "please_work", {"working": True}
+            socketio,
+            {NAMESPACE: "/raspberry_pi"},
+            "please_work",
+            {"working": True},
         )
         print("SEnt a message!!!!!!!!!!")
 
