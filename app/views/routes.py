@@ -7,6 +7,7 @@ from app.models.shelf_grow import ShelfGrow
 from app.models.grow_phase import GrowPhase
 
 from app.job_scheduler.schedule_jobs import schedule_grow_for_shelf
+from app.job_scheduler.sync_grows import sync_grows
 
 
 def init_endpoint_listeners(app_config, app):
@@ -36,4 +37,5 @@ def init_endpoint_listeners(app_config, app):
     @app.route("/sync-grows", methods=["POST"])
     def sync_grows():
         print("SYNC GROWS CALLED!")
+        sync_grows()
         return jsonify({"success": True})
