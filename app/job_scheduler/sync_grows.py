@@ -11,7 +11,7 @@ def sync_grows(app_config) -> None:
     def sync_grows_response(message):
         print("RECEIVED SYNC GROWS RESPONSE:", message)
 
-    app_config.sio.emit("sync_grows", {})
+    socketio.emit("sync_grows", {})
     print("sync_grows event emitted")
 
 
