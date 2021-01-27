@@ -15,6 +15,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.job import Job
 
 API_ENDPOINT = "http://sunrisa_server:5000/add-job"
+SYNC_GROWS_ENDPOINT = "http://sunrisa_server:5000/sync-grows"
+
+SYNC_GROWS_JOB = "sync_grows_job"
 
 
 def send_message_to_socketio_server(
@@ -41,6 +44,37 @@ def send_message_to_socketio_server(
 
     # raises exception if non-2xx code is returned
     r.raise_for_status()
+
+
+def sync_grows():
+    print("Sync grows called!")
+    r = requests.post(url=SYNC_GROWS_ENDPOINT)
+
+    # raises exception if non-2xx code is returned
+    r.raise_for_status()
+
+
+# schedules a job for syncing the pi grows with the
+# grows stored in the database
+def schedule_grow_sync_job(scheduler):
+    # first get jobs currently running and check if sync job already exists
+    current_jobs: List[Job] = get_scheduler_jobs(scheduler)
+    print("found jobs:", current_jobs)
+    for job in current_jobs:
+        if job.id == SYNC_GROWS_JOB:
+            # grow job is already running
+            print("Returning early because sync grow job already exists")
+            return
+
+    print("sync grow job not found, adding it to scheduler")
+    # grow job is not running. Schedule it
+    job = scheduler.add_job(
+        sync_grows,
+        "interval",
+        id=SYNC_GROWS_JOB,
+        minutes=5,  # TODO: Put this in a constants file
+    )
+    print("scheduled grow job:", job)
 
 
 def schedule_grow_job(
@@ -170,11 +204,17 @@ class JobScheduler(job_scheduler_pb2_grpc.JobSchedulerServicer):
 
 
 def serve():
-    print("Serving the application")
+    print("Starting the job scheduler")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+
+    job_scheduler: JobScheduler = JobScheduler()
     job_scheduler_pb2_grpc.add_JobSchedulerServicer_to_server(
-        JobScheduler(), server
+        job_scheduler, server
     )
+
+    # schedule grow sync job on startup if needed
+    schedule_grow_sync_job(job_scheduler.job_scheduler)
+
     server.add_insecure_port("[::]:50051")
     server.start()
     server.wait_for_termination()

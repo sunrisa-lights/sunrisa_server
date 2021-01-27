@@ -2,6 +2,11 @@ import pymysql.cursors
 
 from app.db.db import DB
 
+import logging
+
+log = logging.getLogger("werkzeug")
+log.setLevel(logging.ERROR)
+
 
 class AppConfig:
     DB_NAME = "sunrisa_test"
