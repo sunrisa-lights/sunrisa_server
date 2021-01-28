@@ -82,8 +82,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("room")
             room_json = message["room"]
             room = Room.from_json(room_json)
-            app_config.logger.debug(room)
-            print("Saw room in message")
+            print("Saw room in message", room)
             app_config.db.write_room(room)
 
         if "rack" in message:
@@ -91,8 +90,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("rack")
             rack_json = message["rack"]
             rack = Rack.from_json(rack_json)
-            app_config.logger.debug(rack)
-            print("Saw rack in message")
+            print("Saw rack in message", rack)
             app_config.db.write_rack(rack)
 
         if "recipe" in message:
@@ -100,8 +98,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("recipe")
             recipe_json = message["recipe"]
             recipe = Recipe.from_json(recipe_json)
-            app_config.logger.debug(recipe)
-            print("Saw recipe in message")
+            print("Saw recipe in message", recipe)
             app_config.db.write_recipe(recipe)
 
         if "shelf" in message:
@@ -109,7 +106,6 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("shelf")
             shelf_json = message["shelf"]
             shelf = Shelf.from_json(shelf_json)
-            app_config.logger.debug(shelf)
             print("Saw shelf in message", shelf)
             app_config.db.write_shelf(shelf)
 
