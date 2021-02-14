@@ -13,6 +13,7 @@ from app.models.recipe import Recipe
 from app.models.recipe_phase import RecipePhase
 from app.models.shelf import Shelf
 from app.models.shelf_grow import ShelfGrow
+from app.models.shelf_light_record import ShelfLightRecord
 from app.db.grow import (
     create_grow_table,
     update_grow_harvest_data,
@@ -63,6 +64,10 @@ from app.db.shelf_grow import (
     read_shelves_with_grow,
     read_shelves_with_grows,
     write_shelf_grows,
+)
+from app.db.shelf_light_record import (
+    create_shelf_light_record_table,
+    write_shelf_light_records,
 )
 
 
@@ -115,6 +120,7 @@ class DB:
             create_grow_table(db_conn)
             create_grow_phase_table(db_conn)
             create_shelf_grow_table(db_conn)
+            create_shelf_light_record_table(db_conn)
 
             # if creating all tables was successful, commit the transaction
             db_conn.commit()
@@ -556,9 +562,20 @@ class DB:
             print("Error writing shelf grows:", shelf_grows, str(e))
             raise
 
-    def write_plant(self, plant: Plant) -> None:
-        db_conn = self._new_connection(self.db_name)
+    def write_shelf_light_records(
+        self,
+        db_conn: pymysql.connections.Connection,
+        shelf_light_records: List[ShelfLightRecord],
+    ) -> None:
+        if not shelf_light_records:
+            return
+
         try:
-            write_plant(db_conn, plant)
-        finally:
-            db_conn.close()
+            write_shelf_light_records(db_conn, shelf_light_records)
+        except Exception as e:
+            print(
+                "Error writing shelf light records:",
+                shelf_light_records,
+                str(e),
+            )
+            raise
