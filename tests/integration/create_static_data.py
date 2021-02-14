@@ -3,6 +3,9 @@ import sys
 
 from typing import List, Tuple
 
+# TODO(lwotton): Remove this hack. Needed to import project files.
+sys.path.append(".")
+
 from app.models.room import Room
 from app.models.rack import Rack
 from app.models.shelf import Shelf
