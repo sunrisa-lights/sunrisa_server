@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 from app.models.shelf_light_record import ShelfLightRecord
@@ -46,6 +47,30 @@ def write_shelf_light_records(
     cursor = conn.cursor()
     cursor.execute(sql, shelf_light_record_sql_args)
     cursor.close()
+
+
+def get_shelf_light_records(
+    conn, after_date: datetime
+) -> List[ShelfLightRecord]:
+    sql = "SELECT (room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at) from `shelf_light_records` where recorded_at > %s"
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (after_date))
+        light_records = cursor.fetchall()
+        found_light_records: List[ShelfLightRecord] = [
+            ShelfLightRecord(room, rack, shelf, red, blue, power, recorded_at)
+            for (
+                room,
+                rack,
+                shelf,
+                red,
+                blue,
+                power,
+                recorded_at,
+            ) in light_records
+        ]
+
+        cursor.close()
+        return found_light_records
 
 
 def create_shelf_light_record_table(conn):

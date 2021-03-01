@@ -67,6 +67,7 @@ from app.db.shelf_grow import (
 )
 from app.db.shelf_light_record import (
     create_shelf_light_record_table,
+    get_shelf_light_records,
     write_shelf_light_records,
 )
 
@@ -578,4 +579,13 @@ class DB:
                 shelf_light_records,
                 str(e),
             )
+            raise
+
+    def get_shelf_light_records(
+        self, db_conn: pymysql.connections.Connection, after_date: datetime
+    ) -> None:
+        try:
+            get_shelf_light_records(db_conn, after_date)
+        except Exception as e:
+            print("Error getting shelf light records:", after_date, str(e))
             raise

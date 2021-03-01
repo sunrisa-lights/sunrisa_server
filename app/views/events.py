@@ -12,7 +12,10 @@ from app.job_scheduler.schedule_jobs import (
     client_schedule_job,
 )
 
-from app.lib.sync_grows import sync_grows as sync_grows_helper
+from app.lib.sync_grows import (
+    get_synced_shelf_light_records,
+    sync_grows as sync_grows_helper,
+)
 
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
@@ -69,7 +72,23 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("sync_grows_response")
     def sync_grows_response(message):
         print("RECEIVED SYNC GROWS RESPONSE:", message)
-        sync_grows_helper(app_config, message)
+        shelf_light_records: List[ShelfLightRecord] = sync_grows_helper(
+            app_config, message
+        )
+
+    @socketio.on("get_synced_grows")
+    def get_synced_grows(message):
+        print("RECEIVED SYNC GROWS RESPONSE:", message)
+        after_date = iso8601_string_to_datetime(message["after_date"])
+        shelf_light_records = get_synced_shelf_light_records(
+            app_config, after_date
+        )
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "get_synced_grows_response",
+            {"succeeded": True, "shelf_light_records": shelf_light_records},
+        )
 
     @socketio.on("disconnect")
     def disconnect():

@@ -6,22 +6,22 @@ from app_config import AppConfig
 
 # Returns true if light recrods saved successfully to DB, false if not
 def sync_grows(app_config: AppConfig, light_info: Any) -> bool:
-    recorded_at = datetime.now()
-    print("LIGHT INFO!:", light_info)
-    shelf_light_records: List[ShelfLightRecord] = []
-    for room in light_info:
-        for rack in light_info[room]:
-            for shelf in light_info[room][rack]:
-                shelf_light_dict = light_info[room][rack][shelf]
-                red = shelf_light_dict.get("red_level")
-                blue = shelf_light_dict.get("blue_level")
-                power = shelf_light_dict.get("power_level")
-                shelf_light_record: ShelfLightRecord = ShelfLightRecord(
-                    shelf, rack, room, red, blue, power, recorded_at
-                )
-                shelf_light_records.append(shelf_light_record)
-
     try:
+        recorded_at = datetime.now()
+        print("LIGHT INFO!:", light_info)
+        shelf_light_records: List[ShelfLightRecord] = []
+        for room in light_info:
+            for rack in light_info[room]:
+                for shelf in light_info[room][rack]:
+                    shelf_light_dict = light_info[room][rack][shelf]
+                    red = shelf_light_dict.get("red_level")
+                    blue = shelf_light_dict.get("blue_level")
+                    power = shelf_light_dict.get("power_level")
+                    shelf_light_record: ShelfLightRecord = ShelfLightRecord(
+                        shelf, rack, room, red, blue, power, recorded_at
+                    )
+                    shelf_light_records.append(shelf_light_record)
+
         db_conn = app_config.db._new_transaction()
         app_config.db.write_shelf_light_records(db_conn, shelf_light_records)
         db_conn.commit()
@@ -38,6 +38,31 @@ def sync_grows(app_config: AppConfig, light_info: Any) -> bool:
         if db_conn:
             db_conn.rollback()
         return False
+    finally:
+        # close connection if defined
+        if db_conn:
+            db_conn.close()
+
+
+# Returns true if light recrods saved successfully to DB, false if not
+def get_synced_shelf_light_records(
+    app_config: AppConfig, after_date: datetime
+) -> List[ShelfLightRecord]:
+    try:
+        db_conn = app_config.db._new_transaction()
+        shelf_light_records = app_config.db.get_shelf_light_records(
+            db_conn, after_date
+        )
+        return shelf_light_records
+    except Exception as e:
+        exception_str: str = str(e)
+        print(
+            "Error with getting shelf light records",
+            after_date,
+            exception_str,
+            traceback.format_exc(),
+        )
+        return []
     finally:
         # close connection if defined
         if db_conn:
