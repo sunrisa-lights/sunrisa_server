@@ -6,7 +6,7 @@ from app.models.shelf_light_record import ShelfLightRecord
 def write_shelf_light_record(
     conn, shelf_light_record: ShelfLightRecord
 ) -> None:
-    sql = "INSERT INTO `shelf_grows` (room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO `shelf_light_records` (room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     cursor = conn.cursor()
     cursor.execute(
         sql,
@@ -40,7 +40,7 @@ def write_shelf_light_records(
         )
         value_list.append("(%s, %s, %s, %s, %s, %s, %s)")
 
-    sql = "INSERT INTO `shelf_grows` (room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at) VALUES {}".format(
+    sql = "INSERT INTO `shelf_light_records` (room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at) VALUES {}".format(
         ", ".join(value_list)
     )
     cursor = conn.cursor()
