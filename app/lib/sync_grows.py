@@ -38,3 +38,7 @@ def sync_grows(app_config: AppConfig, light_info: Any) -> bool:
         if db_conn:
             db_conn.rollback()
         return False
+    finally:
+        # close connection if defined
+        if db_conn:
+            db_conn.close()
