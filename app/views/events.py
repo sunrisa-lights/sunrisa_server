@@ -12,6 +12,8 @@ from app.job_scheduler.schedule_jobs import (
     client_schedule_job,
 )
 
+from app.lib.sync_grows import sync_grows as sync_grows_helper
+
 from app.models.grow import Grow
 from app.models.grow_phase import GrowPhase
 from app.models.plant import Plant
@@ -67,6 +69,7 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("sync_grows_response")
     def sync_grows_response(message):
         print("RECEIVED SYNC GROWS RESPONSE:", message)
+        sync_grows_helper(app_config, message)
 
     @socketio.on("disconnect")
     def disconnect():

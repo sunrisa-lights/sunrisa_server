@@ -53,9 +53,9 @@ def create_shelf_light_record_table(conn):
     room_id INT NOT NULL,
     rack_id INT NOT NULL,
     shelf_id INT NOT NULL,
-    power_level INT NOT NULL,
-    red_level INT NOT NULL,
-    blue_level INT NOT NULL,
+    power_level INT,
+    red_level INT,
+    blue_level INT,
     recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (shelf_id, rack_id, room_id, recorded_at),
     FOREIGN KEY (shelf_id, rack_id, room_id)
