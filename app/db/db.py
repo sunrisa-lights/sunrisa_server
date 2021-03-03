@@ -583,9 +583,10 @@ class DB:
 
     def get_shelf_light_records(
         self, db_conn: pymysql.connections.Connection, after_date: datetime
-    ) -> None:
+    ) -> List[ShelfLightRecords]:
         try:
-            get_shelf_light_records(db_conn, after_date)
+            shelf_light_records: List[ShelfLightRecord] = get_shelf_light_records(db_conn, after_date)
+            return shelf_light_records
         except Exception as e:
             print("Error getting shelf light records:", after_date, str(e))
             raise

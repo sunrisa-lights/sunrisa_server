@@ -79,6 +79,15 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("get_synced_grows")
     def get_synced_grows(message):
         print("RECEIVED SYNC GROWS RESPONSE:", message)
+        if not "after_date" in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_synced_grows_response",
+                {"succeeded": False, "reason": "Must specify `after_date` attribute" },
+            )
+            return
+
         after_date = iso8601_string_to_datetime(message["after_date"])
         shelf_light_records = get_synced_shelf_light_records(
             app_config, after_date
