@@ -1,4 +1,4 @@
-.PHONY: pre build-up up-d build-up-d logs curr-logs stop clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up
+.PHONY: pre build-up up-d build-up-d logs curr-logs stop clean clean_volume lint virtual test_unit test_integration mypy install install_integration run test up message-protos protos
 
 pre:
 	pre-commit run --all-files
@@ -68,3 +68,11 @@ test:
 
 up:
 	docker-compose up
+
+message-protos:
+	mkdir -p app/generated
+	venv/bin/python -m grpc_tools.protoc --proto_path=app/protos --python_out=app/generated app/protos/job_scheduler.proto
+
+protos:
+	mkdir -p app/generated
+	venv/bin/python -m grpc_tools.protoc -I=app/protos --python_out=app/generated --grpc_python_out=app/generated app/protos/job_scheduler.proto

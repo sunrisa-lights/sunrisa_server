@@ -1,7 +1,11 @@
 import pymysql.cursors
-import logging
 
 from app.db.db import DB
+
+import logging
+
+log = logging.getLogger("werkzeug")
+log.setLevel(logging.ERROR)
 
 
 class AppConfig:
@@ -11,9 +15,6 @@ class AppConfig:
         self.sio = sio
 
         if env == "development":
-            logging.basicConfig(level=logging.DEBUG)
-            self.logger = logging
-
             self.db = DB(self.DB_NAME)
             self.db.initialize_tables()
         else:

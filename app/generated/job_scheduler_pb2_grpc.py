@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from app.generated.python import job_scheduler_pb2 as job__scheduler__pb2
+from app.generated import job_scheduler_pb2 as job__scheduler__pb2
 
 
 class JobSchedulerStub(object):
@@ -25,6 +25,11 @@ class JobSchedulerStub(object):
             request_serializer=job__scheduler__pb2.RemoveJobRequest.SerializeToString,
             response_deserializer=job__scheduler__pb2.RemoveJobReply.FromString,
         )
+        self.GetJobs = channel.unary_unary(
+            "/JobScheduler/GetJobs",
+            request_serializer=job__scheduler__pb2.GetJobsRequest.SerializeToString,
+            response_deserializer=job__scheduler__pb2.GetJobsReply.FromString,
+        )
 
 
 class JobSchedulerServicer(object):
@@ -45,6 +50,13 @@ class JobSchedulerServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def GetJobs(self, request, context):
+        """Gets all jobs from the job scheduler (method for debugging)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_JobSchedulerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -57,6 +69,11 @@ def add_JobSchedulerServicer_to_server(servicer, server):
             servicer.RemoveJob,
             request_deserializer=job__scheduler__pb2.RemoveJobRequest.FromString,
             response_serializer=job__scheduler__pb2.RemoveJobReply.SerializeToString,
+        ),
+        "GetJobs": grpc.unary_unary_rpc_method_handler(
+            servicer.GetJobs,
+            request_deserializer=job__scheduler__pb2.GetJobsRequest.FromString,
+            response_serializer=job__scheduler__pb2.GetJobsReply.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -115,6 +132,33 @@ class JobScheduler(object):
             "/JobScheduler/RemoveJob",
             job__scheduler__pb2.RemoveJobRequest.SerializeToString,
             job__scheduler__pb2.RemoveJobReply.FromString,
+            options,
+            channel_credentials,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def GetJobs(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/JobScheduler/GetJobs",
+            job__scheduler__pb2.GetJobsRequest.SerializeToString,
+            job__scheduler__pb2.GetJobsReply.FromString,
             options,
             channel_credentials,
             call_credentials,

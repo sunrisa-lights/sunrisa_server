@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import json
@@ -7,9 +6,15 @@ import traceback
 from typing import Any, List, Optional
 
 from app.job_scheduler.schedule_jobs import (
+    client_get_jobs,
     client_remove_job,
     client_reschedule_job,
     client_schedule_job,
+)
+
+from app.lib.sync_grows import (
+    get_synced_shelf_light_records,
+    sync_grows as sync_grows_helper,
 )
 
 from app.models.grow import Grow
@@ -46,10 +51,12 @@ def send_message_to_namespace_if_specified(
 ):
     if NAMESPACE in message:
         message_namespace = message[NAMESPACE]
+        print("Emitting a message to namespace:", message_namespace)
         socketio.emit(
             event_name, json.dumps(event_data), namespace=message_namespace
         )
     else:
+        print("Emitting a message to everyone:")
         socketio.emit(event_name, event_data)
 
 
@@ -61,6 +68,37 @@ def init_event_listeners(app_config, socketio):
     @socketio.on("connect_error")
     def connect_error():
         print("The connection failed!")
+
+    @socketio.on("sync_grows_response")
+    def sync_grows_response(message):
+        print("RECEIVED SYNC GROWS RESPONSE:", message)
+        shelf_light_records: List[ShelfLightRecord] = sync_grows_helper(
+            app_config, message
+        )
+
+    @socketio.on("get_synced_grows")
+    def get_synced_grows(message):
+        print("RECEIVED SYNC GROWS RESPONSE:", message)
+        if not "after_date" in message:
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_synced_grows_response",
+                {"succeeded": False, "reason": "Must specify `after_date` attribute" },
+            )
+            return
+
+        after_date = iso8601_string_to_datetime(message["after_date"])
+        shelf_light_records = get_synced_shelf_light_records(
+            app_config, after_date
+        )
+        print("shelf_light_records:", shelf_light_records)
+        send_message_to_namespace_if_specified(
+            socketio,
+            message,
+            "get_synced_grows_response",
+            {"succeeded": True, "shelf_light_records": [slr.to_json() for slr in shelf_light_records] },
+        )
 
     @socketio.on("disconnect")
     def disconnect():
@@ -76,8 +114,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("room")
             room_json = message["room"]
             room = Room.from_json(room_json)
-            app_config.logger.debug(room)
-            print("Saw room in message")
+            print("Saw room in message", room)
             app_config.db.write_room(room)
 
         if "rack" in message:
@@ -85,8 +122,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("rack")
             rack_json = message["rack"]
             rack = Rack.from_json(rack_json)
-            app_config.logger.debug(rack)
-            print("Saw rack in message")
+            print("Saw rack in message", rack)
             app_config.db.write_rack(rack)
 
         if "recipe" in message:
@@ -94,8 +130,7 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("recipe")
             recipe_json = message["recipe"]
             recipe = Recipe.from_json(recipe_json)
-            app_config.logger.debug(recipe)
-            print("Saw recipe in message")
+            print("Saw recipe in message", recipe)
             app_config.db.write_recipe(recipe)
 
         if "shelf" in message:
@@ -103,7 +138,6 @@ def init_event_listeners(app_config, socketio):
             entities_processed.append("shelf")
             shelf_json = message["shelf"]
             shelf = Shelf.from_json(shelf_json)
-            app_config.logger.debug(shelf)
             print("Saw shelf in message", shelf)
             app_config.db.write_shelf(shelf)
 
@@ -1104,6 +1138,40 @@ def init_event_listeners(app_config, socketio):
                 socketio,
                 message,
                 "read_complete_grows_response",
+                {
+                    "succeeded": False,
+                    "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(
+                        exception_str
+                    ),
+                },
+            )
+
+    @socketio.on("get_jobs")
+    def get_jobs(message) -> None:
+        try:
+            jobs = client_get_jobs()
+            job_ids = []
+            for job in jobs:
+                job_ids.append(job.id)
+
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_jobs_response",
+                {"jobs": job_ids, "succeeded": True},
+            )
+        except Exception as e:
+            exception_str: str = str(e)
+            print(
+                "Error with getting jobs:",
+                message,
+                exception_str,
+                traceback.format_exc(),
+            )
+            send_message_to_namespace_if_specified(
+                socketio,
+                message,
+                "get_jobs_response",
                 {
                     "succeeded": False,
                     "reason": "Unexpected error. Please document the conditions that lead to this error. {}".format(

@@ -11,8 +11,7 @@ from app_config import AppConfig
 import grpc  # type: ignore
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from app.generated.python import job_scheduler_pb2  # type: ignore
-from app.generated.grpc_python import job_scheduler_pb2_grpc  # type: ignore
+from app.generated import job_scheduler_pb2, job_scheduler_pb2_grpc  # type: ignore
 
 
 def schedule_grow_for_shelf(
@@ -225,3 +224,19 @@ def client_reschedule_job(
     client_schedule_job(
         shelf_grows, new_grow_phase, power_level, red_level, blue_level
     )
+
+
+def client_get_jobs() -> List[job_scheduler_pb2.Job]:
+    with grpc.insecure_channel("sunrisa_job_scheduler:50051") as channel:
+        stub = job_scheduler_pb2_grpc.JobSchedulerStub(channel)
+
+        proto = job_scheduler_pb2.GetJobsRequest()
+
+        response = stub.GetJobs(proto)
+
+    print(
+        "Job scheduler client received response from GetJobs: {}".format(
+            response.jobs
+        )
+    )
+    return response.jobs
