@@ -92,11 +92,12 @@ def init_event_listeners(app_config, socketio):
         shelf_light_records = get_synced_shelf_light_records(
             app_config, after_date
         )
+        print("shelf_light_records:", shelf_light_records)
         send_message_to_namespace_if_specified(
             socketio,
             message,
             "get_synced_grows_response",
-            {"succeeded": True, "shelf_light_records": shelf_light_records},
+            {"succeeded": True, "shelf_light_records": [slr.to_json() for slr in shelf_light_records] },
         )
 
     @socketio.on("disconnect")

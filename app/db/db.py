@@ -583,7 +583,7 @@ class DB:
 
     def get_shelf_light_records(
         self, db_conn: pymysql.connections.Connection, after_date: datetime
-    ) -> List[ShelfLightRecords]:
+    ) -> List[ShelfLightRecord]:
         try:
             shelf_light_records: List[ShelfLightRecord] = get_shelf_light_records(db_conn, after_date)
             return shelf_light_records

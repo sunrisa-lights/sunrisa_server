@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 from app.models.shelf_light_record import ShelfLightRecord
 from app_config import AppConfig
 
-# Returns true if light recrods saved successfully to DB, false if not
+# Returns true if light records saved successfully to DB, false if not
 def sync_grows(app_config: AppConfig, light_info: Any) -> bool:
     try:
         recorded_at = datetime.now()

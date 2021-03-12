@@ -52,12 +52,12 @@ def write_shelf_light_records(
 def get_shelf_light_records(
     conn, after_date: datetime
 ) -> List[ShelfLightRecord]:
-    sql = "SELECT room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at from `shelf_light_records` where recorded_at > %s"
+    sql = "SELECT room_id, rack_id, shelf_id, red_level, blue_level, power_level, recorded_at from `shelf_light_records` where recorded_at > %s ORDER BY recorded_at DESC"
     with conn.cursor() as cursor:
         cursor.execute(sql, (after_date))
         light_records = cursor.fetchall()
         found_light_records: List[ShelfLightRecord] = [
-            ShelfLightRecord(room, rack, shelf, red, blue, power, recorded_at)
+            ShelfLightRecord(shelf, rack, room, red, blue, power, recorded_at)
             for (
                 room,
                 rack,
