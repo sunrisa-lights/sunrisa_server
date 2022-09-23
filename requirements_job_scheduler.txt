@@ -4,7 +4,7 @@ chardet==3.0.4
 grpcio==1.30.0
 grpcio-tools==1.30.0
 idna==2.10
-protobuf==3.12.4
+protobuf==3.18.3
 PyMySQL==0.10.0
 python-dateutil==2.8.1
 pytz==2020.1
